@@ -22,7 +22,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
 
     @Override
-    public synchronized Collection<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         ArrayList<Message> res = new ArrayList<Message>();
         NavigableMap<Long, List<Message>> subMap = msgMap.subMap(tMin, true, tMax, true);
         for (Map.Entry<Long, List<Message>> mapEntry : subMap.entrySet()) {

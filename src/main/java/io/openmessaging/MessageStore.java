@@ -1,6 +1,7 @@
 package io.openmessaging;
 
-import java.util.Collection;
+import java.util.List;
+
 
 public abstract class MessageStore {
     /**
@@ -13,7 +14,7 @@ public abstract class MessageStore {
     /**
      * 根据a和t的条件,返回符合条件的消息的集合
      * 这个接口需要是线程安全的，也即评测程序会并发调用该接口
-     * 返回的Collection需要按照t升序排列. Collection会被并发读，但不涉及写，因此只需要是线程读安全就可以了；
+     * 返回的List需要按照t升序排列. List会被并发读，但不涉及写，因此只需要是线程读安全就可以了；单次最大检查消息数量最高会接近百万级别
      * @param aMin 代表a的最小值(包含此值)
      * @param aMax 代表a的最大值(包含此值)
      * @param tMin 代表t的最小值(包含此值)
