@@ -19,7 +19,7 @@ public abstract class MessageStore {
      * @param tMin 代表t的最小值(包含此值)
      * @param tMax 代表t的最大值(包含此值)
      */
-    abstract Collection<Message> getMessage(long aMin, long aMax, long tMin, long tMax);
+    abstract List<Message> getMessage(long aMin, long aMax, long tMin, long tMax);
 
 
     /**

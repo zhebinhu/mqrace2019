@@ -11,7 +11,7 @@ public class Message {
     //输入时间戳,基本是升序的,可能重复
     private long t;
 
-    //消息体, 随机byte数组, 大小约34字节
+    //消息体, 随机byte数组, 大小固定34字节
     private byte[] body;
 
     private int hash = 0;
