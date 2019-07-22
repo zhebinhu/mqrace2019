@@ -53,7 +53,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
 
-        return sum / count;
+        return count == 0 ? 0 : sum / count;
     }
 
 }
