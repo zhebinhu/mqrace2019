@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -42,6 +43,8 @@ public class Queue {
 
     private boolean inited = false;
 
+    private AtomicInteger count = new AtomicInteger(0);
+
     public Queue(int num) {
         this.num = num;
         RandomAccessFile memoryMappedFile = null;
@@ -72,6 +75,10 @@ public class Queue {
             indexMap.put(curTime, index);
         }
         index++;
+        if (count.intValue() % 100000 == 0) {
+            System.out.println("thread-" + num + " count:" + count.getAndIncrement() + " time:" + System.currentTimeMillis() + " indexMapSize:" + indexMap.size());
+            System.out.println("message:"+message);
+        }
     }
 
     public void init() {
@@ -119,6 +126,7 @@ public class Queue {
         //            init();
         //            inited = true;
         //        }
+
         Long offsetA;
         Long offsetB;
         if (tMin > curTime) {
@@ -151,23 +159,23 @@ public class Queue {
         //            offsetA += len / Constants.MESSAGE_SIZE;
         //        }
 
-        //        try {
-        //            mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, offsetA * Constants.MESSAGE_SIZE, (offsetB - offsetA) * Constants.MESSAGE_SIZE);
-        //        } catch (IOException e) {
-        //            e.printStackTrace();
-        //        }
-        //        while (offsetA < offsetB) {
-        //            Message message = new Message(0, 0, null);
-        //            message.setT(mappedByteBuffer.getLong());
-        //            message.setA(mappedByteBuffer.getLong());
-        //            byte[] body = new byte[Constants.MESSAGE_SIZE - 16];
-        //            mappedByteBuffer.get(body);
-        //            message.setBody(body);
-        //            if (message.getA() <= aMax && message.getA() >= aMin) {
-        //                result.add(message);
-        //            }
-        //            offsetA++;
-        //        }
+        //                try {
+        //                    mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, offsetA * Constants.MESSAGE_SIZE, (offsetB - offsetA) * Constants.MESSAGE_SIZE);
+        //                } catch (IOException e) {
+        //                    e.printStackTrace();
+        //                }
+        //                while (offsetA < offsetB) {
+        //                    Message message = new Message(0, 0, null);
+        //                    message.setT(mappedByteBuffer.getLong());
+        //                    message.setA(mappedByteBuffer.getLong());
+        //                    byte[] body = new byte[Constants.MESSAGE_SIZE - 16];
+        //                    mappedByteBuffer.get(body);
+        //                    message.setBody(body);
+        //                    if (message.getA() <= aMax && message.getA() >= aMin) {
+        //                        result.add(message);
+        //                    }
+        //                    offsetA++;
+        //                }
 
         while (offsetA < offsetB) {
             try {
