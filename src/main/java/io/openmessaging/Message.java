@@ -1,7 +1,6 @@
 package io.openmessaging;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 
 public class Message {
