@@ -57,26 +57,28 @@ public class Queue {
     }
 
     public void put(Message message) {
-        int remain = buffer.remaining();
-        if (remain < Constants.MESSAGE_SIZE) {
-            buffer.flip();
-            try {
-                fileChannel.write(buffer);
-                buffer.clear();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        buffer.putLong(message.getT());
-        buffer.putLong(message.getA());
-        buffer.put(message.getBody());
+//        int remain = buffer.remaining();
+//        if (remain < Constants.MESSAGE_SIZE) {
+//            buffer.flip();
+//            try {
+//                fileChannel.write(buffer);
+//                buffer.clear();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//        buffer.putLong(message.getT());
+//        buffer.putLong(message.getA());
+//        buffer.put(message.getBody());
         if (message.getT() > curTime) {
             curTime = message.getT();
             indexMap.put(curTime, index);
         }
-        index++;
-        System.out.println("thread-" + num + " count:" + count.getAndIncrement() + " time:" + System.currentTimeMillis() + " indexMapSize:" + indexMap.size());
-        System.out.println("message:"+message);
+//        index++;
+        if(count.get()%1000==0) {
+            System.out.println("thread-" + num + " count:" + count.getAndIncrement() + " time:" + System.currentTimeMillis() + " indexMapSize:" + indexMap.size());
+            System.out.println("message:" + message);
+        }
 
     }
 
