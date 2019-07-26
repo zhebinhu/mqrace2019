@@ -75,7 +75,7 @@ public class Queue {
             indexMap.put(curTime, index);
         }
         index++;
-        if (count.intValue() % 100000 == 0) {
+        if (count.intValue() % 100 == 0) {
             System.out.println("thread-" + num + " count:" + count.getAndIncrement() + " time:" + System.currentTimeMillis() + " indexMapSize:" + indexMap.size());
             System.out.println("message:"+message);
         }
