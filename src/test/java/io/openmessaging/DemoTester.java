@@ -161,11 +161,11 @@ public class DemoTester {
             Random random = new Random();
             while (timesCounter.getAndIncrement() < checkTimes && System.currentTimeMillis() <= maxTimeStamp) {
                 try {
-                    int aIndex1 = random.nextInt(maxIndex);
+                    int aIndex1 = random.nextInt(maxIndex - 1);
                     if (aIndex1 < 0) {
                         aIndex1 = 0;
                     }
-                    int aIndex2 = Math.min(aIndex1 + maxCheckSize, maxIndex - 2);
+                    int aIndex2 = Math.min(aIndex1 + maxCheckSize, maxIndex - 1);
 
                     int tIndex1 = random.nextInt(aIndex2 - aIndex1) + aIndex1;
                     if (tIndex1 < 0) {
@@ -249,11 +249,11 @@ public class DemoTester {
             Random random = new Random();
             while (timesCounter.getAndIncrement() < checkTimes && System.currentTimeMillis() <= maxTimeStamp) {
                 try {
-                    int aIndex1 = random.nextInt(maxIndex);
+                    int aIndex1 = random.nextInt(maxIndex - 1);
                     if (aIndex1 < 0) {
                         aIndex1 = 0;
                     }
-                    int aIndex2 = Math.min(aIndex1 + maxCheckSize, maxIndex - 2);
+                    int aIndex2 = Math.min(aIndex1 + maxCheckSize, maxIndex - 1);
 
                     int tIndex1 = random.nextInt(aIndex2 - aIndex1) + aIndex1;
                     if (tIndex1 < 0) {
