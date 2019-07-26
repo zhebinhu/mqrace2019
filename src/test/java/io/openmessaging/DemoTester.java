@@ -165,7 +165,7 @@ public class DemoTester {
                     if (aIndex1 < 0) {
                         aIndex1 = 0;
                     }
-                    int aIndex2 = Math.min(aIndex1 + maxCheckSize, maxIndex - 1);
+                    int aIndex2 = Math.min(aIndex1 + maxCheckSize, maxIndex - 2);
 
                     int tIndex1 = random.nextInt(aIndex2 - aIndex1) + aIndex1;
                     if (tIndex1 < 0) {
@@ -253,7 +253,7 @@ public class DemoTester {
                     if (aIndex1 < 0) {
                         aIndex1 = 0;
                     }
-                    int aIndex2 = Math.min(aIndex1 + maxCheckSize, maxIndex - 1);
+                    int aIndex2 = Math.min(aIndex1 + maxCheckSize, maxIndex - 2);
 
                     int tIndex1 = random.nextInt(aIndex2 - aIndex1) + aIndex1;
                     if (tIndex1 < 0) {
