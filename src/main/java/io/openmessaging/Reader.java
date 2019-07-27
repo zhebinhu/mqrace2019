@@ -58,7 +58,7 @@ public class Reader {
 
     private Long curTime = -1L;
 
-    public NavigableMap<Long, Long> indexMap = new TreeMap<Long, Long>();
+    private NavigableMap<Long, Long> indexMap = new TreeMap<Long, Long>();
 
     private volatile boolean inited = false;
 

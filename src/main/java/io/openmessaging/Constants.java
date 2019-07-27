@@ -16,5 +16,5 @@ public class Constants {
 
     public final static int INDEX_RATE = 30;
 
-    public final static int READ_PARALLEL = 2;
+    public final static int READ_PARALLEL = 4;
 }
