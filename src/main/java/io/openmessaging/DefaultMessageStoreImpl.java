@@ -43,13 +43,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 }
             }
         }
-//        try {
-//            semaphore.acquire();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("1" + aMin + " " + aMax + " " + tMin + " " + tMax + " " + System.currentTimeMillis());
         List<Message> result = forkJoinPool.invoke(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax));
-//        semaphore.release();
+        semaphore.release();
         return result;
     }
 
@@ -69,6 +70,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
+        System.out.println("2" + aMin + " " + aMax + " " + tMin + " " + tMax + " " + System.currentTimeMillis());
         return 0L;
         //return (long)queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble();
     }
