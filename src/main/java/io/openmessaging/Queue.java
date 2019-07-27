@@ -4,17 +4,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -33,26 +27,15 @@ public class Queue {
     /**
      * 直接内存
      */
-    private ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
+    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
 
-    private ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
-
-    private ByteBuffer buffer;
-
-    private Future future;
-
-    private ExecutorService flushThread = Executors.newSingleThreadExecutor();
-
-    /**
-     * 消息总数
-     */
     private Long index = 0L;
 
-    private boolean inited = false;
+    private Long curTime = -1L;
 
-    private Long copied = 0L;
+    public NavigableMap<Long, Long> indexMap = new TreeMap<Long, Long>();
 
-    private Long readed = 0L;
+    private volatile boolean inited = false;
 
     public Queue(int num) {
         this.num = num;
@@ -63,84 +46,103 @@ public class Queue {
             e.printStackTrace();
         }
         fileChannel = memoryMappedFile.getChannel();
-        buffer = buffer1;
     }
 
     public void put(Message message) {
         int remain = buffer.remaining();
         if (remain < Constants.MESSAGE_SIZE) {
             buffer.flip();
-            flush();
+            try {
+                fileChannel.write(buffer);
+                buffer.clear();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         buffer.putLong(message.getT());
         buffer.putLong(message.getA());
         buffer.put(message.getBody());
+        if (message.getT() / Constants.INDEX_RATE > curTime) {
+            curTime = message.getT() / Constants.INDEX_RATE;
+            indexMap.put(curTime, index);
+        }
         index++;
     }
 
-    public void flush() {
-        if (future != null) {
+    public void init() {
+        int remain = buffer.remaining();
+        if (remain > 0) {
+            buffer.flip();
             try {
-                future.get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
-        ByteBuffer temp = buffer;
-        future = flushThread.submit(() -> {
-            try {
-                fileChannel.write(temp);
-                temp.clear();
+                fileChannel.write(buffer);
+                buffer.clear();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        });
-        if (buffer == buffer1) {
-            buffer = buffer2;
-        } else {
-            buffer = buffer1;
         }
     }
 
-    public Message copy() {
+    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+        List<Message> result = new ArrayList<>();
+
+        if (indexMap.isEmpty()) {
+            return result;
+        }
+
         if (!inited) {
-            int remain = buffer.remaining();
-            if (remain > 0) {
-                buffer.flip();
-                try {
-                    fileChannel.write(buffer);
-                    buffer.clear();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            synchronized (this) {
+                if (!inited) {
+                    init();
+                    inited = true;
                 }
             }
-            inited = true;
         }
-        if (readed >= index) {
-            try {
-                fileChannel.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
+
+        Long offsetA;
+        Long offsetB;
+
+        if (tMin / Constants.INDEX_RATE > curTime) {
+            return result;
+        } else {
+            offsetA = indexMap.get(indexMap.higherKey(tMin / Constants.INDEX_RATE - 1));
         }
-        if (readed.equals(copied)) {
+        if (tMax / Constants.INDEX_RATE >= curTime) {
+            offsetB = index;
+        } else {
+            offsetB = indexMap.get(indexMap.higherKey(tMax / Constants.INDEX_RATE));
+        }
+
+        while (offsetA < offsetB) {
             try {
-                buffer.clear();
-                fileChannel.read(buffer, copied * Constants.MESSAGE_SIZE);
+                fileChannel.read(buffer, offsetA * Constants.MESSAGE_SIZE);
                 buffer.flip();
-                copied += Constants.MESSAGE_NUM;
+                long offset = Math.min(offsetB - offsetA, Constants.MESSAGE_NUM);
+                for (int i = 0; i < offset; i++) {
+                    long time = buffer.getLong();
+                    if (time < tMin || time > tMax) {
+                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
+                        continue;
+                    }
+                    long value = buffer.getLong();
+                    if (value < aMin || value > aMax) {
+                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 16);
+                        continue;
+                    }
+                    byte[] body = new byte[Constants.MESSAGE_SIZE - 16];
+                    buffer.get(body);
+                    Message message = new Message(value, time, body);
+                    result.add(message);
+
+                }
+                buffer.clear();
+                offsetA += Constants.MESSAGE_NUM;
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        long time = buffer.getLong();
-        long value = buffer.getLong();
-        byte[] body = new byte[Constants.MESSAGE_SIZE - 16];
-        buffer.get(body);
-        readed++;
-        return new Message(value, time, body);
+        buffer.clear();
+        return result;
+
     }
 }
