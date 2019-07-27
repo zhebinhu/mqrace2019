@@ -72,7 +72,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 }
             }
         }
-        System.out.println("1 " + aMin + " " + aMax + " " + tMin + " " + tMax + " " + (System.currentTimeMillis() - startTime));
+        //System.out.println("1 " + aMin + " " + aMax + " " + tMin + " " + tMax + " " + (System.currentTimeMillis() - startTime));
         //        List<Message> result = forkJoinPool.invoke(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax));
         if (!copied) {
             synchronized (this) {
@@ -88,23 +88,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-        //        if (avgJoinPool == null) {
-        //            synchronized (this) {
-        //                if (avgJoinPool == null) {
-        //                    avgJoinPool = new ForkJoinPool(queues.size() * 2);
-        //                }
-        //            }
-        //        }
-        //        try {
-        //            return (long) avgJoinPool.submit(() -> queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble()).get().doubleValue();
-        //        } catch (InterruptedException e) {
-        //            e.printStackTrace();
-        //        } catch (ExecutionException e) {
-        //            e.printStackTrace();
-        //        }
-        //        //System.out.println("2 " + aMin + " " + aMax + " " + tMin + " " + tMax + " " + System.currentTimeMillis());
-        //        return 0L;
-        //return (long)queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble();
         return (int) reader.getMessage(aMin, aMax, tMin, tMax).stream().mapToLong(Message::getA).average().getAsDouble();
     }
 
