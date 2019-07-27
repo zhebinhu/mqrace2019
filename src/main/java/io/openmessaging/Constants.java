@@ -6,7 +6,7 @@ package io.openmessaging;
 public class Constants {
     public final static int MESSAGE_SIZE = 50;
 
-    public final static int MESSAGE_NUM = 1024;
+    public final static int MESSAGE_NUM = 4*1024;
 
     //public final static String URL = "/users/huzhebin/data/";
 
@@ -16,5 +16,5 @@ public class Constants {
 
     public final static int INDEX_RATE = 30;
 
-    public final static int READ_PARALLEL = 2;
+    public final static int READ_PARALLEL = 4;
 }
