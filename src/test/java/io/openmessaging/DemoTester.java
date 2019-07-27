@@ -176,7 +176,7 @@ public class DemoTester {
                     int index2 = Math.min(aIndex2, tIndex2);
 
                     List<Message> msgs = messageStore.getMessage(aIndex1, aIndex2, tIndex1, tIndex2);
-                    //System.out.println(timesCounter.get());
+                    System.out.println(timesCounter.get());
                     //验证消息
                     Iterator<Message> iter = msgs.iterator();
                     while (iter.hasNext()) {

@@ -15,4 +15,6 @@ public class Constants {
     public final static int MAPPED_SIZE = MESSAGE_SIZE * 32 * 1024 * 1024;
 
     public final static int INDEX_RATE = 30;
+
+    public final static int READ_PARALLEL = 2;
 }

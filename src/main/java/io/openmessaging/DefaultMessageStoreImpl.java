@@ -1,7 +1,5 @@
 package io.openmessaging;
 
-import com.sun.tools.javac.util.Pair;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;

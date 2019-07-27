@@ -10,11 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -67,7 +64,7 @@ public class Reader {
         }
         fileChannel = memoryMappedFile.getChannel();
 
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < Constants.READ_PARALLEL; i++) {
             ByteBuffer readBuffer = ByteBuffer.allocateDirect(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
             byteBuffers.add(readBuffer);
         }
