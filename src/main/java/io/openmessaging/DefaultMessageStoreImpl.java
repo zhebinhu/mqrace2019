@@ -74,8 +74,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
         }
         System.out.println("1 " + aMin + " " + aMax + " " + tMin + " " + tMax + " " + (System.currentTimeMillis() - startTime));
         //        List<Message> result = forkJoinPool.invoke(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax));
-        //        semaphore.release();
-        //        return result;
         if (!copied) {
             synchronized (this) {
                 if (!copied) {
@@ -139,6 +137,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         }
         queues.clear();
         System.out.println("copy end at:" + System.currentTimeMillis());
+        System.out.println("indexmap size:" + reader.indexMap.size());
     }
 
     //    public class MergeTask extends RecursiveTask<List<Message>> {
