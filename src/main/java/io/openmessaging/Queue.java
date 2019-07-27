@@ -10,6 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -29,7 +33,15 @@ public class Queue {
     /**
      * 直接内存
      */
-    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
+    private ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
+
+    private ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
+
+    private ByteBuffer buffer;
+
+    private Future future;
+
+    private ExecutorService flushThread = Executors.newSingleThreadExecutor();
 
     /**
      * 消息总数
@@ -51,23 +63,45 @@ public class Queue {
             e.printStackTrace();
         }
         fileChannel = memoryMappedFile.getChannel();
+        buffer = buffer1;
     }
 
     public void put(Message message) {
         int remain = buffer.remaining();
         if (remain < Constants.MESSAGE_SIZE) {
             buffer.flip();
-            try {
-                fileChannel.write(buffer);
-                buffer.clear();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            flush();
         }
         buffer.putLong(message.getT());
         buffer.putLong(message.getA());
         buffer.put(message.getBody());
         index++;
+    }
+
+    public void flush() {
+        if (future != null) {
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+        ByteBuffer temp = buffer;
+        future = flushThread.submit(() -> {
+            try {
+                fileChannel.write(temp);
+                temp.clear();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        if (buffer == buffer1) {
+            buffer = buffer2;
+        } else {
+            buffer = buffer1;
+        }
     }
 
     public Message copy() {

@@ -19,7 +19,7 @@ public class Pair<A, B> {
     }
 
     public boolean equals(Object var1) {
-        return var1 instanceof com.sun.tools.javac.util.Pair && Objects.equals(this.fst, ((com.sun.tools.javac.util.Pair)var1).fst) && Objects.equals(this.snd, ((com.sun.tools.javac.util.Pair)var1).snd);
+        return var1 instanceof Pair && Objects.equals(this.fst, ((Pair)var1).fst) && Objects.equals(this.snd, ((Pair)var1).snd);
     }
 
     public int hashCode() {
@@ -30,7 +30,4 @@ public class Pair<A, B> {
         }
     }
 
-    public static <A, B> com.sun.tools.javac.util.Pair<A, B> of(A var0, B var1) {
-        return new com.sun.tools.javac.util.Pair(var0, var1);
-    }
 }
