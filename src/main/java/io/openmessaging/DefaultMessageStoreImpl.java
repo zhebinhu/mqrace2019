@@ -77,7 +77,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         if (!copied) {
             synchronized (this) {
                 if (!copied) {
-                    copy();
+                    //copy();
                     copied = true;
                 }
             }
