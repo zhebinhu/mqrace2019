@@ -57,27 +57,26 @@ public class Queue {
     }
 
     public void put(Message message) {
-//        int remain = buffer.remaining();
-//        if (remain < Constants.MESSAGE_SIZE) {
-//            buffer.flip();
-//            try {
-//                fileChannel.write(buffer);
-//                buffer.clear();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        buffer.putLong(message.getT());
-//        buffer.putLong(message.getA());
-//        buffer.put(message.getBody());
-        if (message.getT() > curTime) {
-            curTime = message.getT();
+        int remain = buffer.remaining();
+        if (remain < Constants.MESSAGE_SIZE) {
+            buffer.flip();
+            try {
+                fileChannel.write(buffer);
+                buffer.clear();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        buffer.putLong(message.getT());
+        buffer.putLong(message.getA());
+        buffer.put(message.getBody());
+        if (message.getT() / Constants.INDEX_RATE > curTime) {
+            curTime = message.getT() / Constants.INDEX_RATE;
             indexMap.put(curTime, index);
         }
-//        index++;
-        if(count.get()%1000==0) {
+        index++;
+        if (count.get() % 1000 == 0) {
             System.out.println("thread-" + num + " count:" + count.getAndIncrement() + " time:" + System.currentTimeMillis() + " indexMapSize:" + indexMap.size());
-            System.out.println("message:" + message);
         }
 
     }
@@ -130,15 +129,15 @@ public class Queue {
 
         Long offsetA;
         Long offsetB;
-        if (tMin > curTime) {
+        if (tMin / Constants.INDEX_RATE > curTime) {
             return result;
         } else {
-            offsetA = indexMap.get(indexMap.higherKey(tMin - 1));
+            offsetA = indexMap.get(indexMap.higherKey(tMin / Constants.INDEX_RATE - 1));
         }
-        if (tMax >= curTime) {
+        if (tMax / Constants.INDEX_RATE >= curTime) {
             offsetB = index;
         } else {
-            offsetB = indexMap.get(indexMap.higherKey(tMax));
+            offsetB = indexMap.get(indexMap.higherKey(tMax / Constants.INDEX_RATE));
         }
 
         //        while (offsetA < offsetB) {
@@ -184,15 +183,21 @@ public class Queue {
                 buffer.flip();
                 long offset = Math.min(offsetB - offsetA, Constants.MESSAGE_NUM);
                 for (int i = 0; i < offset; i++) {
-                    Message message = new Message(0, 0, null);
-                    message.setT(buffer.getLong());
-                    message.setA(buffer.getLong());
+                    long time = buffer.getLong();
+                    if (time < tMin || time > tMax) {
+                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
+                        continue;
+                    }
+                    long value = buffer.getLong();
+                    if (value < aMin || value > aMax) {
+                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 16);
+                        continue;
+                    }
                     byte[] body = new byte[Constants.MESSAGE_SIZE - 16];
                     buffer.get(body);
-                    message.setBody(body);
-                    if (message.getA() <= aMax && message.getA() >= aMin) {
-                        result.add(message);
-                    }
+                    Message message = new Message(value, time, body);
+                    result.add(message);
+
                 }
                 buffer.clear();
                 offsetA += Constants.MESSAGE_NUM;

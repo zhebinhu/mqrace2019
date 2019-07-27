@@ -13,4 +13,6 @@ public class Constants {
     public final static String URL = "/alidata1/race2019/data/";
 
     public final static int MAPPED_SIZE = MESSAGE_SIZE * 32 * 1024 * 1024;
+
+    public final static int INDEX_RATE = 30;
 }

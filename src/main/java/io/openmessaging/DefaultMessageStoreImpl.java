@@ -20,6 +20,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile ForkJoinPool avgJoinPool;
 
+    private Semaphore semaphore = new Semaphore(2);
+
     @Override
     public void put(Message message) {
         if (!queues.containsKey(Thread.currentThread())) {
@@ -41,7 +43,13 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 }
             }
         }
+//        try {
+//            semaphore.acquire();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
         List<Message> result = forkJoinPool.invoke(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax));
+//        semaphore.release();
         return result;
     }
 
