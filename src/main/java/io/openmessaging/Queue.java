@@ -31,19 +31,16 @@ public class Queue {
      */
     private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
 
-    private List<MappedByteBuffer> mappedByteBuffers = new ArrayList<>();
-
-    private MappedByteBuffer mappedByteBuffer;
-
+    /**
+     * 消息总数
+     */
     private Long index = 0L;
-
-    private Long curTime = -1L;
-
-    private NavigableMap<Long, Long> indexMap = new TreeMap<Long, Long>();
 
     private boolean inited = false;
 
-    private AtomicInteger count = new AtomicInteger(0);
+    private Long copied = 0L;
+
+    private Long readed = 0L;
 
     public Queue(int num) {
         this.num = num;
@@ -70,153 +67,46 @@ public class Queue {
         buffer.putLong(message.getT());
         buffer.putLong(message.getA());
         buffer.put(message.getBody());
-        if (message.getT() / Constants.INDEX_RATE > curTime) {
-            curTime = message.getT() / Constants.INDEX_RATE;
-            indexMap.put(curTime, index);
-        }
         index++;
     }
 
-    public void init() {
-        int remain = buffer.remaining();
-        if (remain > 0) {
-            buffer.flip();
-            try {
-                fileChannel.write(buffer);
-                buffer.clear();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        long mappedIndex = 0;
-        long fileSize = index * Constants.MESSAGE_SIZE;
-        while (mappedIndex < fileSize) {
-            try {
-                MappedByteBuffer mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, mappedIndex, Math.min(fileSize - mappedIndex, Constants.MAPPED_SIZE));
-                mappedByteBuffers.add(mappedByteBuffer);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            mappedIndex += Constants.MAPPED_SIZE;
-        }
-    }
-
-    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
-        List<Message> result = new ArrayList<>();
-        if (indexMap.isEmpty()) {
-            return result;
-        }
-
-        int remain = buffer.remaining();
-        if (remain > 0) {
-            buffer.flip();
-            try {
-                fileChannel.write(buffer);
-                buffer.clear();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        //        if (!inited) {
-        //            init();
-        //            inited = true;
-        //        }
-
-        Long offsetA;
-        Long offsetB;
-        if (tMin / Constants.INDEX_RATE > curTime) {
-            return result;
-        } else {
-            offsetA = indexMap.get(indexMap.higherKey(tMin / Constants.INDEX_RATE - 1));
-        }
-        if (tMax / Constants.INDEX_RATE >= curTime) {
-            offsetB = index;
-        } else {
-            offsetB = indexMap.get(indexMap.higherKey(tMax / Constants.INDEX_RATE));
-        }
-
-        //        while (offsetA < offsetB) {
-        //            mappedByteBuffer = mappedByteBuffers.get((int) (offsetA * Constants.MESSAGE_SIZE / Constants.MAPPED_SIZE));
-        //            int start = (int) ((offsetA * Constants.MESSAGE_SIZE) % Constants.MAPPED_SIZE);
-        //            int len = (int) Math.min((offsetB - offsetA) * Constants.MESSAGE_SIZE, Constants.MAPPED_SIZE - start);
-        //            mappedByteBuffer.position(start);
-        //            while (mappedByteBuffer.position() < start + len) {
-        //                long time = mappedByteBuffer.getLong();
-        //                if (time < tMin || time > tMax) {
-        //                    mappedByteBuffer.position(mappedByteBuffer.position() + Constants.MESSAGE_SIZE - 8);
-        //                    continue;
-        //                }
-        //                long value = mappedByteBuffer.getLong();
-        //                if (value < aMin || value > aMax) {
-        //                    mappedByteBuffer.position(mappedByteBuffer.position() + Constants.MESSAGE_SIZE - 16);
-        //                    continue;
-        //                }
-        //                byte[] body = new byte[Constants.MESSAGE_SIZE - 16];
-        //                mappedByteBuffer.get(body);
-        //                Message message = new Message(value, time, body);
-        //                result.add(message);
-        //            }
-        //            offsetA += len / Constants.MESSAGE_SIZE;
-        //        }
-
-//        try {
-//            mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, offsetA * Constants.MESSAGE_SIZE, (offsetB - offsetA) * Constants.MESSAGE_SIZE);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        while (offsetA < offsetB) {
-//            long time = mappedByteBuffer.getLong();
-//            if (time < tMin || time > tMax) {
-//                mappedByteBuffer.position(mappedByteBuffer.position() + Constants.MESSAGE_SIZE - 8);
-//                offsetA++;
-//                continue;
-//            }
-//            long value = mappedByteBuffer.getLong();
-//            if (value < aMin || value > aMax) {
-//                mappedByteBuffer.position(mappedByteBuffer.position() + Constants.MESSAGE_SIZE - 16);
-//                offsetA++;
-//                continue;
-//            }
-//            byte[] body = new byte[Constants.MESSAGE_SIZE - 16];
-//            mappedByteBuffer.get(body);
-//            Message message = new Message(value, time, body);
-//            result.add(message);
-//            offsetA++;
-//        }
-
-                while (offsetA < offsetB) {
-                    try {
-                        fileChannel.read(buffer, offsetA * Constants.MESSAGE_SIZE);
-                        buffer.flip();
-                        long offset = Math.min(offsetB - offsetA, Constants.MESSAGE_NUM);
-                        for (int i = 0; i < offset; i++) {
-                            long time = buffer.getLong();
-                            if (time < tMin || time > tMax) {
-                                buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
-                                continue;
-                            }
-                            long value = buffer.getLong();
-                            if (value < aMin || value > aMax) {
-                                buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 16);
-                                continue;
-                            }
-                            byte[] body = new byte[Constants.MESSAGE_SIZE - 16];
-                            buffer.get(body);
-                            Message message = new Message(value, time, body);
-                            result.add(message);
-
-                        }
-                        buffer.clear();
-                        offsetA += Constants.MESSAGE_NUM;
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+    public Message copy() {
+        if (!inited) {
+            int remain = buffer.remaining();
+            if (remain > 0) {
+                buffer.flip();
+                try {
+                    fileChannel.write(buffer);
+                    buffer.clear();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+            }
+            inited = true;
+        }
+        if (readed >= index) {
+            try {
+                fileChannel.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+        if (readed.equals(copied)) {
+            try {
                 buffer.clear();
-
-        return result;
-
+                fileChannel.read(buffer, copied * Constants.MESSAGE_SIZE);
+                buffer.flip();
+                copied += Constants.MESSAGE_NUM;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        long time = buffer.getLong();
+        long value = buffer.getLong();
+        byte[] body = new byte[Constants.MESSAGE_SIZE - 16];
+        buffer.get(body);
+        readed++;
+        return new Message(value, time, body);
     }
 }
