@@ -35,22 +35,22 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     @Override
-    public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         if (forkJoinPool == null) {
             synchronized (this) {
                 if (forkJoinPool == null) {
-                    forkJoinPool = new ForkJoinPool(queues.size() * 2);
+                    forkJoinPool = new ForkJoinPool();
                 }
             }
         }
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            semaphore.acquire();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
         System.out.println("1" + aMin + " " + aMax + " " + tMin + " " + tMax + " " + System.currentTimeMillis());
         List<Message> result = forkJoinPool.invoke(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax));
-        semaphore.release();
+//        semaphore.release();
         return result;
     }
 
