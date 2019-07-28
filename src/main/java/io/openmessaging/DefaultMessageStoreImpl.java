@@ -115,26 +115,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     }
 
-    //    private List<Message> merge(List<Message> a, List<Message> b) {
-    //        List<Message> result = new ArrayList<>();
-    //        int i = 0;
-    //        int j = 0;
-    //        while (i < a.size() && j < b.size()) {
-    //            if (a.get(i).getT() <= b.get(j).getT()) {
-    //                result.add(a.get(i++));
-    //            } else {
-    //                result.add(b.get(j++));
-    //            }
-    //        }
-    //        while (i < a.size()) {
-    //            result.add(a.get(i++));
-    //        }
-    //        while (j < b.size()) {
-    //            result.add(b.get(j++));
-    //        }
-    //        return result;
-    //    }
-
     public class MergeTask extends RecursiveTask<List<Message>> {
         private int start;
 
@@ -164,21 +144,25 @@ public class DefaultMessageStoreImpl extends MessageStore {
         }
 
         protected List<Message> compute() {
-            List<Message> result;
-            if (start == end) {
-                return queues.get(start).getMessage(aMin, aMax, tMin, tMax, messagePool);
-            } else {
-                int mid = (start + end) / 2;
-                MergeTask leftTask = new MergeTask(queues, start, mid, aMin, aMax, tMin, tMax, messagePool);
-                MergeTask rightTask = new MergeTask(queues, mid + 1, end, aMin, aMax, tMin, tMax, messagePool);
+            List<Message> result = new ArrayList<>();
+            try {
+                if (start == end) {
+                    return queues.get(start).getMessage(aMin, aMax, tMin, tMax, messagePool);
+                } else {
+                    int mid = (start + end) / 2;
+                    MergeTask leftTask = new MergeTask(queues, start, mid, aMin, aMax, tMin, tMax, messagePool);
+                    MergeTask rightTask = new MergeTask(queues, mid + 1, end, aMin, aMax, tMin, tMax, messagePool);
 
-                leftTask.fork();
-                rightTask.fork();
+                    leftTask.fork();
+                    rightTask.fork();
 
-                List<Message> leftResult = leftTask.join();
-                List<Message> rightResult = rightTask.join();
+                    List<Message> leftResult = leftTask.join();
+                    List<Message> rightResult = rightTask.join();
 
-                result = merge(leftResult, rightResult);
+                    result = merge(leftResult, rightResult);
+                }
+            }catch (Exception e){
+                e.printStackTrace(System.out);
             }
             return result;
         }
