@@ -73,7 +73,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             long starttime = System.currentTimeMillis();
             result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread()))).get();
             long endtime = System.currentTimeMillis();
-            System.out.println("size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -149,7 +149,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
                     result = merge(leftResult, rightResult);
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace(System.out);
             }
             return result;
