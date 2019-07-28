@@ -52,17 +52,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
             synchronized (this) {
                 if (!get) {
                     System.out.println("get:" + System.currentTimeMillis());
-                    for (Queue queue : queues.values()) {
-                        System.out.println("indexmap size:" + queue.indexMap.size());
-                    }
                     get = true;
                 }
             }
         }
         try {
             semaphore.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
         long starttime = System.currentTimeMillis();
         List<List<Message>> messageLists = new ArrayList<>();
@@ -83,6 +80,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
         return (long) queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble();
+
     }
 
     private List<Message> merge(List<Message> a, List<Message> b) {

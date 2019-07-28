@@ -33,7 +33,7 @@ public class Queue {
 
     private Long curTime = -1L;
 
-    public NavigableMap<Long, Long> indexMap = new TreeMap<Long, Long>();
+    private NavigableMap<Long, Long> indexMap = new TreeMap<Long, Long>();
 
     private volatile boolean inited = false;
 
@@ -43,7 +43,7 @@ public class Queue {
         try {
             memoryMappedFile = new RandomAccessFile(Constants.URL + num + ".data", "rw");
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         fileChannel = memoryMappedFile.getChannel();
     }
@@ -56,7 +56,7 @@ public class Queue {
                 fileChannel.write(buffer);
                 buffer.clear();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         }
         buffer.putLong(message.getT());
@@ -77,7 +77,7 @@ public class Queue {
                 fileChannel.write(buffer);
                 buffer.clear();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         }
     }
@@ -138,7 +138,7 @@ public class Queue {
                 offsetA += Constants.MESSAGE_NUM;
 
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         }
         buffer.clear();
