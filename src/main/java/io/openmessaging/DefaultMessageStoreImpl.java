@@ -18,15 +18,19 @@ public class DefaultMessageStoreImpl extends MessageStore {
      */
     private ConcurrentMap<Thread, Queue> queues = new ConcurrentHashMap<>();
 
-    private AtomicInteger num = new AtomicInteger(0);
+    /**
+     * 一个消费线程对应一个消息池
+     */
+    private ConcurrentMap<Thread, MessagePool> messagePools = new ConcurrentHashMap<>();
 
-    private Semaphore semaphore = new Semaphore(2);
+    private AtomicInteger num = new AtomicInteger(0);
 
     private volatile boolean put = false;
 
     private volatile boolean get = false;
 
     private volatile boolean avg = false;
+
     @Override
     public void put(Message message) {
         if (!queues.containsKey(Thread.currentThread())) {
@@ -57,24 +61,25 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 }
             }
         }
-        try {
-            semaphore.acquire();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+        if (!messagePools.containsKey(Thread.currentThread())) {
+            synchronized (this) {
+                if (!messagePools.containsKey(Thread.currentThread())) {
+                    messagePools.put(Thread.currentThread(), new MessagePool());
+                }
+            }
         }
         long starttime = System.currentTimeMillis();
         List<List<Message>> messageLists = new ArrayList<>();
-        for (Queue queue : queues.values()) {
-            messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax));
-        }
         long middletime = System.currentTimeMillis();
-        System.out.println("getMessage cost:" + (middletime - starttime));
+        for (Queue queue : queues.values()) {
+            messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread())));
+        }
         List<Message> result = new ArrayList<>();
         for (List<Message> list : messageLists) {
             result = merge(result, list);
         }
-        semaphore.release();
-        System.out.println("mergeMessage cost:" + (System.currentTimeMillis() - middletime));
+        long endtime = System.currentTimeMillis();
+        System.out.println("getmessage: " + (middletime - starttime) + " merge: " + (endtime - middletime));
         return result;
     }
 
@@ -85,10 +90,19 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 if (!avg) {
                     System.out.println("avg:" + System.currentTimeMillis());
                     avg = true;
+                    messagePools.clear();
                 }
             }
         }
-        return (long) queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble();
+        if (!messagePools.containsKey(Thread.currentThread())) {
+            synchronized (this) {
+                if (!messagePools.containsKey(Thread.currentThread())) {
+                    messagePools.put(Thread.currentThread(), new MessagePool());
+                }
+            }
+        }
+        MessagePool messagePool = messagePools.get(Thread.currentThread());
+        return (long) queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax, messagePool)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble();
 
     }
 

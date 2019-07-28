@@ -82,7 +82,7 @@ public class Queue {
         }
     }
 
-    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
         List<Message> result = new ArrayList<>();
 
         if (indexMap.isEmpty()) {
@@ -128,11 +128,11 @@ public class Queue {
                         buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 16);
                         continue;
                     }
-                    byte[] body = new byte[Constants.MESSAGE_SIZE - 16];
-                    buffer.get(body);
-                    Message message = new Message(value, time, body);
+                    Message message = messagePool.get();
+                    buffer.get(message.getBody());
+                    message.setT(time);
+                    message.setA(value);
                     result.add(message);
-
                 }
                 buffer.clear();
                 offsetA += Constants.MESSAGE_NUM;
@@ -145,4 +145,5 @@ public class Queue {
         return result;
 
     }
+
 }
