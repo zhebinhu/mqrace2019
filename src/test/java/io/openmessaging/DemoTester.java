@@ -27,9 +27,9 @@ public class DemoTester {
         //查询的线程数量
         int checkTsNum = 10;
         // 每次查询消息的最大跨度
-        int maxMsgCheckSize = 500000;
+        int maxMsgCheckSize = 300000;
         // 每次查询求平均的最大跨度
-        int maxValueCheckSize = 500000;
+        int maxValueCheckSize = 300000;
 
         MessageStore messageStore = null;
 
@@ -176,36 +176,36 @@ public class DemoTester {
                     int index2 = Math.min(aIndex2, tIndex2);
 
                     List<Message> msgs = messageStore.getMessage(aIndex1, aIndex2, tIndex1, tIndex2);
-                    System.out.println(timesCounter.get());
+                    //System.out.println(timesCounter.get());
                     //验证消息
-//                    Iterator<Message> iter = msgs.iterator();
-//                    while (iter.hasNext()) {
-//                        if (index1 > index2) {
-//                            checkError();
-//                        }
-//
-//                        Message msg = iter.next();
-//                        if (msg.getA() != msg.getT() || msg.getA() != index1 ||
-//                                ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
-//                            checkError();
-//                        }
-//
-//                        //偶数需要多验证一次
-//                        if ((index1 & 0x1) == 0 && iter.hasNext()) {
-//                            msg = iter.next();
-//                            if (msg.getA() != msg.getT() || msg.getA() != index1
-//                                    || ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
-//                                checkError();
-//                            }
-//                        }
-//
-//                        ++index1;
-//                    }
-//
-//
-//                    if (index1 - 1 != index2) {
-//                        checkError();
-//                    }
+                    Iterator<Message> iter = msgs.iterator();
+                    while (iter.hasNext()) {
+                        if (index1 > index2) {
+                            checkError();
+                        }
+
+                        Message msg = iter.next();
+                        if (msg.getA() != msg.getT() || msg.getA() != index1 ||
+                                ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
+                            checkError();
+                        }
+
+                        //偶数需要多验证一次
+                        if ((index1 & 0x1) == 0 && iter.hasNext()) {
+                            msg = iter.next();
+                            if (msg.getA() != msg.getT() || msg.getA() != index1
+                                    || ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
+                                checkError();
+                            }
+                        }
+
+                        ++index1;
+                    }
+
+
+                    if (index1 - 1 != index2) {
+                        checkError();
+                    }
 
                     numCounter.getAndAdd(msgs.size());
                 } catch (Throwable t) {

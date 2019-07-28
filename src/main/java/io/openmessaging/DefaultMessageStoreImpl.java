@@ -3,9 +3,7 @@ package io.openmessaging;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -30,6 +28,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
     private volatile boolean get = false;
 
     private volatile boolean avg = false;
+
+    private ForkJoinPool forkJoinPool = new ForkJoinPool();
 
     @Override
     public void put(Message message) {
@@ -69,17 +69,29 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
         long starttime = System.currentTimeMillis();
-        List<List<Message>> messageLists = new ArrayList<>();
-        long middletime = System.currentTimeMillis();
-        for (Queue queue : queues.values()) {
-            messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread())));
-        }
         List<Message> result = new ArrayList<>();
-        for (List<Message> list : messageLists) {
-            result = merge(result, list);
+        try {
+            result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread()))).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         }
         long endtime = System.currentTimeMillis();
-        System.out.println("getmessage: " + (middletime - starttime) + " merge: " + (endtime - middletime));
+        System.out.println(" getMessage: " + (endtime - starttime));
+        //        long starttime = System.currentTimeMillis();
+        //        List<List<Message>> messageLists = new ArrayList<>();
+        //        for (Queue queue : queues.values()) {
+        //            messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread())));
+        //        }
+        //        long middletime = System.currentTimeMillis();
+        //        List<Message> result = new ArrayList<>();
+        //        for (List<Message> list : messageLists) {
+        //            result = merge(result, list);
+        //        }
+        //        long endtime = System.currentTimeMillis();
+        //        System.out.println("getmessage: " + (middletime - starttime) + " merge: " + (endtime - middletime));
+        //        return result;
         return result;
     }
 
@@ -106,23 +118,92 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     }
 
-    private List<Message> merge(List<Message> a, List<Message> b) {
-        List<Message> result = new ArrayList<>();
-        int i = 0;
-        int j = 0;
-        while (i < a.size() && j < b.size()) {
-            if (a.get(i).getT() <= b.get(j).getT()) {
-                result.add(a.get(i++));
+    //    private List<Message> merge(List<Message> a, List<Message> b) {
+    //        List<Message> result = new ArrayList<>();
+    //        int i = 0;
+    //        int j = 0;
+    //        while (i < a.size() && j < b.size()) {
+    //            if (a.get(i).getT() <= b.get(j).getT()) {
+    //                result.add(a.get(i++));
+    //            } else {
+    //                result.add(b.get(j++));
+    //            }
+    //        }
+    //        while (i < a.size()) {
+    //            result.add(a.get(i++));
+    //        }
+    //        while (j < b.size()) {
+    //            result.add(b.get(j++));
+    //        }
+    //        return result;
+    //    }
+
+    public class MergeTask extends RecursiveTask<List<Message>> {
+        private int start;
+
+        private int end;
+
+        private List<Queue> queues;
+
+        private long aMin;
+
+        private long aMax;
+
+        private long tMin;
+
+        private long tMax;
+
+        private MessagePool messagePool;
+
+        MergeTask(List<Queue> queues, int start, int end, long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
+            this.queues = queues;
+            this.start = start;
+            this.end = end;
+            this.aMin = aMin;
+            this.aMax = aMax;
+            this.tMin = tMin;
+            this.tMax = tMax;
+            this.messagePool = messagePool;
+        }
+
+        protected List<Message> compute() {
+            List<Message> result;
+            if (start == end) {
+                return queues.get(start).getMessage(aMin, aMax, tMin, tMax, messagePool);
             } else {
+                int mid = (start + end) / 2;
+                MergeTask leftTask = new MergeTask(queues, start, mid, aMin, aMax, tMin, tMax, messagePool);
+                MergeTask rightTask = new MergeTask(queues, mid + 1, end, aMin, aMax, tMin, tMax, messagePool);
+
+                leftTask.fork();
+                rightTask.fork();
+
+                List<Message> leftResult = leftTask.join();
+                List<Message> rightResult = rightTask.join();
+
+                result = merge(leftResult, rightResult);
+            }
+            return result;
+        }
+
+        private List<Message> merge(List<Message> a, List<Message> b) {
+            List<Message> result = new ArrayList<>();
+            int i = 0;
+            int j = 0;
+            while (i < a.size() && j < b.size()) {
+                if (a.get(i).getT() <= b.get(j).getT()) {
+                    result.add(a.get(i++));
+                } else {
+                    result.add(b.get(j++));
+                }
+            }
+            while (i < a.size()) {
+                result.add(a.get(i++));
+            }
+            while (j < b.size()) {
                 result.add(b.get(j++));
             }
+            return result;
         }
-        while (i < a.size()) {
-            result.add(a.get(i++));
-        }
-        while (j < b.size()) {
-            result.add(b.get(j++));
-        }
-        return result;
     }
 }
