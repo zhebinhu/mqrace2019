@@ -29,7 +29,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean avg = false;
 
-    private ForkJoinPool forkJoinPool = new ForkJoinPool();
+    private ForkJoinPool forkJoinPool = new ForkJoinPool(20);
 
     @Override
     public void put(Message message) {
@@ -53,45 +53,42 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
-        if (!get) {
-            synchronized (this) {
-                if (!get) {
-                    System.out.println("get:" + System.currentTimeMillis());
-                    get = true;
-                }
-            }
-        }
-        if (!messagePools.containsKey(Thread.currentThread())) {
-            synchronized (this) {
-                if (!messagePools.containsKey(Thread.currentThread())) {
-                    messagePools.put(Thread.currentThread(), new MessagePool());
-                }
-            }
-        }
-        long starttime = System.currentTimeMillis();
         List<Message> result = new ArrayList<>();
         try {
+            if (!get) {
+                synchronized (this) {
+                    if (!get) {
+                        System.out.println("get:" + System.currentTimeMillis());
+                        get = true;
+                    }
+                }
+            }
+            if (!messagePools.containsKey(Thread.currentThread())) {
+                synchronized (this) {
+                    if (!messagePools.containsKey(Thread.currentThread())) {
+                        messagePools.put(Thread.currentThread(), new MessagePool());
+                    }
+                }
+            }
+            long starttime = System.currentTimeMillis();
             result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread()))).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+            long endtime = System.currentTimeMillis();
+            System.out.println("size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            //        long starttime = System.currentTimeMillis();
+            //        List<List<Message>> messageLists = new ArrayList<>();
+            //        for (Queue queue : queues.values()) {
+            //            messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread())));
+            //        }
+            //        long middletime = System.currentTimeMillis();
+            //        List<Message> result = new ArrayList<>();
+            //        for (List<Message> list : messageLists) {
+            //            result = merge(result, list);
+            //        }
+            //        long endtime = System.currentTimeMillis();
+            //        System.out.println("getmessage: " + (middletime - starttime) + " merge: " + (endtime - middletime));
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
         }
-        long endtime = System.currentTimeMillis();
-        System.out.println(" getMessage: " + (endtime - starttime));
-        //        long starttime = System.currentTimeMillis();
-        //        List<List<Message>> messageLists = new ArrayList<>();
-        //        for (Queue queue : queues.values()) {
-        //            messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread())));
-        //        }
-        //        long middletime = System.currentTimeMillis();
-        //        List<Message> result = new ArrayList<>();
-        //        for (List<Message> list : messageLists) {
-        //            result = merge(result, list);
-        //        }
-        //        long endtime = System.currentTimeMillis();
-        //        System.out.println("getmessage: " + (middletime - starttime) + " merge: " + (endtime - middletime));
-        //        return result;
         return result;
     }
 

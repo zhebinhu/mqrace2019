@@ -43,7 +43,7 @@ public class Queue {
         try {
             memoryMappedFile = new RandomAccessFile(Constants.URL + num + ".data", "rw");
         } catch (FileNotFoundException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace(System.out);
         }
         fileChannel = memoryMappedFile.getChannel();
     }
@@ -56,7 +56,7 @@ public class Queue {
                 fileChannel.write(buffer);
                 buffer.clear();
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace(System.out);
             }
         }
         buffer.putLong(message.getT());
@@ -77,7 +77,7 @@ public class Queue {
                 fileChannel.write(buffer);
                 buffer.clear();
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace(System.out);
             }
         }
     }
@@ -138,7 +138,7 @@ public class Queue {
                 offsetA += Constants.MESSAGE_NUM;
 
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace(System.out);
             }
         }
         buffer.clear();

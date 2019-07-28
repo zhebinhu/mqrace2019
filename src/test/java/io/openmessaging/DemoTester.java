@@ -14,22 +14,22 @@ public class DemoTester {
     public static void main(String args[]) throws Exception {
         //评测相关配置
         //发送阶段的发送数量，也即发送阶段必须要在规定时间内把这些消息发送完毕方可
-        int msgNum  = 2000000;
+        int msgNum  = 12000000;
         //发送阶段的最大持续时间，也即在该时间内，如果消息依然没有发送完毕，则退出评测
         int sendTime = 10 * 60 * 1000;
         //查询阶段的最大持续时间，也即在该时间内，如果消息依然没有消费完毕，则退出评测
         int checkTime = 10 * 60 * 1000;
 
         //正确性检测的次数
-        int checkTimes = 2000;
+        int checkTimes = 10000;
         //发送的线程数量
-        int sendTsNum = 10;
+        int sendTsNum = 12;
         //查询的线程数量
-        int checkTsNum = 10;
+        int checkTsNum = 12;
         // 每次查询消息的最大跨度
-        int maxMsgCheckSize = 300000;
+        int maxMsgCheckSize = 320000;
         // 每次查询求平均的最大跨度
-        int maxValueCheckSize = 300000;
+        int maxValueCheckSize = 320000;
 
         MessageStore messageStore = null;
 
