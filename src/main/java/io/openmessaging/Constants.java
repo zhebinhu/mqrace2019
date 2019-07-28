@@ -14,5 +14,5 @@ public class Constants {
 
     public final static int MAPPED_SIZE = MESSAGE_SIZE * 32 * 1024 * 1024;
 
-    public final static int INDEX_RATE = 512;
+    public final static int INDEX_RATE = 1024;
 }
