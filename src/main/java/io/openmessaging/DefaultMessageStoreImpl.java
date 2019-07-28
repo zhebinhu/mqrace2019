@@ -82,25 +82,29 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-        if (!avg) {
-            synchronized (this) {
-                if (!avg) {
-                    System.out.println("avg:" + System.currentTimeMillis());
-                    avg = true;
-                    messagePools.clear();
+        try {
+            if (!avg) {
+                synchronized (this) {
+                    if (!avg) {
+                        System.out.println("avg:" + System.currentTimeMillis());
+                        avg = true;
+                        messagePools.clear();
+                    }
                 }
             }
-        }
-        if (!messagePools.containsKey(Thread.currentThread())) {
-            synchronized (this) {
-                if (!messagePools.containsKey(Thread.currentThread())) {
-                    messagePools.put(Thread.currentThread(), new MessagePool());
+            if (!messagePools.containsKey(Thread.currentThread())) {
+                synchronized (this) {
+                    if (!messagePools.containsKey(Thread.currentThread())) {
+                        messagePools.put(Thread.currentThread(), new MessagePool());
+                    }
                 }
             }
+            MessagePool messagePool = messagePools.get(Thread.currentThread());
+            return (long) queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax, messagePool)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble();
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
         }
-        MessagePool messagePool = messagePools.get(Thread.currentThread());
-        return (long) queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax, messagePool)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble();
-
+        return 0L;
     }
 
     public class MergeTask extends RecursiveTask<List<Message>> {

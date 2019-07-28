@@ -114,6 +114,7 @@ public class Queue {
 
         while (offsetA < offsetB) {
             try {
+                buffer.clear();
                 fileChannel.read(buffer, offsetA * Constants.MESSAGE_SIZE);
                 buffer.flip();
                 long offset = Math.min(offsetB - offsetA, Constants.MESSAGE_NUM);
@@ -134,14 +135,12 @@ public class Queue {
                     message.setA(value);
                     result.add(message);
                 }
-                buffer.clear();
                 offsetA += Constants.MESSAGE_NUM;
 
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
         }
-        buffer.clear();
         return result;
 
     }
