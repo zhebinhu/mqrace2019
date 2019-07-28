@@ -39,6 +39,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             synchronized (this) {
                 if (!put) {
                     System.out.println("put:" + System.currentTimeMillis());
+                    put = true;
                 }
             }
         }
@@ -54,6 +55,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     for (Queue queue : queues.values()) {
                         System.out.println("indexmap size:" + queue.indexMap.size());
                     }
+                    get = true;
                 }
             }
         }
