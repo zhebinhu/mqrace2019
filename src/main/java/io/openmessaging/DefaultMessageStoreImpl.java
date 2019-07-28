@@ -71,7 +71,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 }
             }
             long starttime = System.currentTimeMillis();
-            result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread()))).get();
+            //result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread()))).get();
+            List<List<Message>> messageLists = new ArrayList<>();
+            for (Queue queue : queues.values()) {
+                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread())));
+            }
+            for (List<Message> messages : messageLists) {
+                result = merge(result, messages);
+            }
             long endtime = System.currentTimeMillis();
             System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
@@ -105,6 +112,26 @@ public class DefaultMessageStoreImpl extends MessageStore {
             e.printStackTrace(System.out);
         }
         return 0L;
+    }
+
+    private List<Message> merge(List<Message> a, List<Message> b) {
+        List<Message> result = new ArrayList<>();
+        int i = 0;
+        int j = 0;
+        while (i < a.size() && j < b.size()) {
+            if (a.get(i).getT() <= b.get(j).getT()) {
+                result.add(a.get(i++));
+            } else {
+                result.add(b.get(j++));
+            }
+        }
+        while (i < a.size()) {
+            result.add(a.get(i++));
+        }
+        while (j < b.size()) {
+            result.add(b.get(j++));
+        }
+        return result;
     }
 
     public class MergeTask extends RecursiveTask<List<Message>> {

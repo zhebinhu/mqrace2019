@@ -108,7 +108,7 @@ public class Queue {
         }
         if (tMax / Constants.INDEX_RATE >= curTime) {
             offsetB = index;
-            System.out.println(offsetB);
+            System.out.println("at the end: "+offsetB);
         } else {
             offsetB = indexMap.get(indexMap.higherKey(tMax / Constants.INDEX_RATE));
         }
