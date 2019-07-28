@@ -26,6 +26,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean get = false;
 
+    private volatile boolean avg = false;
     @Override
     public void put(Message message) {
         if (!queues.containsKey(Thread.currentThread())) {
@@ -79,6 +80,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
+        if (!avg) {
+            synchronized (this) {
+                if (!avg) {
+                    System.out.println("avg:" + System.currentTimeMillis());
+                    avg = true;
+                }
+            }
+        }
         return (long) queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble();
 
     }
