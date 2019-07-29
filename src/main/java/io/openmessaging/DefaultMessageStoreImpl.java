@@ -29,7 +29,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean avg = false;
 
-    private ForkJoinPool forkJoinPool = new ForkJoinPool(20);
+    private ForkJoinPool forkJoinPool = new ForkJoinPool(10);
 
     @Override
     public void put(Message message) {
@@ -71,14 +71,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 }
             }
             long starttime = System.currentTimeMillis();
-            result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread()))).get();
-            //List<List<Message>> messageLists = new ArrayList<>();
-            //for (Queue queue : queues.values()) {
-            //    messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread())));
-            //}
-            //for (List<Message> messages : messageLists) {
-            //    result = merge(result, messages);
-            //}
+            //result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread()))).get();
+            List<List<Message>> messageLists = new ArrayList<>();
+            for (Queue queue : queues.values()) {
+                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread())));
+            }
+            for (List<Message> messages : messageLists) {
+                result = merge(result, messages);
+            }
             long endtime = System.currentTimeMillis();
             System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
