@@ -3,6 +3,7 @@ package io.openmessaging;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.OptionalDouble;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,7 +30,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean avg = false;
 
-    private ForkJoinPool forkJoinPool = new ForkJoinPool(10);
+    private ForkJoinPool forkJoinPool = new ForkJoinPool(20);
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
@@ -69,14 +70,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 messagePoolThreadLocal.set(new MessagePool());
             }
             long starttime = System.currentTimeMillis();
-            //result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread()))).get();
-            List<List<Message>> messageLists = new ArrayList<>();
-            for (Queue queue : queues.values()) {
-                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
-            }
-            for (List<Message> messages : messageLists) {
-                result = merge(result, messages);
-            }
+            result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
+//            List<List<Message>> messageLists = new ArrayList<>();
+//            for (Queue queue : queues.values()) {
+//                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
+//            }
+//            for (List<Message> messages : messageLists) {
+//                result = merge(result, messages);
+//            }
             long endtime = System.currentTimeMillis();
             System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
@@ -108,7 +109,13 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 messagePoolThreadLocal.set(new MessagePool());
             }
             MessagePool messagePool = messagePoolThreadLocal.get();
-            return (long) queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax, messagePool)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble();
+            OptionalDouble result = queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax, messagePool)).flatMap(Collection::stream).mapToLong(Message::getA).average();
+            if(!result.isPresent()){
+                return 0L;
+            }
+            else {
+                return (long)result.getAsDouble();
+            }
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
