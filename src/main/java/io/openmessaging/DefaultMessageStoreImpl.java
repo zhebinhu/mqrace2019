@@ -73,14 +73,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 System.out.println("getMessage thread:"+threadSet.size());
             }
             long starttime = System.currentTimeMillis();
-            //result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
-            List<List<Message>> messageLists = new ArrayList<>();
-            for (Queue queue : queues.values()) {
-                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
-            }
-            for (List<Message> messages : messageLists) {
-                result = merge(result, messages);
-            }
+            result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
+//            List<List<Message>> messageLists = new ArrayList<>();
+//            for (Queue queue : queues.values()) {
+//                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
+//            }
+//            for (List<Message> messages : messageLists) {
+//                result = merge(result, messages);
+//            }
             long endtime = System.currentTimeMillis();
             System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
