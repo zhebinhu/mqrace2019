@@ -25,7 +25,7 @@ public class DemoTester {
         //发送的线程数量
         int sendTsNum = 12;
         //查询的线程数量
-        int checkTsNum = 12;
+        int checkTsNum = 4;
         // 每次查询消息的最大跨度
         int maxMsgCheckSize = 1000;
         // 每次查询求平均的最大跨度
@@ -75,6 +75,23 @@ public class DemoTester {
         }
         long msgCheckEnd = System.currentTimeMillis();
         System.out.printf("Message Check: %d ms Num:%d\n", msgCheckEnd - msgCheckStart, msgCheckNum.get());
+
+        //Step3: 查询聚合消息
+        long msgCheckStart2 = System.currentTimeMillis();
+        AtomicLong msgCheckTimes2 = new AtomicLong(0);
+        AtomicLong msgCheckNum2 = new AtomicLong(0);
+        Thread[] msgChecks2 = new Thread[checkTsNum*2];
+        for (int i = 0; i < checkTsNum; i++) {
+            msgChecks2[i] = new Thread(new MessageChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxMsgCheckSize, msgCheckTimes2, msgCheckNum2));
+        }
+        for (int i = 0; i < checkTsNum; i++) {
+            msgChecks2[i].start();
+        }
+        for (int i = 0; i < checkTsNum; i++) {
+            msgChecks2[i].join();
+        }
+        long msgCheckEnd2 = System.currentTimeMillis();
+        System.out.printf("Message Check2: %d ms Num:%d\n", msgCheckEnd2 - msgCheckStart2, msgCheckNum2.get());
 
         //Step3: 查询聚合结果
         long checkStart = System.currentTimeMillis();
