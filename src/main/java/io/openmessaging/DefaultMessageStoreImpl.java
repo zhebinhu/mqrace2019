@@ -1,9 +1,6 @@
 package io.openmessaging;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.OptionalDouble;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,6 +30,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
     private ForkJoinPool forkJoinPool = new ForkJoinPool(20);
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
+
+    private Map<Thread,Object> threadSet = new ConcurrentHashMap<>();
 
     @Override
     public void put(Message message) {
@@ -69,15 +68,19 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (messagePoolThreadLocal.get() == null) {
                 messagePoolThreadLocal.set(new MessagePool());
             }
+            if(!threadSet.containsKey(Thread.currentThread())){
+                threadSet.put(Thread.currentThread()," ");
+                System.out.println("getMessage thread:"+threadSet.size());
+            }
             long starttime = System.currentTimeMillis();
-            result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
-//            List<List<Message>> messageLists = new ArrayList<>();
-//            for (Queue queue : queues.values()) {
-//                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
-//            }
-//            for (List<Message> messages : messageLists) {
-//                result = merge(result, messages);
-//            }
+            //result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
+            List<List<Message>> messageLists = new ArrayList<>();
+            for (Queue queue : queues.values()) {
+                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
+            }
+            for (List<Message> messages : messageLists) {
+                result = merge(result, messages);
+            }
             long endtime = System.currentTimeMillis();
             System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
