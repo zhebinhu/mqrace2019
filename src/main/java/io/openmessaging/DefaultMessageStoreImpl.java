@@ -19,7 +19,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     /**
      * 一个消费线程对应一个消息池
      */
-    private ConcurrentMap<Thread, MessagePool> messagePools = new ConcurrentHashMap<>();
+    //private ConcurrentMap<Thread, MessagePool> messagePools = new ConcurrentHashMap<>();
 
     private AtomicInteger num = new AtomicInteger(0);
 
@@ -30,6 +30,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
     private volatile boolean avg = false;
 
     private ForkJoinPool forkJoinPool = new ForkJoinPool(10);
+
+    private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
     @Override
     public void put(Message message) {
@@ -63,18 +65,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-            if (!messagePools.containsKey(Thread.currentThread())) {
-                synchronized (this) {
-                    if (!messagePools.containsKey(Thread.currentThread())) {
-                        messagePools.put(Thread.currentThread(), new MessagePool());
-                    }
-                }
+            if (messagePoolThreadLocal.get() == null) {
+                messagePoolThreadLocal.set(new MessagePool());
             }
             long starttime = System.currentTimeMillis();
             //result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread()))).get();
             List<List<Message>> messageLists = new ArrayList<>();
             for (Queue queue : queues.values()) {
-                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePools.get(Thread.currentThread())));
+                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
             }
             for (List<Message> messages : messageLists) {
                 result = merge(result, messages);
@@ -95,18 +93,21 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     if (!avg) {
                         System.out.println("avg:" + System.currentTimeMillis());
                         avg = true;
-                        messagePools.clear();
+                        //messagePools.clear();
                     }
                 }
             }
-            if (!messagePools.containsKey(Thread.currentThread())) {
-                synchronized (this) {
-                    if (!messagePools.containsKey(Thread.currentThread())) {
-                        messagePools.put(Thread.currentThread(), new MessagePool());
-                    }
-                }
+//            if (!messagePools.containsKey(Thread.currentThread())) {
+//                synchronized (this) {
+//                    if (!messagePools.containsKey(Thread.currentThread())) {
+//                        messagePools.put(Thread.currentThread(), new MessagePool());
+//                    }
+//                }
+//            }
+            if (messagePoolThreadLocal.get() == null) {
+                messagePoolThreadLocal.set(new MessagePool());
             }
-            MessagePool messagePool = messagePools.get(Thread.currentThread());
+            MessagePool messagePool = messagePoolThreadLocal.get();
             return (long) queues.values().stream().parallel().map(queue -> queue.getMessage(aMin, aMax, tMin, tMax, messagePool)).flatMap(Collection::stream).mapToLong(Message::getA).average().getAsDouble();
         } catch (Exception e) {
             e.printStackTrace(System.out);
