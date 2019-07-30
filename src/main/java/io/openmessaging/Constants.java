@@ -8,12 +8,12 @@ public class Constants {
     public final static int MESSAGE_SIZE = 16;
 
 
-    public final static int MESSAGE_NUM = 2*1024*1024;
+    public final static int MESSAGE_NUM = 2*1024;
 
     // data 的大小
     public final static int DATA_SIZE = 34;
 
-    public final static int DATA_NUM = 2*1024*1024;
+    public final static int DATA_NUM = 2*1024;
 
     //public final static String URL = "/users/huzhebin/data/";
 
