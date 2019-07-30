@@ -28,9 +28,9 @@ public class DataReader {
     /**
      * 双缓冲异步
      */
-    private ByteBuffer buffer1 = ByteBuffer.allocate(Constants.DATA_SIZE * Constants.DATA_NUM);
+    private ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
 
-    private ByteBuffer buffer2 = ByteBuffer.allocate(Constants.DATA_SIZE * Constants.DATA_NUM);
+    private ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
 
     private ByteBuffer buffer;
 
