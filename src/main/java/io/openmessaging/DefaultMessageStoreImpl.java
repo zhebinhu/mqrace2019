@@ -68,11 +68,11 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (messagePoolThreadLocal.get() == null) {
                 messagePoolThreadLocal.set(new MessagePool());
             }
-            if(!threadSet.containsKey(Thread.currentThread())){
-                threadSet.put(Thread.currentThread()," ");
-                System.out.println("getMessage thread:"+threadSet.size());
-            }
-            long starttime = System.currentTimeMillis();
+//            if(!threadSet.containsKey(Thread.currentThread())){
+//                threadSet.put(Thread.currentThread()," ");
+//                System.out.println("getMessage thread:"+threadSet.size());
+//            }
+            //long starttime = System.currentTimeMillis();
             result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
 //            List<List<Message>> messageLists = new ArrayList<>();
 //            for (Queue queue : queues.values()) {
@@ -81,8 +81,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
 //            for (List<Message> messages : messageLists) {
 //                result = merge(result, messages);
 //            }
-            long endtime = System.currentTimeMillis();
-            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            //long endtime = System.currentTimeMillis();
+            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
