@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -29,23 +31,44 @@ public class Queue {
      */
     private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
 
-    private Long index = 0L;
+    /**
+     * 消息总数
+     */
+    private long messageNum = 0L;
 
-    private Long curTime = -1L;
+    /**
+     * 最大时间
+     */
+    private long maxTime = -1L;
+
+    /**
+     * 缓存中最大消息
+     */
+    private long bufferMaxIndex = -1L;
+
+    /**
+     * 缓存中最小消息
+     */
+    private long bufferMinIndex = -1L;
 
     private NavigableMap<Long, Long> indexMap = new TreeMap<Long, Long>();
 
     private volatile boolean inited = false;
 
+    private DataReader dataReader;
+
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+
     public Queue(int num) {
         this.num = num;
         RandomAccessFile memoryMappedFile = null;
         try {
-            memoryMappedFile = new RandomAccessFile(Constants.URL + num + ".data", "rw");
+            memoryMappedFile = new RandomAccessFile(Constants.URL + num + ".msg", "rw");
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }
         fileChannel = memoryMappedFile.getChannel();
+        dataReader = new DataReader(num);
     }
 
     public void put(Message message) {
@@ -59,14 +82,16 @@ public class Queue {
                 e.printStackTrace(System.out);
             }
         }
+
         buffer.putLong(message.getT());
         buffer.putLong(message.getA());
-        buffer.put(message.getBody());
-        if (message.getT() / Constants.INDEX_RATE > curTime) {
-            curTime = message.getT() / Constants.INDEX_RATE;
-            indexMap.put(curTime, index);
+        dataReader.put(message);
+
+        if (message.getT() / Constants.INDEX_RATE > maxTime) {
+            maxTime = message.getT() / Constants.INDEX_RATE;
+            indexMap.put(maxTime, messageNum);
         }
-        index++;
+        messageNum++;
     }
 
     public void init() {
@@ -101,14 +126,13 @@ public class Queue {
         Long offsetA;
         Long offsetB;
 
-        if (tMin / Constants.INDEX_RATE > curTime) {
+        if (tMin / Constants.INDEX_RATE > maxTime) {
             return result;
         } else {
             offsetA = indexMap.get(indexMap.higherKey(tMin / Constants.INDEX_RATE - 1));
         }
-        if (tMax / Constants.INDEX_RATE >= curTime) {
-            offsetB = index;
-            //System.out.println("at the end: "+offsetB);
+        if (tMax / Constants.INDEX_RATE >= maxTime) {
+            offsetB = messageNum;
         } else {
             offsetB = indexMap.get(indexMap.higherKey(tMax / Constants.INDEX_RATE));
         }
@@ -127,16 +151,15 @@ public class Queue {
                     }
                     long value = buffer.getLong();
                     if (value < aMin || value > aMax) {
-                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 16);
                         continue;
                     }
                     Message message = messagePool.get();
-                    buffer.get(message.getBody());
+                    dataReader.getData(offsetA + i, message);
                     message.setT(time);
                     message.setA(value);
                     result.add(message);
                 }
-                offsetA += Constants.MESSAGE_NUM;
+                offsetA += offset;
 
             } catch (IOException e) {
                 e.printStackTrace(System.out);
@@ -144,6 +167,57 @@ public class Queue {
         }
         return result;
 
+    }
+
+    public synchronized List<MiniMsg> getMiniMsg(long aMin, long aMax, long tMin, long tMax, MiniMsgPool miniMsgPool){
+        List<MiniMsg> result = new ArrayList<>();
+
+        if (indexMap.isEmpty()) {
+            return result;
+        }
+
+        Long offsetA;
+        Long offsetB;
+
+        if (tMin / Constants.INDEX_RATE > maxTime) {
+            return result;
+        } else {
+            offsetA = indexMap.get(indexMap.higherKey(tMin / Constants.INDEX_RATE - 1));
+        }
+        if (tMax / Constants.INDEX_RATE >= maxTime) {
+            offsetB = messageNum;
+        } else {
+            offsetB = indexMap.get(indexMap.higherKey(tMax / Constants.INDEX_RATE));
+        }
+
+        while (offsetA < offsetB) {
+            try {
+                buffer.clear();
+                fileChannel.read(buffer, offsetA * Constants.MESSAGE_SIZE);
+                buffer.flip();
+                long offset = Math.min(offsetB - offsetA, Constants.MESSAGE_NUM);
+                for (int i = 0; i < offset; i++) {
+                    long time = buffer.getLong();
+                    if (time < tMin || time > tMax) {
+                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
+                        continue;
+                    }
+                    long value = buffer.getLong();
+                    if (value < aMin || value > aMax) {
+                        continue;
+                    }
+                    MiniMsg miniMsg = miniMsgPool.get();
+                    miniMsg.setT(time);
+                    miniMsg.setA(value);
+                    result.add(miniMsg);
+                }
+                offsetA += offset;
+
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+        }
+        return result;
     }
 
 }
