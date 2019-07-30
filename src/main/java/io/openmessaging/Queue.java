@@ -176,6 +176,15 @@ public class Queue {
             return result;
         }
 
+        if (!inited) {
+            synchronized (this) {
+                if (!inited) {
+                    init();
+                    inited = true;
+                }
+            }
+        }
+
         Long offsetA;
         Long offsetB;
 
