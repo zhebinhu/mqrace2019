@@ -27,7 +27,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean avg = false;
 
-    private ForkJoinPool forkJoinPool = new ForkJoinPool(20);
+    private ForkJoinPool forkJoinPool = new ForkJoinPool();
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
@@ -52,6 +52,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 }
             }
         }
+
         queues.get(Thread.currentThread()).put(message);
     }
 
@@ -70,7 +71,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (messagePoolThreadLocal.get() == null) {
                 messagePoolThreadLocal.set(new MessagePool());
             }
-            long starttime = System.currentTimeMillis();
+            //long starttime = System.currentTimeMillis();
             result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
 //            List<List<Message>> messageLists = new ArrayList<>();
 //            for (Queue queue : queues.values()) {
@@ -79,8 +80,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
 //            for (List<Message> messages : messageLists) {
 //                result = merge(result, messages);
 //            }
-            long endtime = System.currentTimeMillis();
-            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            //long endtime = System.currentTimeMillis();
+            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }

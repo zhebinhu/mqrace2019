@@ -169,7 +169,7 @@ public class Queue {
 
     }
 
-    public synchronized List<MiniMsg> getMiniMsg(long aMin, long aMax, long tMin, long tMax, MiniMsgPool miniMsgPool){
+    public synchronized List<MiniMsg> getMiniMsg(long aMin, long aMax, long tMin, long tMax, MiniMsgPool miniMsgPool) {
         List<MiniMsg> result = new ArrayList<>();
 
         if (indexMap.isEmpty()) {

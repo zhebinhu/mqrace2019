@@ -134,7 +134,7 @@ public class DataReader {
                 bufferMinIndex = index;
                 bufferMaxIndex = Math.min(index + Constants.DATA_NUM, messageNum);
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.out);
             }
             buffer.flip();
         }
