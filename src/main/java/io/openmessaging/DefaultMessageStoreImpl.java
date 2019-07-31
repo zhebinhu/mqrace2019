@@ -22,7 +22,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean avg = false;
 
-    private ForkJoinPool forkJoinPool = new ForkJoinPool(20);
+    private ForkJoinPool forkJoinPool1 = new ForkJoinPool(12);
+    private ForkJoinPool forkJoinPool2 = new ForkJoinPool(24);
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
@@ -63,7 +64,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 messagePoolThreadLocal.set(new MessagePool());
             }
             //long starttime = System.currentTimeMillis();
-            result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
+            result = forkJoinPool1.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
             //            List<List<Message>> messageLists = new ArrayList<>();
             //            for (Queue queue : queues.values()) {
             //                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
@@ -91,9 +92,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 }
             }
             long starttime = System.currentTimeMillis();
-            Avg result = forkJoinPool.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
+            Avg result = forkJoinPool2.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
             long endtime = System.currentTimeMillis();
-            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
+            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " count:" + result.getCount() + " getAvgValue: " + (endtime - starttime));
             if (result.getCount() == 0) {
                 return 0L;
             } else {

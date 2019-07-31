@@ -26,13 +26,9 @@ public class DataReader {
     private FileChannel fileChannel;
 
     /**
-     * 双缓冲异步
+     * 堆外内存
      */
-    private ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
-
-    private ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
-
-    private ByteBuffer buffer;
+    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
 
     /**
      * 消息总数
@@ -67,35 +63,18 @@ public class DataReader {
             e.printStackTrace(System.out);
         }
         fileChannel = memoryMappedFile.getChannel();
-        buffer = buffer1;
     }
 
     public void put(Message message) {
         int remain = buffer.remaining();
         if (remain < Constants.DATA_SIZE) {
-            if (putFuture != null) {
-                try {
-                    putFuture.get();
-                } catch (Exception e) {
-                    e.printStackTrace(System.out);
-                }
+            buffer.flip();
+            try {
+                fileChannel.write(buffer);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-            ByteBuffer tmp = buffer;
-            putFuture = executorService.submit(() -> {
-                try {
-                    tmp.flip();
-                    fileChannel.write(tmp);
-                    tmp.clear();
-                } catch (IOException e) {
-                    e.printStackTrace(System.out);
-                }
-            });
-            if (buffer == buffer1) {
-                buffer = buffer2;
-            } else {
-                buffer = buffer1;
-            }
+            buffer.clear();
         }
         buffer.put(message.getBody());
         messageNum++;
