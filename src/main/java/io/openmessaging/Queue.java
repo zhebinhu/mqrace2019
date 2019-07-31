@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,11 +48,13 @@ public class Queue {
      */
     private long bufferMinIndex = -1L;
 
-    private NavigableMap<Long, Long> indexMap = new TreeMap<Long, Long>();
+    private List<Index> indexList = new ArrayList<>();
 
     private volatile boolean inited = false;
 
     private DataReader dataReader;
+
+    private Index index = new Index(0, 0);
 
     public Queue(int num) {
         this.num = num;
@@ -87,7 +86,7 @@ public class Queue {
 
         if (message.getT() / Constants.INDEX_RATE > maxTime) {
             maxTime = message.getT() / Constants.INDEX_RATE;
-            indexMap.put(maxTime, messageNum);
+            indexList.add(new Index(maxTime, messageNum));
         }
         messageNum++;
     }
@@ -108,7 +107,7 @@ public class Queue {
     public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
         List<Message> result = new ArrayList<>();
 
-        if (indexMap.isEmpty()) {
+        if (indexList.isEmpty()) {
             return result;
         }
 
@@ -121,18 +120,30 @@ public class Queue {
             }
         }
 
-        Long offsetA;
-        Long offsetB;
+        long offsetA;
+        long offsetB;
 
         if (tMin / Constants.INDEX_RATE > maxTime) {
             return result;
         } else {
-            offsetA = indexMap.get(indexMap.higherKey(tMin / Constants.INDEX_RATE - 1));
+            index.setTime(tMin / Constants.INDEX_RATE);
+            int i = Collections.binarySearch(indexList, index);
+            if (i >= 0) {
+                offsetA = indexList.get(i).getOffset();
+            } else {
+                offsetA = indexList.get(Math.max(0, -(i + 2))).getOffset();
+            }
         }
         if (tMax / Constants.INDEX_RATE >= maxTime) {
             offsetB = messageNum;
         } else {
-            offsetB = indexMap.get(indexMap.higherKey(tMax / Constants.INDEX_RATE));
+            index.setTime(tMax / Constants.INDEX_RATE + 1);
+            int i = Collections.binarySearch(indexList, index);
+            if (i >= 0) {
+                offsetB = indexList.get(i).getOffset();
+            } else {
+                offsetB = indexList.get(Math.min(indexList.size() - 1, -(i + 1))).getOffset();
+            }
         }
 
         while (offsetA < offsetB) {
@@ -170,7 +181,7 @@ public class Queue {
     public synchronized Avg getAvg(long aMin, long aMax, long tMin, long tMax) {
         Avg result = new Avg();
 
-        if (indexMap.isEmpty()) {
+        if (indexList.isEmpty()) {
             result.setTotal(0);
             result.setCount(0);
             return result;
@@ -185,18 +196,30 @@ public class Queue {
             }
         }
 
-        Long offsetA;
-        Long offsetB;
+        long offsetA;
+        long offsetB;
 
         if (tMin / Constants.INDEX_RATE > maxTime) {
             return result;
         } else {
-            offsetA = indexMap.get(indexMap.higherKey(tMin / Constants.INDEX_RATE - 1));
+            index.setTime(tMin / Constants.INDEX_RATE);
+            int i = Collections.binarySearch(indexList, index);
+            if (i >= 0) {
+                offsetA = indexList.get(i).getOffset();
+            } else {
+                offsetA = indexList.get(Math.max(0, -(i + 2))).getOffset();
+            }
         }
         if (tMax / Constants.INDEX_RATE >= maxTime) {
             offsetB = messageNum;
         } else {
-            offsetB = indexMap.get(indexMap.higherKey(tMax / Constants.INDEX_RATE));
+            index.setTime(tMax / Constants.INDEX_RATE + 1);
+            int i = Collections.binarySearch(indexList, index);
+            if (i >= 0) {
+                offsetB = indexList.get(i).getOffset();
+            } else {
+                offsetB = indexList.get(Math.min(indexList.size() - 1, -(i + 1))).getOffset();
+            }
         }
 
         while (offsetA < offsetB) {
@@ -208,15 +231,15 @@ public class Queue {
                 for (int i = 0; i < offset; i++) {
                     long time = buffer.getLong();
                     if (time < tMin || time > tMax) {
-                        buffer.position(buffer.position()+Constants.MESSAGE_SIZE-8);
+                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
                         continue;
                     }
                     long value = buffer.getLong();
                     if (value < aMin || value > aMax) {
                         continue;
                     }
-                    result.setCount(result.getCount()+1);
-                    result.setTotal(result.getTotal()+value);
+                    result.setCount(result.getCount() + 1);
+                    result.setTotal(result.getTotal() + value);
                 }
                 offsetA += offset;
 

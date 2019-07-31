@@ -18,5 +18,5 @@ public class Constants {
 
     public final static String URL = "/alidata1/race2019/data/";
 
-    public final static int INDEX_RATE = 512;
+    public final static int INDEX_RATE = 256;
 }
