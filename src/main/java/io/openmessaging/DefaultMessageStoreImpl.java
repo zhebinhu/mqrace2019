@@ -22,11 +22,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean avg = false;
 
-    private ForkJoinPool forkJoinPool = new ForkJoinPool();
+    private ForkJoinPool forkJoinPool = new ForkJoinPool(20);
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
-
-    //private Map<Thread,Object> threadSet = new ConcurrentHashMap<>();
 
     @Override
     public void put(Message message) {
@@ -89,17 +87,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     if (!avg) {
                         System.out.println("avg:" + System.currentTimeMillis());
                         avg = true;
-                        //messagePools.clear();
                     }
                 }
             }
-            //            if (!messagePools.containsKey(Thread.currentThread())) {
-            //                synchronized (this) {
-            //                    if (!messagePools.containsKey(Thread.currentThread())) {
-            //                        messagePools.put(Thread.currentThread(), new MessagePool());
-            //                    }
-            //                }
-            //            }
             Avg result = forkJoinPool.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
             if (result.getCount() == 0) {
                 return 0L;

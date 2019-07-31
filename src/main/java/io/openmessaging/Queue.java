@@ -57,8 +57,6 @@ public class Queue {
 
     private DataReader dataReader;
 
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
-
     public Queue(int num) {
         this.num = num;
         RandomAccessFile memoryMappedFile = null;
