@@ -169,10 +169,12 @@ public class Queue {
 
     }
 
-    public synchronized List<MiniMsg> getMiniMsg(long aMin, long aMax, long tMin, long tMax, MiniMsgPool miniMsgPool) {
-        List<MiniMsg> result = new ArrayList<>();
+    public synchronized Avg getAvg(long aMin, long aMax, long tMin, long tMax) {
+        Avg result = new Avg();
 
         if (indexMap.isEmpty()) {
+            result.setTotal(0);
+            result.setCount(0);
             return result;
         }
 
@@ -208,17 +210,15 @@ public class Queue {
                 for (int i = 0; i < offset; i++) {
                     long time = buffer.getLong();
                     if (time < tMin || time > tMax) {
-                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
+                        buffer.position(buffer.position()+Constants.MESSAGE_SIZE-8);
                         continue;
                     }
                     long value = buffer.getLong();
                     if (value < aMin || value > aMax) {
                         continue;
                     }
-                    MiniMsg miniMsg = miniMsgPool.get();
-                    miniMsg.setT(time);
-                    miniMsg.setA(value);
-                    result.add(miniMsg);
+                    result.setCount(result.getCount()+1);
+                    result.setTotal(result.getTotal()+value);
                 }
                 offsetA += offset;
 

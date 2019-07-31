@@ -14,11 +14,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
      */
     private ConcurrentMap<Thread, Queue> queues = new ConcurrentHashMap<>();
 
-    /**
-     * 一个消费线程对应一个消息池
-     */
-    //private ConcurrentMap<Thread, MessagePool> messagePools = new ConcurrentHashMap<>();
-
     private AtomicInteger num = new AtomicInteger(0);
 
     private volatile boolean put = false;
@@ -30,8 +25,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
     private ForkJoinPool forkJoinPool = new ForkJoinPool();
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
-
-    private ThreadLocal<MiniMsgPool> miniMsgPoolThreadLocal = new ThreadLocal<>();
 
     //private Map<Thread,Object> threadSet = new ConcurrentHashMap<>();
 
@@ -73,13 +66,13 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
             //long starttime = System.currentTimeMillis();
             result = forkJoinPool.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
-//            List<List<Message>> messageLists = new ArrayList<>();
-//            for (Queue queue : queues.values()) {
-//                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
-//            }
-//            for (List<Message> messages : messageLists) {
-//                result = merge(result, messages);
-//            }
+            //            List<List<Message>> messageLists = new ArrayList<>();
+            //            for (Queue queue : queues.values()) {
+            //                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
+            //            }
+            //            for (List<Message> messages : messageLists) {
+            //                result = merge(result, messages);
+            //            }
             //long endtime = System.currentTimeMillis();
             //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
@@ -100,23 +93,18 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-//            if (!messagePools.containsKey(Thread.currentThread())) {
-//                synchronized (this) {
-//                    if (!messagePools.containsKey(Thread.currentThread())) {
-//                        messagePools.put(Thread.currentThread(), new MessagePool());
-//                    }
-//                }
-//            }
-            if (miniMsgPoolThreadLocal.get() == null) {
-                miniMsgPoolThreadLocal.set(new MiniMsgPool());
-            }
-            MiniMsgPool miniMsgPool = miniMsgPoolThreadLocal.get();
-            OptionalDouble result = queues.values().stream().parallel().map(queue -> queue.getMiniMsg(aMin, aMax, tMin, tMax, miniMsgPool)).flatMap(Collection::stream).mapToLong(MiniMsg::getA).average();
-            if(!result.isPresent()){
+            //            if (!messagePools.containsKey(Thread.currentThread())) {
+            //                synchronized (this) {
+            //                    if (!messagePools.containsKey(Thread.currentThread())) {
+            //                        messagePools.put(Thread.currentThread(), new MessagePool());
+            //                    }
+            //                }
+            //            }
+            Avg result = forkJoinPool.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
+            if (result.getCount() == 0) {
                 return 0L;
-            }
-            else {
-                return (long)result.getAsDouble();
+            } else {
+                return result.getTotal() / result.getCount();
             }
         } catch (Exception e) {
             e.printStackTrace(System.out);
@@ -142,6 +130,59 @@ public class DefaultMessageStoreImpl extends MessageStore {
             result.add(b.get(j++));
         }
         return result;
+    }
+
+    public class AvgTask extends RecursiveTask<Avg> {
+        private int start;
+
+        private int end;
+
+        private List<Queue> queues;
+
+        private long aMin;
+
+        private long aMax;
+
+        private long tMin;
+
+        private long tMax;
+
+        AvgTask(List<Queue> queues, int start, int end, long aMin, long aMax, long tMin, long tMax) {
+            this.queues = queues;
+            this.start = start;
+            this.end = end;
+            this.aMin = aMin;
+            this.aMax = aMax;
+            this.tMin = tMin;
+            this.tMax = tMax;
+        }
+
+        @Override
+        protected Avg compute() {
+            Avg result = new Avg();
+            try {
+                if (start == end) {
+                    return queues.get(start).getAvg(aMin, aMax, tMin, tMax);
+                } else {
+                    int mid = (start + end) / 2;
+                    AvgTask leftTask = new AvgTask(queues, start, mid, aMin, aMax, tMin, tMax);
+                    AvgTask rightTask = new AvgTask(queues, mid + 1, end, aMin, aMax, tMin, tMax);
+
+                    leftTask.fork();
+                    rightTask.fork();
+
+                    Avg leftResult = leftTask.join();
+                    Avg rightResult = rightTask.join();
+
+                    result.setCount(leftResult.getCount() + rightResult.getCount());
+                    result.setTotal(leftResult.getTotal() + rightResult.getTotal());
+                    return result;
+                }
+            } catch (Exception e) {
+                e.printStackTrace(System.out);
+            }
+            return result;
+        }
     }
 
     public class MergeTask extends RecursiveTask<List<Message>> {
