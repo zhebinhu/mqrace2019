@@ -54,6 +54,8 @@ public class Queue {
 
     private DataReader dataReader;
 
+    private ValueReader valueReader;
+
     private Index index = new Index(0, 0);
 
     public Queue(int num) {
@@ -66,6 +68,7 @@ public class Queue {
         }
         fileChannel = memoryMappedFile.getChannel();
         dataReader = new DataReader(num);
+        valueReader = new ValueReader(num);
     }
 
     public void put(Message message) {
@@ -81,7 +84,7 @@ public class Queue {
         }
 
         buffer.putLong(message.getT());
-        buffer.putLong(message.getA());
+        valueReader.put(message);
         dataReader.put(message);
 
         if (message.getT() / Constants.INDEX_RATE > maxTime) {
@@ -155,10 +158,10 @@ public class Queue {
                 for (int i = 0; i < offset; i++) {
                     long time = buffer.getLong();
                     if (time < tMin || time > tMax) {
-                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
+                        //buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
                         continue;
                     }
-                    long value = buffer.getLong();
+                    long value = valueReader.getValue(offsetA+i);
                     if (value < aMin || value > aMax) {
                         continue;
                     }
@@ -199,6 +202,7 @@ public class Queue {
         long offsetA;
         long offsetB;
 
+
         if (tMin / Constants.INDEX_RATE > maxTime) {
             return result;
         } else {
@@ -222,6 +226,8 @@ public class Queue {
             }
         }
 
+        boolean started = false;
+
         while (offsetA < offsetB) {
             try {
                 buffer.clear();
@@ -234,7 +240,7 @@ public class Queue {
                         buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
                         continue;
                     }
-                    long value = buffer.getLong();
+                    long value = valueReader.getValue(offsetA+i);
                     if (value < aMin || value > aMax) {
                         continue;
                     }
