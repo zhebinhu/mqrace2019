@@ -90,12 +90,16 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
+            long starttime = System.currentTimeMillis();
             Avg result = forkJoinPool.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
+            long endtime = System.currentTimeMillis();
+            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
             if (result.getCount() == 0) {
                 return 0L;
             } else {
                 return result.getTotal() / result.getCount();
             }
+
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
