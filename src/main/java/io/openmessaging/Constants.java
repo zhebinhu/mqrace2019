@@ -18,9 +18,9 @@ public class Constants {
 
     public final static int DATA_NUM = 2 * 1024;
 
-    //public final static String URL = "/users/huzhebin/data/";
+    public final static String URL = "/users/huzhebin/data/";
 
-    public final static String URL = "/alidata1/race2019/data/";
+    //public final static String URL = "/alidata1/race2019/data/";
 
     public final static int INDEX_RATE = 256;
 }
