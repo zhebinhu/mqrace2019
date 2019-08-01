@@ -22,7 +22,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean avg = false;
 
-    private ForkJoinPool forkJoinPool1 = new ForkJoinPool(12);
+    private ForkJoinPool forkJoinPool1 = new ForkJoinPool(20);
     private ForkJoinPool forkJoinPool2 = new ForkJoinPool(20);
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();

@@ -84,7 +84,7 @@ public class ValueReader {
         }
     }
 
-    public synchronized long getValue(long index) {
+    public long getValue(long index) {
 
         if (!inited) {
             synchronized (this) {
