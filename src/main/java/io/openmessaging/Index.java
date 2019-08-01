@@ -6,9 +6,9 @@ package io.openmessaging;
 public class Index implements Comparable<Index> {
     long time;
 
-    long offset;
+    int offset;
 
-    Index(long time, long offset) {
+    Index(long time, int offset) {
         this.time = time;
         this.offset = offset;
     }
@@ -21,11 +21,11 @@ public class Index implements Comparable<Index> {
         this.time = time;
     }
 
-    public long getOffset() {
+    public int getOffset() {
         return offset;
     }
 
-    public void setOffset(long offset) {
+    public void setOffset(int offset) {
         this.offset = offset;
     }
 

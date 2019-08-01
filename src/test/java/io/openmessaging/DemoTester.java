@@ -78,20 +78,20 @@ public class DemoTester {
 
         //Step3: 查询聚合结果
         long checkStart = System.currentTimeMillis();
-        AtomicLong valueCheckTimes = new AtomicLong(0);
-        AtomicLong valueCheckNum = new AtomicLong(0);
-        Thread[] checks = new Thread[checkTsNum];
-        for (int i = 0; i < checkTsNum; i++) {
-            checks[i] = new Thread(new ValueChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxValueCheckSize, valueCheckTimes, valueCheckNum));
-        }
-        for (int i = 0; i < checkTsNum; i++) {
-            checks[i].start();
-        }
-        for (int i = 0; i < checkTsNum; i++) {
-            checks[i].join();
-        }
-        long checkEnd = System.currentTimeMillis();
-        System.out.printf("Value Check: %d ms Num: %d\n", checkEnd - checkStart, valueCheckNum.get());
+//        AtomicLong valueCheckTimes = new AtomicLong(0);
+//        AtomicLong valueCheckNum = new AtomicLong(0);
+//        Thread[] checks = new Thread[checkTsNum];
+//        for (int i = 0; i < checkTsNum; i++) {
+//            checks[i] = new Thread(new ValueChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxValueCheckSize, valueCheckTimes, valueCheckNum));
+//        }
+//        for (int i = 0; i < checkTsNum; i++) {
+//            checks[i].start();
+//        }
+//        for (int i = 0; i < checkTsNum; i++) {
+//            checks[i].join();
+//        }
+//        long checkEnd = System.currentTimeMillis();
+//        System.out.printf("Value Check: %d ms Num: %d\n", checkEnd - checkStart, valueCheckNum.get());
 //
 //        //评测结果
 //        System.out.printf("Total Score:%d\n", (msgNum / (sendSend- sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
