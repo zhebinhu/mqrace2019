@@ -105,7 +105,7 @@ public class Queue {
         messageNum++;
         if (messageNum >= arraysLen) {
             arraysLen += 10000000;
-            Arrays.copyOf(times, arraysLen);
+            times = Arrays.copyOf(times, arraysLen);
         }
 
     }
