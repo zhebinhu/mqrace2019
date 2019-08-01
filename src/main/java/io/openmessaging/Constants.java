@@ -5,7 +5,7 @@ package io.openmessaging;
  */
 public class Constants {
     // T 和 A 的大小
-    public final static int MESSAGE_SIZE = 1;
+    public final static int MESSAGE_SIZE = 8;
 
     public final static int MESSAGE_NUM = 4 * 1024;
 

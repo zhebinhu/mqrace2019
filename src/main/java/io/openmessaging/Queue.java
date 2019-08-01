@@ -58,9 +58,6 @@ public class Queue {
 
     private Index index = new Index(0, 0);
 
-    private int arraysLen = 150000000;
-
-    private byte[] times = new byte[arraysLen];
 
     public Queue(int num) {
         this.num = num;
@@ -73,41 +70,29 @@ public class Queue {
         fileChannel = memoryMappedFile.getChannel();
         dataReader = new DataReader(num);
         valueReader = new ValueReader(num);
-
     }
 
     public void put(Message message) {
-        //        int remain = buffer.remaining();
-        //        if (remain < Constants.MESSAGE_SIZE) {
-        //            buffer.flip();
-        //            try {
-        //                fileChannel.write(buffer);
-        //                buffer.clear();
-        //            } catch (IOException e) {
-        //                e.printStackTrace(System.out);
-        //            }
-        //        }
-
-        if (maxTime == -1 || message.getT() > maxTime + 255) {
-            maxTime = message.getT();
-            indexList.add(new Index(maxTime, messageNum));
+        int remain = buffer.remaining();
+        if (remain < Constants.MESSAGE_SIZE) {
+            buffer.flip();
+            try {
+                fileChannel.write(buffer);
+                buffer.clear();
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
         }
 
-        //buffer.put((byte) (message.getT() - maxTime));
-        times[(int) messageNum] = (byte) (message.getT() - maxTime);
+        buffer.putLong(message.getT());
         valueReader.put(message);
         dataReader.put(message);
 
-        //        if (message.getT() / Constants.INDEX_RATE > maxTime) {
-        //            maxTime = message.getT() / Constants.INDEX_RATE;
-        //            indexList.add(new Index(maxTime, messageNum));
-        //        }
-        messageNum++;
-        if (messageNum >= arraysLen) {
-            arraysLen += 10000000;
-            times = Arrays.copyOf(times, arraysLen);
+        if (message.getT() / Constants.INDEX_RATE > maxTime) {
+            maxTime = message.getT() / Constants.INDEX_RATE;
+            indexList.add(new Index(maxTime, messageNum));
         }
-
+        messageNum++;
     }
 
     public void init() {
@@ -121,7 +106,6 @@ public class Queue {
                 e.printStackTrace(System.out);
             }
         }
-        System.out.println("queue" + num + " index size:" + indexList.size() + " time size:" + times.length);
     }
 
     public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
@@ -236,7 +220,7 @@ public class Queue {
                         e.printStackTrace();
                     }
                     buffer.flip();
-                    int right = Math.min(Constants.MESSAGE_NUM - 1, buffer.limit());
+                    int right = Math.min(Constants.MESSAGE_NUM - 1, buffer.limit()/Constants.MESSAGE_SIZE-1);
                     int left = 0;
                     buffer.position(right * Constants.MESSAGE_SIZE);
                     if (buffer.getLong() < tMin) {
@@ -270,12 +254,12 @@ public class Queue {
                 while (true) {
                     buffer.clear();
                     try {
-                        fileChannel.read(buffer, (offsetB - Constants.MESSAGE_NUM) * Constants.MESSAGE_SIZE);
+                        fileChannel.read(buffer, Math.max(0,offsetB - Constants.MESSAGE_NUM) * Constants.MESSAGE_SIZE);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                     buffer.flip();
-                    int right = Math.min(Constants.MESSAGE_NUM - 1, buffer.limit());
+                    int right = Math.min(Constants.MESSAGE_NUM - 1, buffer.limit()/Constants.MESSAGE_SIZE-1);
                     int left = 0;
                     buffer.position(left * Constants.MESSAGE_SIZE);
                     if (buffer.getLong() > tMax) {
