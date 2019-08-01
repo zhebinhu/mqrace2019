@@ -13,7 +13,7 @@ public class Constants {
 
     public final static int PAGE_SIZE = 64 * 1024;
 
-    public final static int CACHE_SIZE = 224 * 1024 * 1024;
+    public final static int CACHE_SIZE = 256 * 1024 * 1024;
 
     // data 的大小
     public final static int DATA_SIZE = 34;
