@@ -58,7 +58,9 @@ public class Queue {
 
     private Index index = new Index(0, 0);
 
-    private List<Time> times = new ArrayList<>();
+    private int arraysLen = 180000000;
+
+    private byte[] times = new byte[180000000];
 
     public Queue(int num) {
         this.num = num;
@@ -92,7 +94,7 @@ public class Queue {
         }
 
         //buffer.put((byte) (message.getT() - maxTime));
-        //times.add(new Time((byte) (message.getT() - maxTime)));
+        times[(int) messageNum] = (byte) (message.getT() - maxTime);
         valueReader.put(message);
         dataReader.put(message);
 
@@ -101,6 +103,11 @@ public class Queue {
         //            indexList.add(new Index(maxTime, messageNum));
         //        }
         messageNum++;
+        if (messageNum >= arraysLen) {
+            arraysLen += 10000000;
+            Arrays.copyOf(times, arraysLen);
+        }
+
     }
 
     public void init() {
@@ -114,7 +121,7 @@ public class Queue {
                 e.printStackTrace(System.out);
             }
         }
-        System.out.println("queue" + num + " index size:" + indexList.size() + " time size:" + times.size());
+        System.out.println("queue" + num + " index size:" + indexList.size() + " time size:" + times.length);
     }
 
     public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
