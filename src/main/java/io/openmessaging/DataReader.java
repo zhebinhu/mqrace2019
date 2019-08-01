@@ -93,7 +93,7 @@ public class DataReader {
         }
     }
 
-    public synchronized void getData(long index, Message message) {
+    public void getData(long index, Message message) {
 
         if (!inited) {
             synchronized (this) {
