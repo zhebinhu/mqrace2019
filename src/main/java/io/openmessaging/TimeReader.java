@@ -60,21 +60,22 @@ public class TimeReader {
             i++;
         }
 
-        int remain = buffer.remaining();
-        if (remain < Constants.TIME_SIZE) {
+        if (!buffer.hasRemaining()) {
             buffer.flip();
             try {
                 fileChannel.write(buffer);
-                buffer.clear();
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
+            buffer.clear();
         }
         buffer.put(t);
     }
 
     public void init() {
         int remain = buffer.remaining();
+        pageIndex = -1;
+        page = null;
         if (remain > 0) {
             buffer.flip();
             try {
