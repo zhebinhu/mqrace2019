@@ -58,6 +58,8 @@ public class Queue {
 
     private Index index = new Index(0, 0);
 
+    private List<Time> times = new ArrayList<>();
+
     public Queue(int num) {
         this.num = num;
         RandomAccessFile memoryMappedFile = null;
@@ -72,25 +74,31 @@ public class Queue {
     }
 
     public void put(Message message) {
-        int remain = buffer.remaining();
-        if (remain < Constants.MESSAGE_SIZE) {
-            buffer.flip();
-            try {
-                fileChannel.write(buffer);
-                buffer.clear();
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
-            }
+        //        int remain = buffer.remaining();
+        //        if (remain < Constants.MESSAGE_SIZE) {
+        //            buffer.flip();
+        //            try {
+        //                fileChannel.write(buffer);
+        //                buffer.clear();
+        //            } catch (IOException e) {
+        //                e.printStackTrace(System.out);
+        //            }
+        //        }
+
+        if (maxTime == -1 || message.getT() > maxTime + 255) {
+            maxTime = message.getT();
+            indexList.add(new Index(maxTime, messageNum));
         }
 
-        buffer.putLong(message.getT());
+        //buffer.put((byte) (message.getT() - maxTime));
+        times.add(new Time((byte) (message.getT() - maxTime)));
         valueReader.put(message);
         dataReader.put(message);
 
-        if (message.getT() / Constants.INDEX_RATE > maxTime) {
-            maxTime = message.getT() / Constants.INDEX_RATE;
-            indexList.add(new Index(maxTime, messageNum));
-        }
+        //        if (message.getT() / Constants.INDEX_RATE > maxTime) {
+        //            maxTime = message.getT() / Constants.INDEX_RATE;
+        //            indexList.add(new Index(maxTime, messageNum));
+        //        }
         messageNum++;
     }
 
@@ -105,6 +113,7 @@ public class Queue {
                 e.printStackTrace(System.out);
             }
         }
+        System.out.println("queue" + num + " index size:" + indexList.size() + " time size:" + times.size());
     }
 
     public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
@@ -253,7 +262,7 @@ public class Queue {
                 while (true) {
                     buffer.clear();
                     try {
-                        fileChannel.read(buffer, (offsetB- Constants.MESSAGE_NUM)* Constants.MESSAGE_SIZE);
+                        fileChannel.read(buffer, (offsetB - Constants.MESSAGE_NUM) * Constants.MESSAGE_SIZE);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -274,7 +283,7 @@ public class Queue {
                                 left = mid;
                             }
                         }
-                        offsetB = offsetB-Constants.MESSAGE_NUM+right;
+                        offsetB = offsetB - Constants.MESSAGE_NUM + right;
                         break;
                     }
                 }
@@ -283,25 +292,25 @@ public class Queue {
 
         while (offsetA < offsetB) {
             try {
-//                buffer.clear();
-//                fileChannel.read(buffer, offsetA * Constants.MESSAGE_SIZE);
-//                buffer.flip();
-//                long offset = Math.min(offsetB - offsetA, Constants.MESSAGE_NUM);
-//                for (int i = 0; i < offset; i++) {
-//                    long time = buffer.getLong();
-//                    if (time < tMin || time > tMax) {
-//                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
-//                        continue;
-//                    }
-                    long value = valueReader.getValue(offsetA);
-                    if (value < aMin || value > aMax) {
-                        offsetA++;
-                        continue;
-                    }
-                    result.setCount(result.getCount() + 1);
-                    result.setTotal(result.getTotal() + value);
+                //                buffer.clear();
+                //                fileChannel.read(buffer, offsetA * Constants.MESSAGE_SIZE);
+                //                buffer.flip();
+                //                long offset = Math.min(offsetB - offsetA, Constants.MESSAGE_NUM);
+                //                for (int i = 0; i < offset; i++) {
+                //                    long time = buffer.getLong();
+                //                    if (time < tMin || time > tMax) {
+                //                        buffer.position(buffer.position() + Constants.MESSAGE_SIZE - 8);
+                //                        continue;
+                //                    }
+                long value = valueReader.getValue(offsetA);
+                if (value < aMin || value > aMax) {
+                    offsetA++;
+                    continue;
+                }
+                result.setCount(result.getCount() + 1);
+                result.setTotal(result.getTotal() + value);
                 //}
-                offsetA ++;
+                offsetA++;
 
             } catch (Exception e) {
                 e.printStackTrace(System.out);
