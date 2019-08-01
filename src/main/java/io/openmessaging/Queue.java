@@ -58,7 +58,7 @@ public class Queue {
 
     private Index index = new Index(0, 0);
 
-    private int arraysLen = 150000000;
+    private int arraysLen = 180000000;
 
     private byte[] times = new byte[arraysLen];
 
