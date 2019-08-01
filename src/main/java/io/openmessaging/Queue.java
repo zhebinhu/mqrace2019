@@ -71,6 +71,7 @@ public class Queue {
         fileChannel = memoryMappedFile.getChannel();
         dataReader = new DataReader(num);
         valueReader = new ValueReader(num);
+
     }
 
     public void put(Message message) {
@@ -91,7 +92,7 @@ public class Queue {
         }
 
         //buffer.put((byte) (message.getT() - maxTime));
-        times.add(new Time((byte) (message.getT() - maxTime)));
+        //times.add(new Time((byte) (message.getT() - maxTime)));
         valueReader.put(message);
         dataReader.put(message);
 
