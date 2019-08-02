@@ -47,12 +47,11 @@ public class DataReader {
 
     private volatile boolean inited = false;
 
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+    byte[] zipByte = new byte[19];
 
-    /**
-     * 异步put结果
-     */
-    private Future putFuture;
+    byte[] dataTag = new byte[34];
+
+    List<DataTag> dataTags = new ArrayList<>();
 
     public DataReader(int num) {
         this.num = num;
@@ -120,5 +119,41 @@ public class DataReader {
 
         buffer.get(message.getBody());
     }
+
+    private boolean canZip(byte[] dataTag, byte[] data) {
+        int diff = 0;
+        int i = 2;
+        while (i < 34) {
+            if (dataTag[i] != data[i]) {
+                diff++;
+                i = 4 - ((i - 2) % 4) + i;
+            }
+        }
+        return diff < 5;
+    }
+
+//    private byte[] zip(byte[] data) {
+//        int diff = 0;
+//        int i = 2;
+//        while (i < 34) {
+//            if (dataTag[i] != data[i]) {
+//                diff++;
+//                i = 4 - ((i - 2) % 4) + i;
+//            }
+//        }
+//        //return diff < 5;
+//    }
+//
+//    private byte[] unZip(byte[] dataTag) {
+//        int diff = 0;
+//        int i = 2;
+//        while (i < 34) {
+//            if (dataTag[i] != data[i]) {
+//                diff++;
+//                i = 4 - ((i - 2) % 4) + i;
+//            }
+//        }
+//        return diff < 5;
+//    }
 
 }

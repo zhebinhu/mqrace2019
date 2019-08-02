@@ -3,12 +3,12 @@ package io.openmessaging;
 /**
  * Created by huzhebin on 2019/07/31.
  */
-public class Index implements Comparable<Index> {
+public class TimeTag implements Comparable<TimeTag> {
     long time;
 
     int offset;
 
-    Index(long time, int offset) {
+    TimeTag(long time, int offset) {
         this.time = time;
         this.offset = offset;
     }
@@ -30,7 +30,7 @@ public class Index implements Comparable<Index> {
     }
 
     @Override
-    public int compareTo(Index o) {
+    public int compareTo(TimeTag o) {
         if (time > o.getTime()) {
             return 1;
         } else if (time < o.getTime()) {

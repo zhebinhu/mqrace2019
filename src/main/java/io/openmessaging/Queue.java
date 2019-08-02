@@ -1,13 +1,6 @@
 package io.openmessaging;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -31,7 +24,7 @@ public class Queue {
     /**
      * 一级索引
      */
-    private List<Index> indexList = new ArrayList<>();
+    private List<TimeTag> timeTagList = new ArrayList<>();
 
     private DataReader dataReader;
 
@@ -39,7 +32,9 @@ public class Queue {
 
     private TimeReader timeReader;
 
-    private Index index = new Index(0, 0);
+    private TimeTag timeTag = new TimeTag(0, 0);
+
+    private boolean inited = false;
 
     public Queue(int num) {
         this.num = num;
@@ -51,7 +46,7 @@ public class Queue {
     public void put(Message message) {
         if (maxTime == -1 || message.getT() > maxTime + 255) {
             maxTime = message.getT();
-            indexList.add(new Index(maxTime, messageNum));
+            timeTagList.add(new TimeTag(maxTime, messageNum));
         }
 
         timeReader.put((byte) (message.getT() - maxTime));
@@ -62,9 +57,13 @@ public class Queue {
     }
 
     public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
+        if (!inited) {
+            System.out.println("Thread:" + num + " timeTagList size:" + timeTagList.size());
+            inited = true;
+        }
         List<Message> result = new ArrayList<>();
 
-        if (indexList.isEmpty()) {
+        if (timeTagList.isEmpty()) {
             return result;
         }
 
@@ -76,35 +75,35 @@ public class Queue {
         if (tMin > maxTime + 255) {
             return result;
         }
-        if (tMin <= indexList.get(0).getTime()) {
+        if (tMin <= timeTagList.get(0).getTime()) {
             offsetA = 0;
         } else {
-            index.setTime(tMin);
-            index.setOffset(0);
-            thisIndex = Collections.binarySearch(indexList, index);
+            timeTag.setTime(tMin);
+            timeTag.setOffset(0);
+            thisIndex = Collections.binarySearch(timeTagList, timeTag);
             if (thisIndex < 0) {
                 thisIndex = Math.max(0, -(thisIndex + 2));
             }
-            offsetA = indexList.get(thisIndex).getOffset();
+            offsetA = timeTagList.get(thisIndex).getOffset();
         }
-        if (thisIndex == indexList.size() - 1) {
+        if (thisIndex == timeTagList.size() - 1) {
             offsetB = messageNum;
         } else {
-            offsetB = indexList.get(thisIndex + 1).getOffset();
+            offsetB = timeTagList.get(thisIndex + 1).getOffset();
         }
-        long baseTime = indexList.get(thisIndex).getTime();
+        long baseTime = timeTagList.get(thisIndex).getTime();
         while (true) {
             if (offsetA == messageNum) {
                 break;
             }
             if (offsetA == offsetB) {
                 thisIndex++;
-                if (thisIndex == indexList.size() - 1) {
+                if (thisIndex == timeTagList.size() - 1) {
                     offsetB = messageNum;
                 } else {
-                    offsetB = indexList.get(thisIndex + 1).getOffset();
+                    offsetB = timeTagList.get(thisIndex + 1).getOffset();
                 }
-                baseTime = indexList.get(thisIndex).getTime();
+                baseTime = timeTagList.get(thisIndex).getTime();
             }
             long time = baseTime + (timeReader.getTime(offsetA) + 256) % 256;
             if (time < tMin) {
@@ -133,7 +132,7 @@ public class Queue {
     public synchronized Avg getAvg(long aMin, long aMax, long tMin, long tMax) {
         Avg result = new Avg();
 
-        if (indexList.isEmpty()) {
+        if (timeTagList.isEmpty()) {
             result.setTotal(0);
             result.setCount(0);
             return result;
@@ -147,35 +146,35 @@ public class Queue {
         if (tMin > maxTime + 255) {
             return result;
         }
-        if (tMin <= indexList.get(0).getTime()) {
+        if (tMin <= timeTagList.get(0).getTime()) {
             offsetA = 0;
         } else {
-            index.setTime(tMin);
-            index.setOffset(0);
-            thisIndex = Collections.binarySearch(indexList, index);
+            timeTag.setTime(tMin);
+            timeTag.setOffset(0);
+            thisIndex = Collections.binarySearch(timeTagList, timeTag);
             if (thisIndex < 0) {
                 thisIndex = Math.max(0, -(thisIndex + 2));
             }
-            offsetA = indexList.get(thisIndex).getOffset();
+            offsetA = timeTagList.get(thisIndex).getOffset();
         }
-        if (thisIndex == indexList.size() - 1) {
+        if (thisIndex == timeTagList.size() - 1) {
             offsetB = messageNum;
         } else {
-            offsetB = indexList.get(thisIndex + 1).getOffset();
+            offsetB = timeTagList.get(thisIndex + 1).getOffset();
         }
-        long baseTime = indexList.get(thisIndex).getTime();
+        long baseTime = timeTagList.get(thisIndex).getTime();
         while (true) {
             if (offsetA == messageNum) {
                 break;
             }
             if (offsetA == offsetB) {
                 thisIndex++;
-                if (thisIndex == indexList.size() - 1) {
+                if (thisIndex == timeTagList.size() - 1) {
                     offsetB = messageNum;
                 } else {
-                    offsetB = indexList.get(thisIndex + 1).getOffset();
+                    offsetB = timeTagList.get(thisIndex + 1).getOffset();
                 }
-                baseTime = indexList.get(thisIndex).getTime();
+                baseTime = timeTagList.get(thisIndex).getTime();
             }
             long time = baseTime + (timeReader.getTime(offsetA) + 256) % 256;
             if (time < tMin) {
