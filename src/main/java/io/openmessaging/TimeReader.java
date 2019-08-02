@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -37,39 +38,51 @@ public class TimeReader {
 
     LRUCache<Integer, Page> pageCache = new LRUCache<>(Constants.CACHE_SIZE / Constants.PAGE_SIZE);
 
+    int cacheSize = 150000000;
+
+    byte[] timeCache = new byte[cacheSize];
+
+    int msgNumber = 0;
+
     public TimeReader(int num) {
-        this.num = num;
-        RandomAccessFile memoryMappedFile = null;
-        try {
-            memoryMappedFile = new RandomAccessFile(Constants.URL + num + ".time", "rw");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace(System.out);
-        }
-        fileChannel = memoryMappedFile.getChannel();
+        //        this.num = num;
+        //        RandomAccessFile memoryMappedFile = null;
+        //        try {
+        //            memoryMappedFile = new RandomAccessFile(Constants.URL + num + ".time", "rw");
+        //        } catch (FileNotFoundException e) {
+        //            e.printStackTrace(System.out);
+        //        }
+        //        fileChannel = memoryMappedFile.getChannel();
     }
 
     public void put(byte t) {
-        if (i == Constants.PAGE_SIZE) {
-            pageCache.put(k, page);
-            k++;
-            page = new Page();
-            i = 0;
+        //        if (i == Constants.PAGE_SIZE) {
+        //            pageCache.put(k, page);
+        //            k++;
+        //            page = new Page();
+        //            i = 0;
+        //        }
+        //        if (k < Constants.CACHE_SIZE / Constants.PAGE_SIZE) {
+        //            page.bytes[i] = t;
+        //            i++;
+        //        }
+        //
+        //        if (!buffer.hasRemaining()) {
+        //            buffer.flip();
+        //            try {
+        //                fileChannel.write(buffer);
+        //            } catch (IOException e) {
+        //                e.printStackTrace(System.out);
+        //            }
+        //            buffer.clear();
+        //        }
+        //        buffer.put(t);
+        if (msgNumber >= cacheSize) {
+            cacheSize = cacheSize + 100000000;
+            timeCache = Arrays.copyOf(timeCache, cacheSize);
         }
-        if (k < Constants.CACHE_SIZE / Constants.PAGE_SIZE) {
-            page.bytes[i] = t;
-            i++;
-        }
-
-        if (!buffer.hasRemaining()) {
-            buffer.flip();
-            try {
-                fileChannel.write(buffer);
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
-            }
-            buffer.clear();
-        }
-        buffer.put(t);
+        timeCache[msgNumber] = t;
+        msgNumber++;
     }
 
     public void init() {
@@ -88,40 +101,40 @@ public class TimeReader {
     }
 
     public byte getTime(int offset) {
-
-        if (!inited) {
-            synchronized (this) {
-                if (!inited) {
-                    init();
-                    inited = true;
-                }
-            }
-        }
-        if (pageIndex == offset / Constants.PAGE_SIZE) {
-            return page.bytes[offset % Constants.PAGE_SIZE];
-        }
-        pageIndex = offset / Constants.PAGE_SIZE;
-
-        page = pageCache.get(pageIndex);
-
-        if (page == null) {
-            try {
-                buffer.clear();
-                fileChannel.read(buffer, pageIndex * Constants.PAGE_SIZE);
-                buffer.flip();
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
-            }
-            page = pageCache.getOldest();
-            if (page == null) {
-                page = new Page();
-            }
-            buffer.get(page.bytes, 0, buffer.limit());
-            pageCache.put(pageIndex, page);
-        }
-
-        offset = offset % Constants.PAGE_SIZE;
-        return page.bytes[offset % Constants.PAGE_SIZE];
+        return timeCache[offset];
+//        if (!inited) {
+//            synchronized (this) {
+//                if (!inited) {
+//                    init();
+//                    inited = true;
+//                }
+//            }
+//        }
+//        if (pageIndex == offset / Constants.PAGE_SIZE) {
+//            return page.bytes[offset % Constants.PAGE_SIZE];
+//        }
+//        pageIndex = offset / Constants.PAGE_SIZE;
+//
+//        page = pageCache.get(pageIndex);
+//
+//        if (page == null) {
+//            try {
+//                buffer.clear();
+//                fileChannel.read(buffer, pageIndex * Constants.PAGE_SIZE);
+//                buffer.flip();
+//            } catch (IOException e) {
+//                e.printStackTrace(System.out);
+//            }
+//            page = pageCache.getOldest();
+//            if (page == null) {
+//                page = new Page();
+//            }
+//            buffer.get(page.bytes, 0, buffer.limit());
+//            pageCache.put(pageIndex, page);
+//        }
+//
+//        offset = offset % Constants.PAGE_SIZE;
+//        return page.bytes[offset % Constants.PAGE_SIZE];
     }
 
 }
