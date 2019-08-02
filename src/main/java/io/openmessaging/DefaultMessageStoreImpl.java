@@ -70,7 +70,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 threadSet.add(Thread.currentThread());
                 System.out.println("get message threads:" + threadSet.size());
             }
-            long starttime = System.currentTimeMillis();
+            //long starttime = System.currentTimeMillis();
             result = forkJoinPool1.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
             //            List<List<Message>> messageLists = new ArrayList<>();
             //            for (Queue queue : queues.values()) {
@@ -79,8 +79,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
             //            for (List<Message> messages : messageLists) {
             //                result = merge(result, messages);
             //            }
-            long endtime = System.currentTimeMillis();
-            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            //long endtime = System.currentTimeMillis();
+            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -89,28 +89,28 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-//        try {
-//            if (!avg) {
-//                synchronized (this) {
-//                    if (!avg) {
-//                        System.out.println("avg:" + System.currentTimeMillis());
-//                        avg = true;
-//                    }
-//                }
-//            }
-//            long starttime = System.currentTimeMillis();
-//            Avg result = forkJoinPool2.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
-//            long endtime = System.currentTimeMillis();
-//            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " count:" + result.getCount() + " getAvgValue: " + (endtime - starttime));
-//            if (result.getCount() == 0) {
-//                return 0L;
-//            } else {
-//                return result.getTotal() / result.getCount();
-//            }
-//
-//        } catch (Exception e) {
-//            e.printStackTrace(System.out);
-//        }
+        try {
+            if (!avg) {
+                synchronized (this) {
+                    if (!avg) {
+                        System.out.println("avg:" + System.currentTimeMillis());
+                        avg = true;
+                    }
+                }
+            }
+            //long starttime = System.currentTimeMillis();
+            Avg result = forkJoinPool2.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
+            //long endtime = System.currentTimeMillis();
+            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " count:" + result.getCount() + " getAvgValue: " + (endtime - starttime));
+            if (result.getCount() == 0) {
+                return 0L;
+            } else {
+                return result.getTotal() / result.getCount();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+        }
         return 0L;
     }
 

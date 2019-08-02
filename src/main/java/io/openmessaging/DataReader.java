@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -45,6 +42,10 @@ public class DataReader {
      */
     private int bufferMinIndex = -1;
 
+    private int tagMinIndex = -1;
+
+    private int tagMaxIndex = -1;
+
     private volatile boolean inited = false;
 
     byte[] zipByte = new byte[19];
@@ -75,7 +76,7 @@ public class DataReader {
             }
             buffer.clear();
         }
-        if (!canZip(dataTag, message.getBody())) {
+        if (dataTags.isEmpty() || !canZip(dataTag, message.getBody())) {
             dataTag = message.getBody();
             dataTags.add(new DataTag(message.getBody(), messageNum));
         }
@@ -109,6 +110,10 @@ public class DataReader {
                 }
             }
         }
+        if (index == tagMinIndex) {
+            message.setBody(dataTag);
+            return;
+        }
 
         if (index >= bufferMinIndex && index < bufferMaxIndex) {
             buffer.position((int) (index - bufferMinIndex) * Constants.DATA_SIZE);
@@ -124,7 +129,36 @@ public class DataReader {
             buffer.flip();
         }
 
-        buffer.get(message.getBody());
+        buffer.get(zipByte);
+
+        if (index > tagMinIndex && index < tagMaxIndex) {
+            unZip(dataTag, zipByte, message.getBody());
+            return;
+        }
+
+        int thisIndex = Collections.binarySearch(dataTags, new DataTag(null, index));
+        if (thisIndex >= 0) {
+            message.setBody(dataTags.get(thisIndex).getData());
+            tagMinIndex = dataTags.get(thisIndex).getOffset();
+            if (thisIndex == dataTags.size() - 1) {
+                tagMaxIndex = messageNum;
+            } else {
+                tagMaxIndex = dataTags.get(thisIndex + 1).getOffset();
+            }
+            return;
+        }
+        if (thisIndex < 0) {
+            thisIndex = Math.max(0, -(thisIndex + 2));
+            tagMinIndex = dataTags.get(thisIndex).getOffset();
+            if (thisIndex == dataTags.size() - 1) {
+                tagMaxIndex = messageNum;
+            } else {
+                tagMaxIndex = dataTags.get(thisIndex + 1).getOffset();
+            }
+        }
+
+        dataTag = dataTags.get(thisIndex).getData();
+        unZip(dataTag, zipByte, message.getBody());
     }
 
     private boolean canZip(byte[] dataTag, byte[] data) {
@@ -135,6 +169,7 @@ public class DataReader {
                 diff++;
                 i = 4 - ((i - 2) % 4) + i;
             }
+            i++;
         }
         return diff < 5;
     }
@@ -206,6 +241,7 @@ public class DataReader {
                     i = 34;
                 }
             }
+            i++;
         }
         zipByte[2] = bitmap;
     }
@@ -218,7 +254,15 @@ public class DataReader {
         int b = 1;
         for (int k = 0; k < 8; k++) {
             if ((zipData[2] & b << k) != 0) {
-
+                data[j++] = zipData[i++];
+                data[j++] = zipData[i++];
+                data[j++] = zipData[i++];
+                data[j++] = zipData[i++];
+            } else {
+                data[j++] = dataTag[k * 4 + 2];
+                data[j++] = dataTag[k * 4 + 3];
+                data[j++] = dataTag[k * 4 + 4];
+                data[j++] = dataTag[k * 4 + 5];
             }
         }
     }
