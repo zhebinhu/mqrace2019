@@ -50,16 +50,16 @@ public class TimeReader {
     }
 
     public void put(byte t) {
-//        if (i == Constants.PAGE_SIZE) {
-//            pageCache.put(k, page);
-//            k++;
-//            page = new Page();
-//            i = 0;
-//        }
-//        if (k < Constants.CACHE_SIZE / Constants.PAGE_SIZE) {
-//            page.bytes[i] = t;
-//            i++;
-//        }
+        if (i == Constants.PAGE_SIZE) {
+            pageCache.put(k, page);
+            k++;
+            page = new Page();
+            i = 0;
+        }
+        if (k < Constants.CACHE_SIZE / Constants.PAGE_SIZE) {
+            page.bytes[i] = t;
+            i++;
+        }
 
         if (!buffer.hasRemaining()) {
             buffer.flip();
