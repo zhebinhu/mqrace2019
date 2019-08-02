@@ -5,8 +5,6 @@ package io.openmessaging;
  */
 public class Constants {
     // T 和 A 的大小
-    public final static int TIME_SIZE = 1;
-
     public final static int VALUE_SIZE = 4;
 
     public final static int VALUE_NUM = 16 * 1024;

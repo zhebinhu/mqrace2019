@@ -5,9 +5,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -67,11 +64,11 @@ public class ValueReader {
             }
             buffer.clear();
         }
-        long t = message.getT()-message.getA();
-        if(t>Integer.MAX_VALUE){
+        long t = message.getT() - message.getA();
+        if (t >= Integer.MAX_VALUE || t <= Integer.MIN_VALUE) {
             System.out.println("more than");
         }
-        buffer.putInt((int)(message.getT()-message.getA()));
+        buffer.putInt((int) (message.getT() - message.getA()));
         messageNum++;
     }
 
