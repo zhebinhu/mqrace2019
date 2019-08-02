@@ -19,24 +19,24 @@ public class TimeReader {
     /**
      * 文件通道
      */
-    private FileChannel fileChannel;
+    //private FileChannel fileChannel;
 
     /**
      * 堆内存
      */
-    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.PAGE_SIZE);
+    //private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.PAGE_SIZE);
 
-    private volatile boolean inited = false;
+    //private volatile boolean inited = false;
 
-    int i = 0;
+    //int i = 0;
 
-    Page page = new Page();
+    //Page page = new Page();
 
-    int k = 0;
+    //int k = 0;
 
-    int pageIndex = 0;
+    //int pageIndex = 0;
 
-    LRUCache<Integer, Page> pageCache = new LRUCache<>(Constants.CACHE_SIZE / Constants.PAGE_SIZE);
+    //LRUCache<Integer, Page> pageCache = new LRUCache<>(Constants.CACHE_SIZE / Constants.PAGE_SIZE);
 
     int cacheSize = 150000000;
 
@@ -86,18 +86,18 @@ public class TimeReader {
     }
 
     public void init() {
-        int remain = buffer.remaining();
-        pageIndex = -1;
-        page = null;
-        if (remain > 0) {
-            buffer.flip();
-            try {
-                fileChannel.write(buffer);
-                buffer.clear();
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
-            }
-        }
+//        int remain = buffer.remaining();
+//        pageIndex = -1;
+//        page = null;
+//        if (remain > 0) {
+//            buffer.flip();
+//            try {
+//                fileChannel.write(buffer);
+//                buffer.clear();
+//            } catch (IOException e) {
+//                e.printStackTrace(System.out);
+//            }
+//        }
     }
 
     public byte getTime(int offset) {
