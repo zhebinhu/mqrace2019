@@ -64,11 +64,11 @@ public class ValueReader {
             }
             buffer.clear();
         }
-        long t = message.getT() - message.getA();
+        long t = message.getA() - message.getT();
         if (t >= Integer.MAX_VALUE || t <= Integer.MIN_VALUE) {
             System.out.println("more than");
         }
-        buffer.putInt((int) (message.getT() - message.getA()));
+        buffer.putInt((int) (message.getA() - message.getT()));
         messageNum++;
     }
 
