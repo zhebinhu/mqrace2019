@@ -58,16 +58,20 @@ public class ValueReader {
 
     public void put(Message message) {
         int remain = buffer.remaining();
-        if (remain < Constants.DATA_SIZE) {
+        if (remain < Constants.VALUE_SIZE) {
             buffer.flip();
             try {
                 fileChannel.write(buffer);
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.out);
             }
             buffer.clear();
         }
-        buffer.putLong(message.getA());
+        long t = message.getT()-message.getA();
+        if(t>Integer.MAX_VALUE){
+            System.out.println("more than");
+        }
+        buffer.putInt((int)(message.getT()-message.getA()));
         messageNum++;
     }
 
@@ -84,7 +88,7 @@ public class ValueReader {
         }
     }
 
-    public long getValue(long index) {
+    public int getValue(int index) {
 
         if (!inited) {
             synchronized (this) {
@@ -109,7 +113,7 @@ public class ValueReader {
             buffer.flip();
         }
 
-        return buffer.getLong();
+        return buffer.getInt();
     }
 
 }

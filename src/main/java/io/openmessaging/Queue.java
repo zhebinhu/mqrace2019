@@ -18,7 +18,6 @@ public class Queue {
      */
     private int num;
 
-
     /**
      * 消息总数
      */
@@ -115,7 +114,7 @@ public class Queue {
             if (time > tMax) {
                 break;
             }
-            long value = valueReader.getValue(offsetA);
+            long value = time + valueReader.getValue(offsetA);
             if (value < aMin || value > aMax) {
                 offsetA++;
                 continue;
