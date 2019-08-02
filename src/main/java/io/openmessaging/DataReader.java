@@ -33,17 +33,17 @@ public class DataReader {
     /**
      * 消息总数
      */
-    private long messageNum = 0L;
+    private int messageNum = 0;
 
     /**
      * 缓存中最大消息
      */
-    private long bufferMaxIndex = -1L;
+    private int bufferMaxIndex = -1;
 
     /**
      * 缓存中最小消息
      */
-    private long bufferMinIndex = -1L;
+    private int bufferMinIndex = -1;
 
     private volatile boolean inited = false;
 
@@ -75,7 +75,12 @@ public class DataReader {
             }
             buffer.clear();
         }
-        buffer.put(message.getBody());
+        if (!canZip(dataTag, message.getBody())) {
+            dataTag = message.getBody();
+            dataTags.add(new DataTag(message.getBody(), messageNum));
+        }
+        zip(dataTag, message.getBody(), zipByte);
+        buffer.put(zipByte);
         messageNum++;
     }
 
@@ -90,9 +95,11 @@ public class DataReader {
                 e.printStackTrace(System.out);
             }
         }
+        System.out.println("Thread:" + num + " timeTagList size:" + dataTags.size());
+
     }
 
-    public void getData(long index, Message message) {
+    public void getData(int index, Message message) {
 
         if (!inited) {
             synchronized (this) {
@@ -132,28 +139,88 @@ public class DataReader {
         return diff < 5;
     }
 
-//    private byte[] zip(byte[] data) {
-//        int diff = 0;
-//        int i = 2;
-//        while (i < 34) {
-//            if (dataTag[i] != data[i]) {
-//                diff++;
-//                i = 4 - ((i - 2) % 4) + i;
-//            }
-//        }
-//        //return diff < 5;
-//    }
-//
-//    private byte[] unZip(byte[] dataTag) {
-//        int diff = 0;
-//        int i = 2;
-//        while (i < 34) {
-//            if (dataTag[i] != data[i]) {
-//                diff++;
-//                i = 4 - ((i - 2) % 4) + i;
-//            }
-//        }
-//        return diff < 5;
-//    }
+    private void zip(byte[] dataTag, byte[] data, byte[] zipByte) {
+        zipByte[0] = data[0];
+        zipByte[1] = data[1];
+        int i = 2;
+        byte bitmap = 0;
+        byte b = 1;
+        byte p = 3;
+        while (i < 34) {
+            if (dataTag[i] != data[i]) {
+                if (i < 6) {
+                    bitmap |= b;
+                    zipByte[p++] = data[2];
+                    zipByte[p++] = data[3];
+                    zipByte[p++] = data[4];
+                    zipByte[p++] = data[5];
+                    i = 6;
+                } else if (i < 10) {
+                    bitmap |= (b << 1);
+                    zipByte[p++] = data[6];
+                    zipByte[p++] = data[7];
+                    zipByte[p++] = data[8];
+                    zipByte[p++] = data[9];
+                    i = 10;
+                } else if (i < 14) {
+                    bitmap |= (b << 2);
+                    zipByte[p++] = data[10];
+                    zipByte[p++] = data[11];
+                    zipByte[p++] = data[12];
+                    zipByte[p++] = data[13];
+                    i = 14;
+                } else if (i < 18) {
+                    bitmap |= (b << 3);
+                    zipByte[p++] = data[14];
+                    zipByte[p++] = data[15];
+                    zipByte[p++] = data[16];
+                    zipByte[p++] = data[17];
+                    i = 18;
+                } else if (i < 22) {
+                    bitmap |= (b << 4);
+                    zipByte[p++] = data[18];
+                    zipByte[p++] = data[19];
+                    zipByte[p++] = data[20];
+                    zipByte[p++] = data[21];
+                    i = 22;
+                } else if (i < 26) {
+                    bitmap |= (b << 5);
+                    zipByte[p++] = data[22];
+                    zipByte[p++] = data[23];
+                    zipByte[p++] = data[24];
+                    zipByte[p++] = data[25];
+                    i = 26;
+                } else if (i < 30) {
+                    bitmap |= (b << 6);
+                    zipByte[p++] = data[26];
+                    zipByte[p++] = data[27];
+                    zipByte[p++] = data[28];
+                    zipByte[p++] = data[29];
+                    i = 30;
+                } else if (i < 34) {
+                    bitmap |= (b << 7);
+                    zipByte[p++] = data[30];
+                    zipByte[p++] = data[31];
+                    zipByte[p++] = data[32];
+                    zipByte[p++] = data[33];
+                    i = 34;
+                }
+            }
+        }
+        zipByte[2] = bitmap;
+    }
+
+    private void unZip(byte[] dataTag, byte[] zipData, byte[] data) {
+        data[0] = zipData[0];
+        data[1] = zipData[1];
+        int i = 3;
+        int j = 2;
+        int b = 1;
+        for (int k = 0; k < 8; k++) {
+            if ((zipData[2] & b << k) != 0) {
+
+            }
+        }
+    }
 
 }

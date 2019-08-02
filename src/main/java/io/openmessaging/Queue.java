@@ -57,10 +57,7 @@ public class Queue {
     }
 
     public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
-        if (!inited) {
-            System.out.println("Thread:" + num + " timeTagList size:" + timeTagList.size());
-            inited = true;
-        }
+
         List<Message> result = new ArrayList<>();
 
         if (timeTagList.isEmpty()) {
