@@ -171,7 +171,7 @@ public class DataReader {
             }
             i++;
         }
-        return diff < 5;
+        return diff < 4;
     }
 
     private void zip(byte[] dataTag, byte[] data, byte[] zipByte) {
