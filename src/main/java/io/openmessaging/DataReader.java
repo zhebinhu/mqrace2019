@@ -101,7 +101,6 @@ public class DataReader {
     }
 
     public void getData(int index, Message message) {
-
         if (!inited) {
             synchronized (this) {
                 if (!inited) {
@@ -138,6 +137,7 @@ public class DataReader {
 
         int thisIndex = Collections.binarySearch(dataTags, new DataTag(null, index));
         if (thisIndex >= 0) {
+            System.out.println("thisIndex:"+thisIndex);
             dataTag = dataTags.get(thisIndex).getData();
             message.setBody(dataTag);
             tagMinIndex = dataTags.get(thisIndex).getOffset();
@@ -150,6 +150,7 @@ public class DataReader {
         }
         if (thisIndex < 0) {
             thisIndex = Math.max(0, -(thisIndex + 2));
+            System.out.println("thisIndex2:"+thisIndex);
             dataTag = dataTags.get(thisIndex).getData();
             unZip(dataTag, zipByte, message.getBody());
             tagMinIndex = dataTags.get(thisIndex).getOffset();
