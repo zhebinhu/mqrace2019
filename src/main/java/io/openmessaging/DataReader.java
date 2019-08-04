@@ -139,7 +139,7 @@ public class DataReader {
         int thisIndex = Collections.binarySearch(dataTags, new DataTag(null, index));
         if (thisIndex >= 0) {
             dataTag = dataTags.get(thisIndex).getData();
-            message.setBody(dataTags.get(thisIndex).getData());
+            message.setBody(dataTag);
             tagMinIndex = dataTags.get(thisIndex).getOffset();
             if (thisIndex == dataTags.size() - 1) {
                 tagMaxIndex = messageNum;
@@ -150,6 +150,8 @@ public class DataReader {
         }
         if (thisIndex < 0) {
             thisIndex = Math.max(0, -(thisIndex + 2));
+            dataTag = dataTags.get(thisIndex).getData();
+            unZip(dataTag, zipByte, message.getBody());
             tagMinIndex = dataTags.get(thisIndex).getOffset();
             if (thisIndex == dataTags.size() - 1) {
                 tagMaxIndex = messageNum;
@@ -158,8 +160,7 @@ public class DataReader {
             }
         }
 
-        dataTag = dataTags.get(thisIndex).getData();
-        unZip(dataTag, zipByte, message.getBody());
+
     }
 
     private boolean canZip(byte[] dataTag, byte[] data) {
