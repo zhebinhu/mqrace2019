@@ -50,7 +50,7 @@ public class DataReader {
 
     private byte[] zipByte = new byte[Constants.DATA_SIZE];
 
-    private byte[] dataTag = new byte[34];
+    private byte[] dataTag;
 
     private List<DataTag> dataTags = new ArrayList<>();
 
@@ -72,12 +72,13 @@ public class DataReader {
             try {
                 fileChannel.write(buffer);
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.out);
             }
             buffer.clear();
         }
         if (dataTags.isEmpty() || !canZip(dataTag, message.getBody())) {
-            dataTag = message.getBody();
+            dataTag = new byte[34];
+            System.arraycopy(message.getBody(), 0, dataTag, 0, 34);
             dataTags.add(new DataTag(message.getBody(), messageNum));
         }
         zip(dataTag, message.getBody(), zipByte);
@@ -110,7 +111,7 @@ public class DataReader {
             }
         }
         if (index == tagMinIndex) {
-            System.arraycopy(dataTag,0,message.getBody(),0,Constants.DATA_SIZE);
+            System.arraycopy(dataTag, 0, message.getBody(), 0, Constants.DATA_SIZE);
             return;
         }
 
@@ -138,7 +139,7 @@ public class DataReader {
         int thisIndex = Collections.binarySearch(dataTags, new DataTag(null, index));
         if (thisIndex >= 0) {
             dataTag = dataTags.get(thisIndex).getData();
-            System.arraycopy(dataTag,0,message.getBody(),0,Constants.DATA_SIZE);
+            System.arraycopy(dataTag, 0, message.getBody(), 0, Constants.DATA_SIZE);
             tagMinIndex = dataTags.get(thisIndex).getOffset();
             if (thisIndex == dataTags.size() - 1) {
                 tagMaxIndex = messageNum;
@@ -159,7 +160,6 @@ public class DataReader {
             }
         }
 
-
     }
 
     private boolean canZip(byte[] dataTag, byte[] data) {
@@ -173,16 +173,16 @@ public class DataReader {
                 i++;
             }
         }
-        return diff < 3;
+        return diff < 2;
     }
 
     private void zip(byte[] dataTag, byte[] data, byte[] zipByte) {
         zipByte[0] = data[0];
         zipByte[1] = data[1];
         int i = 2;
-        int bitmap = 0;
-        int b = 1;
-        int p = 3;
+        byte bitmap = 0;
+        byte b = 1;
+        byte p = 3;
         while (i < 34) {
             if (dataTag[i] != data[i]) {
                 int j = (i - 2) / 4;
@@ -196,7 +196,7 @@ public class DataReader {
                 i++;
             }
         }
-        zipByte[2] = (byte) bitmap;
+        zipByte[2] = bitmap;
     }
 
     private void unZip(byte[] dataTag, byte[] zipData, byte[] data) {
