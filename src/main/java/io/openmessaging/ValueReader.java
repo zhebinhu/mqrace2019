@@ -23,7 +23,7 @@ public class ValueReader {
     /**
      * 堆外内存
      */
-    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.VALUE_SIZE * Constants.VALUE_NUM);
+    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.VALUE_PAGE_SIZE);
 
     /**
      * 消息总数
@@ -87,7 +87,7 @@ public class ValueReader {
             buffer.clear();
         }
 
-        buffer.putInt((int) (message.getA() - message.getT()));
+        buffer.putInt((int) t);
         messageNum++;
     }
 
@@ -143,6 +143,9 @@ public class ValueReader {
             try {
                 buffer.clear();
                 fileChannel.read(buffer, pageIndex * Constants.VALUE_PAGE_SIZE);
+                if (buffer.limit() != Constants.VALUE_PAGE_SIZE) {
+                    System.out.println("buffer size=" + buffer.limit());
+                }
                 buffer.flip();
             } catch (IOException e) {
                 e.printStackTrace(System.out);
@@ -151,10 +154,10 @@ public class ValueReader {
             if (valuePage == null) {
                 valuePage = new ValuePage();
             }
-            int i = 0;
+
+            int p = 0;
             while (buffer.hasRemaining()) {
-                valuePage.ints[i] = buffer.getInt();
-                i++;
+                valuePage.ints[p++] = buffer.getInt();
             }
             pageCache.put(pageIndex, valuePage);
         }
