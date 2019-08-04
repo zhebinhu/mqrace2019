@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.concurrent.*;
 
 /**
@@ -30,29 +33,26 @@ public class DataReader {
     /**
      * 消息总数
      */
-    private int messageNum = 0;
+    private long messageNum = 0L;
 
     /**
      * 缓存中最大消息
      */
-    private int bufferMaxIndex = -1;
+    private long bufferMaxIndex = -1L;
 
     /**
      * 缓存中最小消息
      */
-    private int bufferMinIndex = -1;
-
-    private int tagMinIndex = -1;
-
-    private int tagMaxIndex = -1;
+    private long bufferMinIndex = -1L;
 
     private volatile boolean inited = false;
 
-    private byte[] zipByte = new byte[Constants.DATA_SIZE];
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    private byte[] dataTag;
-
-    private List<DataTag> dataTags = new ArrayList<>();
+    /**
+     * 异步put结果
+     */
+    private Future putFuture;
 
     public DataReader(int num) {
         this.num = num;
@@ -72,17 +72,11 @@ public class DataReader {
             try {
                 fileChannel.write(buffer);
             } catch (IOException e) {
-                e.printStackTrace(System.out);
+                e.printStackTrace();
             }
             buffer.clear();
         }
-        if (dataTags.isEmpty() || !canZip(dataTag, message.getBody())) {
-            dataTag = new byte[34];
-            System.arraycopy(message.getBody(), 0, dataTag, 0, 34);
-            dataTags.add(new DataTag(message.getBody(), messageNum));
-        }
-        zip(dataTag, message.getBody(), zipByte);
-        buffer.put(zipByte);
+        buffer.put(message.getBody());
         messageNum++;
     }
 
@@ -97,11 +91,10 @@ public class DataReader {
                 e.printStackTrace(System.out);
             }
         }
-        System.out.println("Thread:" + num + " timeTagList size:" + dataTags.size());
-
     }
 
-    public void getData(int index, Message message) {
+    public void getData(long index, Message message) {
+
         if (!inited) {
             synchronized (this) {
                 if (!inited) {
@@ -110,13 +103,9 @@ public class DataReader {
                 }
             }
         }
-        if (index == tagMinIndex) {
-            System.arraycopy(dataTag, 0, message.getBody(), 0, 34);
-            return;
-        }
 
         if (index >= bufferMinIndex && index < bufferMaxIndex) {
-            buffer.position((index - bufferMinIndex) * Constants.DATA_SIZE);
+            buffer.position((int) (index - bufferMinIndex) * Constants.DATA_SIZE);
         } else {
             buffer.clear();
             try {
@@ -129,95 +118,7 @@ public class DataReader {
             buffer.flip();
         }
 
-        buffer.get(zipByte);
-
-        if (index > tagMinIndex && index < tagMaxIndex) {
-            unZip(dataTag, zipByte, message.getBody());
-            return;
-        }
-
-        int thisIndex = Collections.binarySearch(dataTags, new DataTag(null, index));
-        if (thisIndex >= 0) {
-            dataTag = dataTags.get(thisIndex).getData();
-            System.arraycopy(dataTag, 0, message.getBody(), 0, 34);
-            tagMinIndex = dataTags.get(thisIndex).getOffset();
-            if (thisIndex == dataTags.size() - 1) {
-                tagMaxIndex = messageNum;
-            } else {
-                tagMaxIndex = dataTags.get(thisIndex + 1).getOffset();
-            }
-            return;
-        }
-        if (thisIndex < 0) {
-            thisIndex = Math.max(0, -(thisIndex + 2));
-            dataTag = dataTags.get(thisIndex).getData();
-            unZip(dataTag, zipByte, message.getBody());
-            tagMinIndex = dataTags.get(thisIndex).getOffset();
-            if (thisIndex == dataTags.size() - 1) {
-                tagMaxIndex = messageNum;
-            } else {
-                tagMaxIndex = dataTags.get(thisIndex + 1).getOffset();
-            }
-        }
-
-    }
-
-    private boolean canZip(byte[] dataTag, byte[] data) {
-        int diff = 0;
-        int i = 2;
-        while (i < 34) {
-            if (dataTag[i] != data[i]) {
-                diff++;
-                i = 4 - ((i - 2) % 4) + i;
-            } else {
-                i++;
-            }
-        }
-        return diff < 3;
-    }
-
-    private void zip(byte[] dataTag, byte[] data, byte[] zipByte) {
-        zipByte[0] = data[0];
-        zipByte[1] = data[1];
-        int i = 2;
-        byte bitmap = 0;
-        byte b = 1;
-        byte p = 3;
-        while (i < 34) {
-            if (dataTag[i] != data[i]) {
-                int j = (i - 2) / 4;
-                bitmap |= (b << j);
-                zipByte[p++] = data[2 + 4 * j];
-                zipByte[p++] = data[3 + 4 * j];
-                zipByte[p++] = data[4 + 4 * j];
-                zipByte[p++] = data[5 + 4 * j];
-                i = 4 - ((i - 2) % 4) + i;
-            } else {
-                i++;
-            }
-        }
-        zipByte[2] = bitmap;
-    }
-
-    private void unZip(byte[] dataTag, byte[] zipData, byte[] data) {
-        data[0] = zipData[0];
-        data[1] = zipData[1];
-        byte i = 3;
-        byte j = 2;
-        byte b = 1;
-        for (byte k = 0; k < 8; k++) {
-            if ((zipData[2] & (b << k)) != 0) {
-                data[j++] = zipData[i++];
-                data[j++] = zipData[i++];
-                data[j++] = zipData[i++];
-                data[j++] = zipData[i++];
-            } else {
-                data[j++] = dataTag[k * 4 + 2];
-                data[j++] = dataTag[k * 4 + 3];
-                data[j++] = dataTag[k * 4 + 4];
-                data[j++] = dataTag[k * 4 + 5];
-            }
-        }
+        buffer.get(message.getBody());
     }
 
 }
