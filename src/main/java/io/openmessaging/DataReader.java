@@ -48,7 +48,7 @@ public class DataReader {
 
     private volatile boolean inited = false;
 
-    byte[] zipByte = new byte[19];
+    byte[] zipByte = new byte[11];
 
     byte[] dataTag = new byte[34];
 
@@ -116,7 +116,7 @@ public class DataReader {
         }
 
         if (index >= bufferMinIndex && index < bufferMaxIndex) {
-            buffer.position((int) (index - bufferMinIndex) * Constants.DATA_SIZE);
+            buffer.position((index - bufferMinIndex) * Constants.DATA_SIZE);
         } else {
             buffer.clear();
             try {
@@ -171,7 +171,7 @@ public class DataReader {
             }
             i++;
         }
-        return diff < 4;
+        return diff < 3;
     }
 
     private void zip(byte[] dataTag, byte[] data, byte[] zipByte) {
@@ -240,8 +240,9 @@ public class DataReader {
                     zipByte[p++] = data[33];
                     i = 34;
                 }
+            }else {
+                i++;
             }
-            i++;
         }
         zipByte[2] = bitmap;
     }
@@ -253,7 +254,7 @@ public class DataReader {
         int j = 2;
         int b = 1;
         for (int k = 0; k < 8; k++) {
-            if ((zipData[2] & b << k) != 0) {
+            if ((zipData[2] & (b << k)) != 0) {
                 data[j++] = zipData[i++];
                 data[j++] = zipData[i++];
                 data[j++] = zipData[i++];

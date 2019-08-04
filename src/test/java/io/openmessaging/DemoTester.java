@@ -14,7 +14,7 @@ public class DemoTester {
     public static void main(String args[]) throws Exception {
         //评测相关配置
         //发送阶段的发送数量，也即发送阶段必须要在规定时间内把这些消息发送完毕方可
-        int msgNum  = 200000;
+        int msgNum  = 200000000;
         //发送阶段的最大持续时间，也即在该时间内，如果消息依然没有发送完毕，则退出评测
         int sendTime = 10 * 60 * 1000;
         //查询阶段的最大持续时间，也即在该时间内，如果消息依然没有消费完毕，则退出评测
@@ -27,9 +27,9 @@ public class DemoTester {
         //查询的线程数量
         int checkTsNum = 12;
         // 每次查询消息的最大跨度
-        int maxMsgCheckSize = 500;
+        int maxMsgCheckSize = 500000;
         // 每次查询求平均的最大跨度
-        int maxValueCheckSize = 500;
+        int maxValueCheckSize = 500000;
 
         MessageStore messageStore = null;
 
@@ -271,24 +271,24 @@ public class DemoTester {
 
                     long res = 0;
                     long count = 0;
-//                    if (evenIndex1 <= evenIndex2) {
-//                        //顺序数之和
-//                        long sum1 = ((long)(index2 + index1) * (index2 - index1 + 1)) >>> 1;
-//                        //重复的偶数之和
-//                        long sum2 = ((long)(evenIndex1 + evenIndex2) * ((evenIndex2 - evenIndex1 >>> 1) + 1)) >>> 1;
-//                        long sum = sum1 + sum2;
-//                        count = index2 - index1 + 1 + (evenIndex2 - evenIndex1 >>> 1) + 1;
-//                        res = sum / count;
-//                    } else {
-//                        //顺序数之和
-//                        long sum = (index2 + index1) * (index2 - index1 + 1) >>> 1;
-//                        count = index2 - index1 + 1;
-//                        res = sum / count;
-//                    }
-//
-//                    if (res != val) {
-//                        checkError(aIndex1, aIndex2, tIndex1, tIndex2, res, val);
-//                    }
+                    if (evenIndex1 <= evenIndex2) {
+                        //顺序数之和
+                        long sum1 = ((long)(index2 + index1) * (index2 - index1 + 1)) >>> 1;
+                        //重复的偶数之和
+                        long sum2 = ((long)(evenIndex1 + evenIndex2) * ((evenIndex2 - evenIndex1 >>> 1) + 1)) >>> 1;
+                        long sum = sum1 + sum2;
+                        count = index2 - index1 + 1 + (evenIndex2 - evenIndex1 >>> 1) + 1;
+                        res = sum / count;
+                    } else {
+                        //顺序数之和
+                        long sum = (index2 + index1) * (index2 - index1 + 1) >>> 1;
+                        count = index2 - index1 + 1;
+                        res = sum / count;
+                    }
+
+                    if (res != val) {
+                        checkError(aIndex1, aIndex2, tIndex1, tIndex2, res, val);
+                    }
 
                     numCounter.getAndAdd(count);
                 } catch (Throwable t) {
