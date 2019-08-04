@@ -28,7 +28,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
-    private Set<Thread> threadSet = new HashSet<>();
+    //private Set<Thread> threadSet = new HashSet<>();
 
     @Override
     public void put(Message message) {
@@ -66,10 +66,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (messagePoolThreadLocal.get() == null) {
                 messagePoolThreadLocal.set(new MessagePool());
             }
-            if (!threadSet.contains(Thread.currentThread())) {
-                threadSet.add(Thread.currentThread());
-                System.out.println("get message threads:" + threadSet.size());
-            }
+//            if (!threadSet.contains(Thread.currentThread())) {
+//                threadSet.add(Thread.currentThread());
+//                System.out.println("get message threads:" + threadSet.size());
+//            }
             //long starttime = System.currentTimeMillis();
             result = forkJoinPool1.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
             //            List<List<Message>> messageLists = new ArrayList<>();

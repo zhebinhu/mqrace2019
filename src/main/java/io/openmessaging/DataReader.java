@@ -48,11 +48,11 @@ public class DataReader {
 
     private volatile boolean inited = false;
 
-    byte[] zipByte = new byte[11];
+    private byte[] zipByte = new byte[Constants.DATA_SIZE];
 
-    byte[] dataTag = new byte[34];
+    private byte[] dataTag = new byte[34];
 
-    List<DataTag> dataTags = new ArrayList<>();
+    private List<DataTag> dataTags = new ArrayList<>();
 
     public DataReader(int num) {
         this.num = num;
@@ -168,8 +168,9 @@ public class DataReader {
             if (dataTag[i] != data[i]) {
                 diff++;
                 i = 4 - ((i - 2) % 4) + i;
+            } else {
+                i++;
             }
-            i++;
         }
         return diff < 3;
     }
@@ -183,64 +184,14 @@ public class DataReader {
         byte p = 3;
         while (i < 34) {
             if (dataTag[i] != data[i]) {
-                if (i < 6) {
-                    bitmap |= b;
-                    zipByte[p++] = data[2];
-                    zipByte[p++] = data[3];
-                    zipByte[p++] = data[4];
-                    zipByte[p++] = data[5];
-                    i = 6;
-                } else if (i < 10) {
-                    bitmap |= (b << 1);
-                    zipByte[p++] = data[6];
-                    zipByte[p++] = data[7];
-                    zipByte[p++] = data[8];
-                    zipByte[p++] = data[9];
-                    i = 10;
-                } else if (i < 14) {
-                    bitmap |= (b << 2);
-                    zipByte[p++] = data[10];
-                    zipByte[p++] = data[11];
-                    zipByte[p++] = data[12];
-                    zipByte[p++] = data[13];
-                    i = 14;
-                } else if (i < 18) {
-                    bitmap |= (b << 3);
-                    zipByte[p++] = data[14];
-                    zipByte[p++] = data[15];
-                    zipByte[p++] = data[16];
-                    zipByte[p++] = data[17];
-                    i = 18;
-                } else if (i < 22) {
-                    bitmap |= (b << 4);
-                    zipByte[p++] = data[18];
-                    zipByte[p++] = data[19];
-                    zipByte[p++] = data[20];
-                    zipByte[p++] = data[21];
-                    i = 22;
-                } else if (i < 26) {
-                    bitmap |= (b << 5);
-                    zipByte[p++] = data[22];
-                    zipByte[p++] = data[23];
-                    zipByte[p++] = data[24];
-                    zipByte[p++] = data[25];
-                    i = 26;
-                } else if (i < 30) {
-                    bitmap |= (b << 6);
-                    zipByte[p++] = data[26];
-                    zipByte[p++] = data[27];
-                    zipByte[p++] = data[28];
-                    zipByte[p++] = data[29];
-                    i = 30;
-                } else if (i < 34) {
-                    bitmap |= (b << 7);
-                    zipByte[p++] = data[30];
-                    zipByte[p++] = data[31];
-                    zipByte[p++] = data[32];
-                    zipByte[p++] = data[33];
-                    i = 34;
-                }
-            }else {
+                int j = (i - 2) / 4;
+                bitmap |= (b << j);
+                zipByte[p++] = data[2 + 4 * j];
+                zipByte[p++] = data[3 + 4 * j];
+                zipByte[p++] = data[4 + 4 * j];
+                zipByte[p++] = data[5 + 4 * j];
+                i = 4 - ((i - 2) % 4) + i;
+            } else {
                 i++;
             }
         }
