@@ -65,6 +65,9 @@ public class ValueReader {
 
     public void put(Message message) {
         long t = message.getA() - message.getT();
+        if (t < Integer.MIN_VALUE || t > Integer.MAX_VALUE) {
+            System.out.println("value full");
+        }
         if (i == Constants.VALUE_PAGE_SIZE) {
             pageCache.put(k, valuePage);
             k++;
@@ -142,10 +145,8 @@ public class ValueReader {
         if (valuePage == null) {
             try {
                 buffer.clear();
-                fileChannel.read(buffer, pageIndex * Constants.VALUE_PAGE_SIZE);
-                if (buffer.limit() != Constants.VALUE_PAGE_SIZE) {
-                    System.out.println("buffer size=" + buffer.limit());
-                }
+                fileChannel.read(buffer, pageIndex * Constants.VALUE_PAGE_SIZE * Constants.VALUE_SIZE);
+                System.out.println("buffer size=" + buffer.limit() + "pageIndex=" + pageIndex);
                 buffer.flip();
             } catch (IOException e) {
                 e.printStackTrace(System.out);
