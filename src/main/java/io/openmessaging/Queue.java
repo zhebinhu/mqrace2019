@@ -120,6 +120,10 @@ public class Queue {
             message.setT(time);
             message.setA(value);
             result.add(message);
+            long data = ((message.getBody()[4] + 256) % 256) * 256 * 256 * 256 + ((message.getBody()[5] + 256) % 256) * 256 * 256 + ((message.getBody()[6] + 256) % 256) * 256 + ((message.getBody()[7] + 256) % 256);
+            if (data != time) {
+                System.out.println("e");
+            }
             offsetA++;
         }
         return result;

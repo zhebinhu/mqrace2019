@@ -110,7 +110,7 @@ public class DataReader {
             }
         }
         if (index == tagMinIndex) {
-            message.setBody(dataTag);
+            System.arraycopy(dataTag,0,message.getBody(),0,Constants.DATA_SIZE);
             return;
         }
 
@@ -137,9 +137,8 @@ public class DataReader {
 
         int thisIndex = Collections.binarySearch(dataTags, new DataTag(null, index));
         if (thisIndex >= 0) {
-            System.out.println("thisIndex:"+thisIndex);
             dataTag = dataTags.get(thisIndex).getData();
-            message.setBody(dataTag);
+            System.arraycopy(dataTag,0,message.getBody(),0,Constants.DATA_SIZE);
             tagMinIndex = dataTags.get(thisIndex).getOffset();
             if (thisIndex == dataTags.size() - 1) {
                 tagMaxIndex = messageNum;
@@ -150,7 +149,6 @@ public class DataReader {
         }
         if (thisIndex < 0) {
             thisIndex = Math.max(0, -(thisIndex + 2));
-            System.out.println("thisIndex2:"+thisIndex);
             dataTag = dataTags.get(thisIndex).getData();
             unZip(dataTag, zipByte, message.getBody());
             tagMinIndex = dataTags.get(thisIndex).getOffset();
@@ -182,9 +180,9 @@ public class DataReader {
         zipByte[0] = data[0];
         zipByte[1] = data[1];
         int i = 2;
-        byte bitmap = 0;
-        byte b = 1;
-        byte p = 3;
+        int bitmap = 0;
+        int b = 1;
+        int p = 3;
         while (i < 34) {
             if (dataTag[i] != data[i]) {
                 int j = (i - 2) / 4;
@@ -198,7 +196,7 @@ public class DataReader {
                 i++;
             }
         }
-        zipByte[2] = bitmap;
+        zipByte[2] = (byte) bitmap;
     }
 
     private void unZip(byte[] dataTag, byte[] zipData, byte[] data) {
@@ -208,7 +206,7 @@ public class DataReader {
         byte j = 2;
         byte b = 1;
         for (byte k = 0; k < 8; k++) {
-            if ((zipData[2] & 0xff & (b << k)) != 0) {
+            if ((zipData[2] & (b << k)) != 0) {
                 data[j++] = zipData[i++];
                 data[j++] = zipData[i++];
                 data[j++] = zipData[i++];
