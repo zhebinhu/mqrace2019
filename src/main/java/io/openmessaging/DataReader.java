@@ -111,7 +111,7 @@ public class DataReader {
             }
         }
         if (index == tagMinIndex) {
-            System.arraycopy(dataTag, 0, message.getBody(), 0, Constants.DATA_SIZE);
+            System.arraycopy(dataTag, 0, message.getBody(), 0, 34);
             return;
         }
 
@@ -139,7 +139,7 @@ public class DataReader {
         int thisIndex = Collections.binarySearch(dataTags, new DataTag(null, index));
         if (thisIndex >= 0) {
             dataTag = dataTags.get(thisIndex).getData();
-            System.arraycopy(dataTag, 0, message.getBody(), 0, Constants.DATA_SIZE);
+            System.arraycopy(dataTag, 0, message.getBody(), 0, 34);
             tagMinIndex = dataTags.get(thisIndex).getOffset();
             if (thisIndex == dataTags.size() - 1) {
                 tagMaxIndex = messageNum;
@@ -173,7 +173,7 @@ public class DataReader {
                 i++;
             }
         }
-        return diff < 2;
+        return diff < 3;
     }
 
     private void zip(byte[] dataTag, byte[] data, byte[] zipByte) {
