@@ -65,9 +65,6 @@ public class ValueReader {
 
     public void put(Message message) {
         long t = message.getA() - message.getT();
-        if (t < Integer.MIN_VALUE || t > Integer.MAX_VALUE) {
-            System.out.println("value full");
-        }
         if (i == Constants.VALUE_PAGE_SIZE) {
             pageCache.put(k, valuePage);
             k++;
