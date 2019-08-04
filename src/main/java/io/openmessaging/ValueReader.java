@@ -143,7 +143,7 @@ public class ValueReader {
             try {
                 buffer.clear();
                 fileChannel.read(buffer, pageIndex * Constants.VALUE_PAGE_SIZE * Constants.VALUE_SIZE);
-                System.out.println("buffer size=" + buffer.limit() + "pageIndex=" + pageIndex);
+                //System.out.println("buffer size=" + buffer.limit() + "pageIndex=" + pageIndex);
                 buffer.flip();
             } catch (IOException e) {
                 e.printStackTrace(System.out);
