@@ -42,6 +42,16 @@ public class ValueReader {
 
     private volatile boolean inited = false;
 
+    int i = 0;
+
+    ValuePage valuePage = new ValuePage();
+
+    int k = 0;
+
+    int pageIndex = 0;
+
+    LRUCache<Integer, ValuePage> pageCache = new LRUCache<>(Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE);
+
     public ValueReader(int num) {
         this.num = num;
         RandomAccessFile memoryMappedFile = null;
@@ -54,6 +64,18 @@ public class ValueReader {
     }
 
     public void put(Message message) {
+        long t = message.getA() - message.getT();
+        if (i == Constants.VALUE_PAGE_SIZE) {
+            pageCache.put(k, valuePage);
+            k++;
+            valuePage = new ValuePage();
+            i = 0;
+        }
+        if (k < Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE) {
+            valuePage.ints[i] = (int) t;
+            i++;
+        }
+
         int remain = buffer.remaining();
         if (remain < Constants.VALUE_SIZE) {
             buffer.flip();
@@ -64,16 +86,15 @@ public class ValueReader {
             }
             buffer.clear();
         }
-        long t = message.getA() - message.getT();
-        if (t >= Integer.MAX_VALUE || t <= Integer.MIN_VALUE) {
-            System.out.println("more than");
-        }
+
         buffer.putInt((int) (message.getA() - message.getT()));
         messageNum++;
     }
 
     public void init() {
         int remain = buffer.remaining();
+        pageIndex = -1;
+        valuePage = null;
         if (remain > 0) {
             buffer.flip();
             try {
@@ -96,21 +117,49 @@ public class ValueReader {
             }
         }
 
-        if (index >= bufferMinIndex && index < bufferMaxIndex) {
-            buffer.position((int) (index - bufferMinIndex) * Constants.VALUE_SIZE);
-        } else {
-            buffer.clear();
+        //        if (index >= bufferMinIndex && index < bufferMaxIndex) {
+        //            buffer.position((int) (index - bufferMinIndex) * Constants.VALUE_SIZE);
+        //        } else {
+        //            buffer.clear();
+        //            try {
+        //                fileChannel.read(buffer, index * Constants.VALUE_SIZE);
+        //                bufferMinIndex = index;
+        //                bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
+        //            } catch (IOException e) {
+        //                e.printStackTrace(System.out);
+        //            }
+        //            buffer.flip();
+        //        }
+        //
+        //        return buffer.getInt();
+        if (pageIndex == index / Constants.VALUE_PAGE_SIZE) {
+            return valuePage.ints[index % Constants.VALUE_PAGE_SIZE];
+        }
+        pageIndex = index / Constants.VALUE_PAGE_SIZE;
+
+        valuePage = pageCache.get(pageIndex);
+
+        if (valuePage == null) {
             try {
-                fileChannel.read(buffer, index * Constants.VALUE_SIZE);
-                bufferMinIndex = index;
-                bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
+                buffer.clear();
+                fileChannel.read(buffer, pageIndex * Constants.VALUE_PAGE_SIZE);
+                buffer.flip();
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
-            buffer.flip();
+            valuePage = pageCache.getOldest();
+            if (valuePage == null) {
+                valuePage = new ValuePage();
+            }
+            int i = 0;
+            while (buffer.hasRemaining()) {
+                valuePage.ints[i] = buffer.getInt();
+                i++;
+            }
+            pageCache.put(pageIndex, valuePage);
         }
 
-        return buffer.getInt();
+        return valuePage.ints[index % Constants.VALUE_PAGE_SIZE];
     }
 
 }

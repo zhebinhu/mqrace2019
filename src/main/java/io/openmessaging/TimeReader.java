@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -24,19 +23,19 @@ public class TimeReader {
     /**
      * 堆内存
      */
-    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.PAGE_SIZE);
+    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.TIME_PAGE_SIZE);
 
     private volatile boolean inited = false;
 
     int i = 0;
 
-    Page page = new Page();
+    TimePage timePage = new TimePage();
 
     int k = 0;
 
     int pageIndex = 0;
 
-    LRUCache<Integer, Page> pageCache = new LRUCache<>(Constants.CACHE_SIZE / Constants.PAGE_SIZE);
+    LRUCache<Integer, TimePage> pageCache = new LRUCache<>(Constants.CACHE_SIZE / Constants.TIME_PAGE_SIZE);
 
     public TimeReader(int num) {
         this.num = num;
@@ -50,14 +49,14 @@ public class TimeReader {
     }
 
     public void put(byte t) {
-        if (i == Constants.PAGE_SIZE) {
-            pageCache.put(k, page);
+        if (i == Constants.TIME_PAGE_SIZE) {
+            pageCache.put(k, timePage);
             k++;
-            page = new Page();
+            timePage = new TimePage();
             i = 0;
         }
-        if (k < Constants.CACHE_SIZE / Constants.PAGE_SIZE) {
-            page.bytes[i] = t;
+        if (k < Constants.CACHE_SIZE / Constants.TIME_PAGE_SIZE) {
+            timePage.bytes[i] = t;
             i++;
         }
 
@@ -76,7 +75,7 @@ public class TimeReader {
     public void init() {
         int remain = buffer.remaining();
         pageIndex = -1;
-        page = null;
+        timePage = null;
         if (remain > 0) {
             buffer.flip();
             try {
@@ -97,31 +96,30 @@ public class TimeReader {
                 }
             }
         }
-        if (pageIndex == offset / Constants.PAGE_SIZE) {
-            return page.bytes[offset % Constants.PAGE_SIZE];
+        if (pageIndex == offset / Constants.TIME_PAGE_SIZE) {
+            return timePage.bytes[offset % Constants.TIME_PAGE_SIZE];
         }
-        pageIndex = offset / Constants.PAGE_SIZE;
+        pageIndex = offset / Constants.TIME_PAGE_SIZE;
 
-        page = pageCache.get(pageIndex);
+        timePage = pageCache.get(pageIndex);
 
-        if (page == null) {
+        if (timePage == null) {
             try {
                 buffer.clear();
-                fileChannel.read(buffer, pageIndex * Constants.PAGE_SIZE);
+                fileChannel.read(buffer, pageIndex * Constants.TIME_PAGE_SIZE);
                 buffer.flip();
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
-            page = pageCache.getOldest();
-            if (page == null) {
-                page = new Page();
+            timePage = pageCache.getOldest();
+            if (timePage == null) {
+                timePage = new TimePage();
             }
-            buffer.get(page.bytes, 0, buffer.limit());
-            pageCache.put(pageIndex, page);
+            buffer.get(timePage.bytes, 0, buffer.limit());
+            pageCache.put(pageIndex, timePage);
         }
 
-        offset = offset % Constants.PAGE_SIZE;
-        return page.bytes[offset % Constants.PAGE_SIZE];
+        return timePage.bytes[offset % Constants.TIME_PAGE_SIZE];
     }
 
 }
