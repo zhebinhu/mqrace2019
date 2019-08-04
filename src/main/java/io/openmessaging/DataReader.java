@@ -138,6 +138,7 @@ public class DataReader {
 
         int thisIndex = Collections.binarySearch(dataTags, new DataTag(null, index));
         if (thisIndex >= 0) {
+            dataTag = dataTags.get(thisIndex).getData();
             message.setBody(dataTags.get(thisIndex).getData());
             tagMinIndex = dataTags.get(thisIndex).getOffset();
             if (thisIndex == dataTags.size() - 1) {
@@ -201,11 +202,11 @@ public class DataReader {
     private void unZip(byte[] dataTag, byte[] zipData, byte[] data) {
         data[0] = zipData[0];
         data[1] = zipData[1];
-        int i = 3;
-        int j = 2;
-        int b = 1;
-        for (int k = 0; k < 8; k++) {
-            if ((zipData[2] & (b << k)) != 0) {
+        byte i = 3;
+        byte j = 2;
+        byte b = 1;
+        for (byte k = 0; k < 8; k++) {
+            if ((zipData[2] & 0xff & (b << k)) != 0) {
                 data[j++] = zipData[i++];
                 data[j++] = zipData[i++];
                 data[j++] = zipData[i++];
