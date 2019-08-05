@@ -59,6 +59,10 @@ public class ValueReader {
 
     int k = 0;
 
+    int offsetA = -1;
+
+    int offsetB = -1;
+
     LRUCache<Integer, ValuePage> pageCache = new LRUCache<>(Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE);
 
     public ValueReader(int num) {
@@ -138,12 +142,19 @@ public class ValueReader {
                 }
             }
         }
-
-        int thisIndex = Collections.binarySearch(valueTagList, new ValueTag(0, offset));
-        if (thisIndex < 0) {
-            thisIndex = Math.max(0, -(thisIndex + 2));
+        if (offset < offsetA || offset >= offsetB) {
+            int thisIndex = Collections.binarySearch(valueTagList, new ValueTag(0, offset));
+            if (thisIndex < 0) {
+                thisIndex = Math.max(0, -(thisIndex + 2));
+            }
+            tag = valueTagList.get(thisIndex).getValue();
+            offsetA = valueTagList.get(thisIndex).getOffset();
+            if (thisIndex < valueTagList.size() - 1) {
+                offsetB = valueTagList.get(thisIndex + 1).getOffset();
+            } else {
+                offsetB = messageNum;
+            }
         }
-        tag = valueTagList.get(thisIndex).getValue();
 
         if (pageIndex == offset / 2 / Constants.VALUE_PAGE_SIZE) {
             halfByte.setByte(valuePage.bytes[(offset / 2) % Constants.VALUE_PAGE_SIZE]);
