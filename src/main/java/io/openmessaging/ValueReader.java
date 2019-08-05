@@ -69,9 +69,10 @@ public class ValueReader {
             }
             buffer.clear();
         }
-        if (tag == -1 || value > tag + 128) {
+        if (tag == -1 || value > tag + 64) {
             tag = value;
             count++;
+            System.out.println("thread" + num + ":tag=" + tag);
         }
         buffer.putInt(value);
         messageNum++;
