@@ -34,7 +34,16 @@ public class Queue {
 
     private TimeTag timeTag = new TimeTag(0, 0);
 
-    private boolean inited = false;
+    /**
+     * 合并相关参数
+     */
+    private int mergeOffset = 0;
+
+    private long mergeTimeTag = -1;
+
+    private int mergeOffsetB;
+
+    private int mergeTagIndex = -1;
 
     public Queue(int num) {
         this.num = num;
@@ -191,6 +200,30 @@ public class Queue {
             offsetA++;
         }
         return result;
+    }
+
+    /**
+     * 用于合并
+     *
+     * @return
+     */
+    public TA get() {
+        if (mergeOffset == messageNum) {
+            return null;
+        }
+        if (mergeTimeTag == -1 || mergeOffset == mergeOffsetB) {
+            mergeTagIndex++;
+            mergeTimeTag = timeTagList.get(mergeTagIndex).getTime();
+            if (mergeTagIndex + 1 == timeTagList.size()) {
+                mergeOffsetB = messageNum;
+            } else {
+                mergeOffsetB = timeTagList.get(mergeTagIndex + 1).getOffset();
+            }
+        }
+        long time = mergeTimeTag + timeReader.getTime(mergeOffset);
+        long value = time + valueReader.getValue(mergeOffset);
+        mergeOffset++;
+        return new TA(time, value);
     }
 
 }

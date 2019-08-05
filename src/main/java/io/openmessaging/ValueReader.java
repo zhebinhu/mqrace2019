@@ -42,6 +42,10 @@ public class ValueReader {
 
     private volatile boolean inited = false;
 
+    private long count = 0;
+
+    private int tag = -1;
+
     public ValueReader(int num) {
         this.num = num;
         RandomAccessFile memoryMappedFile = null;
@@ -54,6 +58,7 @@ public class ValueReader {
     }
 
     public void put(Message message) {
+        int value = (int) (message.getA() - message.getT());
         int remain = buffer.remaining();
         if (remain < Constants.VALUE_SIZE) {
             buffer.flip();
@@ -64,11 +69,11 @@ public class ValueReader {
             }
             buffer.clear();
         }
-        long t = message.getA() - message.getT();
-        if (t >= Integer.MAX_VALUE || t <= Integer.MIN_VALUE) {
-            System.out.println("more than");
+        if (tag == -1 || value > tag + 255) {
+            tag = value;
+            count++;
         }
-        buffer.putInt((int) (message.getA() - message.getT()));
+        buffer.putInt(value);
         messageNum++;
     }
 
@@ -83,6 +88,7 @@ public class ValueReader {
                 e.printStackTrace(System.out);
             }
         }
+        System.out.println("thread" + num + ":count=" + count);
     }
 
     public int getValue(int index) {
