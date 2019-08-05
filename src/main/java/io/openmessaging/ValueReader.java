@@ -69,7 +69,7 @@ public class ValueReader {
             }
             buffer.clear();
         }
-        if (tag == -1 || value > tag + 255) {
+        if (tag == -1 || value > tag + 128) {
             tag = value;
             count++;
         }
