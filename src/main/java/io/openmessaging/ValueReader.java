@@ -98,7 +98,7 @@ public class ValueReader {
             i = 0;
         }
 
-        if (tag == -1 || value > Byte.MAX_VALUE || value < Byte.MIN_VALUE) {
+        if (tag == -1 || value-tag > Byte.MAX_VALUE || value-tag < Byte.MIN_VALUE) {
             tag = value;
             count++;
             //valueTagList.add(new ValueTag(tag, messageNum));
