@@ -63,6 +63,8 @@ public class ValueReader {
 
     int offsetB = -1;
 
+    int count = 0;
+
     LRUCache<Integer, ValuePage> pageCache = new LRUCache<>(Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE);
 
     public ValueReader(int num) {
@@ -95,13 +97,11 @@ public class ValueReader {
             valuePage = new ValuePage();
             i = 0;
         }
-        if (value < 0) {
-            System.out.println("error" + value);
-        }
 
-        if (tag == -1 || value > tag + 15) {
+        if (tag == -1 || value > Byte.MAX_VALUE || value < Byte.MIN_VALUE) {
             tag = value;
-            valueTagList.add(new ValueTag(tag, messageNum));
+            count++;
+            //valueTagList.add(new ValueTag(tag, messageNum));
         }
 
         if (messageNum % 2 == 0) {
@@ -133,6 +133,7 @@ public class ValueReader {
                 e.printStackTrace(System.out);
             }
         }
+        System.out.println("thread" + num + " count：" + count);
     }
 
     public int getValue(int offset) {
