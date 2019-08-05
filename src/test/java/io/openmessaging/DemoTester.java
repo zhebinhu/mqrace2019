@@ -60,21 +60,21 @@ public class DemoTester {
         long maxCheckTime = System.currentTimeMillis() + checkTime;
 
         //Step2: 查询聚合消息
-        long msgCheckStart = System.currentTimeMillis();
-        AtomicLong msgCheckTimes = new AtomicLong(0);
-        AtomicLong msgCheckNum = new AtomicLong(0);
-        Thread[] msgChecks = new Thread[checkTsNum];
-        for (int i = 0; i < checkTsNum; i++) {
-            msgChecks[i] = new Thread(new MessageChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxMsgCheckSize, msgCheckTimes, msgCheckNum));
-        }
-        for (int i = 0; i < checkTsNum; i++) {
-            msgChecks[i].start();
-        }
-        for (int i = 0; i < checkTsNum; i++) {
-            msgChecks[i].join();
-        }
-        long msgCheckEnd = System.currentTimeMillis();
-        System.out.printf("Message Check: %d ms Num:%d\n", msgCheckEnd - msgCheckStart, msgCheckNum.get());
+//        long msgCheckStart = System.currentTimeMillis();
+//        AtomicLong msgCheckTimes = new AtomicLong(0);
+//        AtomicLong msgCheckNum = new AtomicLong(0);
+//        Thread[] msgChecks = new Thread[checkTsNum];
+//        for (int i = 0; i < checkTsNum; i++) {
+//            msgChecks[i] = new Thread(new MessageChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxMsgCheckSize, msgCheckTimes, msgCheckNum));
+//        }
+//        for (int i = 0; i < checkTsNum; i++) {
+//            msgChecks[i].start();
+//        }
+//        for (int i = 0; i < checkTsNum; i++) {
+//            msgChecks[i].join();
+//        }
+//        long msgCheckEnd = System.currentTimeMillis();
+//        System.out.printf("Message Check: %d ms Num:%d\n", msgCheckEnd - msgCheckStart, msgCheckNum.get());
 
         //Step3: 查询聚合结果
         long checkStart = System.currentTimeMillis();
@@ -94,7 +94,7 @@ public class DemoTester {
         System.out.printf("Value Check: %d ms Num: %d\n", checkEnd - checkStart, valueCheckNum.get());
 
         //评测结果
-        System.out.printf("Total Score:%d\n", (msgNum / (sendSend- sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
+        //System.out.printf("Total Score:%d\n", (msgNum / (sendSend- sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
     }
     static class Producer implements Runnable {
 

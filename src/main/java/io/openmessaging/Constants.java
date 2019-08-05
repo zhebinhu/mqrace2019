@@ -11,7 +11,11 @@ public class Constants {
 
     public final static int TIME_PAGE_SIZE = 64 * 1024;
 
-    public final static int CACHE_SIZE = 192 * 1024 * 1024;
+    public final static int TIME_CACHE_SIZE = 128 * 1024 * 1024;
+
+    public final static int VALUE_PAGE_SIZE = 64 * 1024;
+
+    public final static int VALUE_CACHE_SIZE = 64 * 1024 * 1024;
 
     // data 的大小
     public final static int DATA_SIZE = 34;

@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -23,12 +26,12 @@ public class ValueReader {
     /**
      * 堆外内存
      */
-    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.VALUE_SIZE * Constants.VALUE_NUM);
+    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.VALUE_PAGE_SIZE);
 
     /**
      * 消息总数
      */
-    private long messageNum = 0L;
+    private int messageNum = 0;
 
     /**
      * 缓存中最大消息
@@ -42,9 +45,21 @@ public class ValueReader {
 
     private volatile boolean inited = false;
 
-    private long count = 0;
+    private List<ValueTag> valueTagList = new ArrayList<>();
 
     private int tag = -1;
+
+    private HalfByte halfByte = new HalfByte((byte) 0);
+
+    ValuePage valuePage = new ValuePage();
+
+    int pageIndex = 0;
+
+    int i = 0;
+
+    int k = 0;
+
+    LRUCache<Integer, ValuePage> pageCache = new LRUCache<>(Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE);
 
     public ValueReader(int num) {
         this.num = num;
@@ -69,16 +84,38 @@ public class ValueReader {
             }
             buffer.clear();
         }
+
+        if (i == Constants.VALUE_PAGE_SIZE) {
+            pageCache.put(k, valuePage);
+            k++;
+            valuePage = new ValuePage();
+            i = 0;
+        }
+
         if (tag == -1 || value > tag + 15) {
             tag = value;
-            count++;
-            System.out.println("thread" + num + ":tag=" + tag);
+            valueTagList.add(new ValueTag(tag, messageNum));
         }
-        buffer.putInt(value);
+
+        if (messageNum % 2 == 0) {
+            halfByte.setRight((byte) (value - tag));
+        } else {
+            halfByte.setLeft((byte) (value - tag));
+            buffer.put(halfByte.getByte());
+            if (k < Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE) {
+                valuePage.bytes[i] = halfByte.getByte();
+                i++;
+            }
+            halfByte.setByte((byte) 0);
+        }
+
         messageNum++;
     }
 
     public void init() {
+        pageIndex = -1;
+        valuePage = null;
+        buffer.put(halfByte.getByte());
         int remain = buffer.remaining();
         if (remain > 0) {
             buffer.flip();
@@ -89,10 +126,9 @@ public class ValueReader {
                 e.printStackTrace(System.out);
             }
         }
-        System.out.println("thread" + num + ":count=" + count);
     }
 
-    public int getValue(int index) {
+    public int getValue(int offset) {
 
         if (!inited) {
             synchronized (this) {
@@ -103,21 +139,62 @@ public class ValueReader {
             }
         }
 
-        if (index >= bufferMinIndex && index < bufferMaxIndex) {
-            buffer.position((int) (index - bufferMinIndex) * Constants.VALUE_SIZE);
-        } else {
-            buffer.clear();
+        int thisIndex = Collections.binarySearch(valueTagList, new ValueTag(0, offset));
+        if (thisIndex < 0) {
+            thisIndex = Math.max(0, -(thisIndex + 2));
+        }
+        tag = valueTagList.get(thisIndex).getValue();
+
+        if (pageIndex == offset / 2 / Constants.VALUE_PAGE_SIZE) {
+            halfByte.setByte(valuePage.bytes[(offset / 2) % Constants.VALUE_PAGE_SIZE]);
+            if (offset % 2 == 0) {
+                return tag + halfByte.getRight();
+            } else {
+                return tag + halfByte.getLeft();
+            }
+        }
+        pageIndex = offset / 2 / Constants.VALUE_PAGE_SIZE;
+
+        valuePage = pageCache.get(pageIndex);
+
+        if (valuePage == null) {
             try {
-                fileChannel.read(buffer, index * Constants.VALUE_SIZE);
-                bufferMinIndex = index;
-                bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
+                buffer.clear();
+                fileChannel.read(buffer, pageIndex * Constants.VALUE_PAGE_SIZE);
+                buffer.flip();
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
-            buffer.flip();
+            valuePage = pageCache.getOldest();
+            if (valuePage == null) {
+                valuePage = new ValuePage();
+            }
+            buffer.get(valuePage.bytes, 0, buffer.limit());
+            pageCache.put(pageIndex, valuePage);
         }
 
-        return buffer.getInt();
+        halfByte.setByte(valuePage.bytes[(offset / 2) % Constants.VALUE_PAGE_SIZE]);
+        if (offset % 2 == 0) {
+            return tag + halfByte.getRight();
+        } else {
+            return tag + halfByte.getLeft();
+        }
+
+        //        if (index >= bufferMinIndex && index < bufferMaxIndex) {
+        //            buffer.position((int) (index - bufferMinIndex) * Constants.VALUE_SIZE);
+        //        } else {
+        //            buffer.clear();
+        //            try {
+        //                fileChannel.read(buffer, index * Constants.VALUE_SIZE);
+        //                bufferMinIndex = index;
+        //                bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
+        //            } catch (IOException e) {
+        //                e.printStackTrace(System.out);
+        //            }
+        //            buffer.flip();
+        //        }
+        //
+        //        return buffer.getInt();
     }
 
 }

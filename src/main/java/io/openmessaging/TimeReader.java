@@ -35,7 +35,7 @@ public class TimeReader {
 
     int pageIndex = 0;
 
-    LRUCache<Integer, TimePage> pageCache = new LRUCache<>(Constants.CACHE_SIZE / Constants.TIME_PAGE_SIZE);
+    LRUCache<Integer, TimePage> pageCache = new LRUCache<>(Constants.TIME_CACHE_SIZE / Constants.TIME_PAGE_SIZE);
 
     public TimeReader(int num) {
         this.num = num;
@@ -55,7 +55,7 @@ public class TimeReader {
             timePage = new TimePage();
             i = 0;
         }
-        if (k < Constants.CACHE_SIZE / Constants.TIME_PAGE_SIZE) {
+        if (k < Constants.TIME_CACHE_SIZE / Constants.TIME_PAGE_SIZE) {
             timePage.bytes[i] = t;
             i++;
         }
