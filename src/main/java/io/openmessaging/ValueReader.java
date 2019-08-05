@@ -95,6 +95,9 @@ public class ValueReader {
             valuePage = new ValuePage();
             i = 0;
         }
+        if (value < 0) {
+            System.out.println("error" + value);
+        }
 
         if (tag == -1 || value > tag + 15) {
             tag = value;

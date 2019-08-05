@@ -5,7 +5,6 @@ import java.util.*;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-
 //这是评测程序的一个demo版本，其评测逻辑与实际评测程序基本类似，但是比实际评测简单很多
 //该评测程序主要便于选手在本地优化和调试自己的程序
 
@@ -14,7 +13,7 @@ public class DemoTester {
     public static void main(String args[]) throws Exception {
         //评测相关配置
         //发送阶段的发送数量，也即发送阶段必须要在规定时间内把这些消息发送完毕方可
-        int msgNum  = 200000000;
+        int msgNum = 200000000;
         //发送阶段的最大持续时间，也即在该时间内，如果消息依然没有发送完毕，则退出评测
         int sendTime = 10 * 60 * 1000;
         //查询阶段的最大持续时间，也即在该时间内，如果消息依然没有消费完毕，则退出评测
@@ -35,7 +34,7 @@ public class DemoTester {
 
         try {
             Class queueStoreClass = Class.forName("io.openmessaging.DefaultMessageStoreImpl");
-            messageStore = (MessageStore)queueStoreClass.newInstance();
+            messageStore = (MessageStore) queueStoreClass.newInstance();
         } catch (Throwable t) {
             t.printStackTrace();
             System.exit(-1);
@@ -60,21 +59,21 @@ public class DemoTester {
         long maxCheckTime = System.currentTimeMillis() + checkTime;
 
         //Step2: 查询聚合消息
-//        long msgCheckStart = System.currentTimeMillis();
-//        AtomicLong msgCheckTimes = new AtomicLong(0);
-//        AtomicLong msgCheckNum = new AtomicLong(0);
-//        Thread[] msgChecks = new Thread[checkTsNum];
-//        for (int i = 0; i < checkTsNum; i++) {
-//            msgChecks[i] = new Thread(new MessageChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxMsgCheckSize, msgCheckTimes, msgCheckNum));
-//        }
-//        for (int i = 0; i < checkTsNum; i++) {
-//            msgChecks[i].start();
-//        }
-//        for (int i = 0; i < checkTsNum; i++) {
-//            msgChecks[i].join();
-//        }
-//        long msgCheckEnd = System.currentTimeMillis();
-//        System.out.printf("Message Check: %d ms Num:%d\n", msgCheckEnd - msgCheckStart, msgCheckNum.get());
+        //        long msgCheckStart = System.currentTimeMillis();
+        //        AtomicLong msgCheckTimes = new AtomicLong(0);
+        //        AtomicLong msgCheckNum = new AtomicLong(0);
+        //        Thread[] msgChecks = new Thread[checkTsNum];
+        //        for (int i = 0; i < checkTsNum; i++) {
+        //            msgChecks[i] = new Thread(new MessageChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxMsgCheckSize, msgCheckTimes, msgCheckNum));
+        //        }
+        //        for (int i = 0; i < checkTsNum; i++) {
+        //            msgChecks[i].start();
+        //        }
+        //        for (int i = 0; i < checkTsNum; i++) {
+        //            msgChecks[i].join();
+        //        }
+        //        long msgCheckEnd = System.currentTimeMillis();
+        //        System.out.printf("Message Check: %d ms Num:%d\n", msgCheckEnd - msgCheckStart, msgCheckNum.get());
 
         //Step3: 查询聚合结果
         long checkStart = System.currentTimeMillis();
@@ -96,31 +95,36 @@ public class DemoTester {
         //评测结果
         //System.out.printf("Total Score:%d\n", (msgNum / (sendSend- sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
     }
+
     static class Producer implements Runnable {
 
         private AtomicLong counter;
+
         private long maxMsgNum;
+
         private MessageStore messageStore;
+
         private long maxTimeStamp;
+
         public Producer(MessageStore messageStore, long maxTimeStamp, int maxMsgNum, AtomicLong counter) {
             this.counter = counter;
             this.maxMsgNum = maxMsgNum;
             this.messageStore = messageStore;
-            this.maxTimeStamp =  maxTimeStamp;
+            this.maxTimeStamp = maxTimeStamp;
         }
 
         @Override
         public void run() {
             long count;
-            while ( (count = counter.getAndIncrement()) < maxMsgNum && System.currentTimeMillis() <= maxTimeStamp) {
+            while ((count = counter.getAndIncrement()) < maxMsgNum && System.currentTimeMillis() <= maxTimeStamp) {
                 try {
                     ByteBuffer buffer = ByteBuffer.allocate(34);
                     buffer.putLong(0, count);
                     // 为测试方便, 插入的是有规律的数据, 不是实际测评的情况
-                    messageStore.put(new Message(count, count, buffer.array()));
+                    messageStore.put(new Message(count, count + new Random().nextInt(32), buffer.array()));
                     if ((count & 0x1L) == 0) {
                         //偶数count多加一条消息
-                        messageStore.put(new Message(count, count, buffer.array()));
+                        messageStore.put(new Message(count, count + new Random().nextInt(32), buffer.array()));
                     }
                 } catch (Throwable t) {
                     t.printStackTrace();
@@ -133,20 +137,26 @@ public class DemoTester {
     static class MessageChecker implements Runnable {
 
         private AtomicLong timesCounter;
+
         private AtomicLong numCounter;
+
         private long checkTimes;
+
         private MessageStore messageStore;
+
         private long maxTimeStamp;
+
         private int maxIndex;
+
         private int maxCheckSize;
 
-        public MessageChecker(MessageStore messageStore, long maxTimeStamp, int checkTimes, int maxIndex, int maxCheckSize,
-                              AtomicLong timesCounter, AtomicLong numCounter) {
+        public MessageChecker(
+                MessageStore messageStore, long maxTimeStamp, int checkTimes, int maxIndex, int maxCheckSize, AtomicLong timesCounter, AtomicLong numCounter) {
             this.timesCounter = timesCounter;
             this.numCounter = numCounter;
             this.checkTimes = checkTimes;
             this.messageStore = messageStore;
-            this.maxTimeStamp =  maxTimeStamp;
+            this.maxTimeStamp = maxTimeStamp;
             this.maxIndex = maxIndex;
             this.maxCheckSize = maxCheckSize;
         }
@@ -175,7 +185,7 @@ public class DemoTester {
                     int index1 = Math.max(aIndex1, tIndex1);
                     int index2 = Math.min(aIndex2, tIndex2);
                     //List<Message> msgs = messageStore.getMessage(364740, 520248, 364740, 520248);
-                     //msgs = messageStore.getMessage(14830835, 14830836, 14830835, 14830836);
+                    //msgs = messageStore.getMessage(14830835, 14830836, 14830835, 14830836);
                     List<Message> msgs = messageStore.getMessage(aIndex1, aIndex2, tIndex1, tIndex2);
                     //System.out.println(timesCounter.get());
                     //验证消息
@@ -186,23 +196,20 @@ public class DemoTester {
                         }
 
                         Message msg = iter.next();
-                        if (msg.getA() != msg.getT() || msg.getA() != index1 ||
-                                ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
+                        if (msg.getA() != msg.getT() || msg.getA() != index1 || ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
                             checkError();
                         }
 
                         //偶数需要多验证一次
                         if ((index1 & 0x1) == 0 && iter.hasNext()) {
                             msg = iter.next();
-                            if (msg.getA() != msg.getT() || msg.getA() != index1
-                                    || ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
+                            if (msg.getA() != msg.getT() || msg.getA() != index1 || ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
                                 checkError();
                             }
                         }
 
                         ++index1;
                     }
-
 
                     if (index1 - 1 != index2) {
                         checkError();
@@ -221,27 +228,32 @@ public class DemoTester {
     static class ValueChecker implements Runnable {
 
         private AtomicLong timesCounter;
+
         private AtomicLong numCounter;
+
         private long checkTimes;
+
         private MessageStore messageStore;
+
         private long maxTimeStamp;
+
         private int maxIndex;
+
         private int maxCheckSize;
 
-        public ValueChecker(MessageStore messageStore, long maxTimeStamp, int checkTimes, int maxIndex, int maxCheckSize,
-                            AtomicLong timesCounter, AtomicLong numCounter) {
+        public ValueChecker(
+                MessageStore messageStore, long maxTimeStamp, int checkTimes, int maxIndex, int maxCheckSize, AtomicLong timesCounter, AtomicLong numCounter) {
             this.timesCounter = timesCounter;
             this.numCounter = numCounter;
             this.checkTimes = checkTimes;
             this.messageStore = messageStore;
-            this.maxTimeStamp =  maxTimeStamp;
+            this.maxTimeStamp = maxTimeStamp;
             this.maxIndex = maxIndex;
             this.maxCheckSize = maxCheckSize;
         }
 
         private void checkError(long aMin, long aMax, long tMin, long tMax, long res, long val) {
-            System.out.printf("value check error. aMin:%d, aMax:%d, tMin:%d, tMax:%d, res:%d, val:%d\n",
-                              aMin, aMax, tMin, tMax, res, val);
+            System.out.printf("value check error. aMin:%d, aMax:%d, tMin:%d, tMax:%d, res:%d, val:%d\n", aMin, aMax, tMin, tMax, res, val);
             System.exit(-1);
         }
 
@@ -274,9 +286,9 @@ public class DemoTester {
                     long count = 0;
                     if (evenIndex1 <= evenIndex2) {
                         //顺序数之和
-                        long sum1 = ((long)(index2 + index1) * (index2 - index1 + 1)) >>> 1;
+                        long sum1 = ((long) (index2 + index1) * (index2 - index1 + 1)) >>> 1;
                         //重复的偶数之和
-                        long sum2 = ((long)(evenIndex1 + evenIndex2) * ((evenIndex2 - evenIndex1 >>> 1) + 1)) >>> 1;
+                        long sum2 = ((long) (evenIndex1 + evenIndex2) * ((evenIndex2 - evenIndex1 >>> 1) + 1)) >>> 1;
                         long sum = sum1 + sum2;
                         count = index2 - index1 + 1 + (evenIndex2 - evenIndex1 >>> 1) + 1;
                         res = sum / count;
