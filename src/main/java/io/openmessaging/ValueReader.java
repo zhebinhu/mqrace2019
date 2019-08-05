@@ -69,7 +69,7 @@ public class ValueReader {
             }
             buffer.clear();
         }
-        if (tag == -1 || value > tag + 64) {
+        if (tag == -1 || value > tag + 15) {
             tag = value;
             count++;
             System.out.println("thread" + num + ":tag=" + tag);
