@@ -49,7 +49,7 @@ public class ValueReader {
 
     private int tag = -1;
 
-    private HalfByte halfByte = new HalfByte((byte) 0);
+    private byte aByte = 0;
 
     ValuePage valuePage = new ValuePage();
 
@@ -89,32 +89,22 @@ public class ValueReader {
             buffer.clear();
         }
 
+        if (tag == -1 || value - tag > Byte.MAX_VALUE || value - tag < Byte.MIN_VALUE) {
+            tag = value;
+            valueTagList.add(new ValueTag(tag, messageNum));
+        }
+
         if (i == Constants.VALUE_PAGE_SIZE) {
             pageCache.put(k, valuePage);
             k++;
             valuePage = new ValuePage();
             i = 0;
         }
-        if (value < 0) {
-            System.out.println("error" + value);
+        if (k < Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE) {
+            valuePage.bytes[i] = (byte) (value - tag);
+            i++;
         }
-
-        if (tag == -1 || value > tag + 15) {
-            tag = value;
-            valueTagList.add(new ValueTag(tag, messageNum));
-        }
-
-        if (messageNum % 2 == 0) {
-            halfByte.setRight((byte) (value - tag));
-        } else {
-            halfByte.setLeft((byte) (value - tag));
-            buffer.put(halfByte.getByte());
-            if (k < Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE) {
-                valuePage.bytes[i] = halfByte.getByte();
-                i++;
-            }
-            halfByte.setByte((byte) 0);
-        }
+        buffer.put((byte) (value - tag));
 
         messageNum++;
     }
@@ -122,7 +112,6 @@ public class ValueReader {
     public void init() {
         pageIndex = -1;
         valuePage = null;
-        buffer.put(halfByte.getByte());
         int remain = buffer.remaining();
         if (remain > 0) {
             buffer.flip();
@@ -159,15 +148,11 @@ public class ValueReader {
             }
         }
 
-        if (pageIndex == offset / 2 / Constants.VALUE_PAGE_SIZE) {
-            halfByte.setByte(valuePage.bytes[(offset / 2) % Constants.VALUE_PAGE_SIZE]);
-            if (offset % 2 == 0) {
-                return tag + halfByte.getRight();
-            } else {
-                return tag + halfByte.getLeft();
-            }
+        if (pageIndex == offset / Constants.VALUE_PAGE_SIZE) {
+            return tag + valuePage.bytes[offset % Constants.VALUE_PAGE_SIZE];
         }
-        pageIndex = offset / 2 / Constants.VALUE_PAGE_SIZE;
+
+        pageIndex = offset / Constants.VALUE_PAGE_SIZE;
 
         valuePage = pageCache.get(pageIndex);
 
@@ -187,12 +172,7 @@ public class ValueReader {
             pageCache.put(pageIndex, valuePage);
         }
 
-        halfByte.setByte(valuePage.bytes[(offset / 2) % Constants.VALUE_PAGE_SIZE]);
-        if (offset % 2 == 0) {
-            return tag + halfByte.getRight();
-        } else {
-            return tag + halfByte.getLeft();
-        }
+        return tag + valuePage.bytes[offset % Constants.VALUE_PAGE_SIZE];
 
         //        if (index >= bufferMinIndex && index < bufferMaxIndex) {
         //            buffer.position((int) (index - bufferMinIndex) * Constants.VALUE_SIZE);

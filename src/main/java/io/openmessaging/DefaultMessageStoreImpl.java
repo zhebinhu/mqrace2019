@@ -30,7 +30,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
-    private Queue queue = new Queue(100);
+    //private Queue queue = new Queue(100);
 
     //private Set<Thread> threadSet = new HashSet<>();
 
