@@ -78,8 +78,7 @@ public class ValueReader {
 
     public void put(Message message) {
         int value = (int) (message.getA() - message.getT());
-        int remain = buffer.remaining();
-        if (remain < Constants.VALUE_SIZE) {
+        if (buffer.hasRemaining()) {
             buffer.flip();
             try {
                 fileChannel.write(buffer);
