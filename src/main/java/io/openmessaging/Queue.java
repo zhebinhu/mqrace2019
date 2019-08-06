@@ -63,7 +63,7 @@ public class Queue {
         messageNum++;
     }
 
-    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
+    public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
 
         List<Message> result = new ArrayList<>();
 
@@ -130,7 +130,7 @@ public class Queue {
 
     }
 
-    public synchronized Avg getAvg(long aMin, long aMax, long tMin, long tMax) {
+    public Avg getAvg(long aMin, long aMax, long tMin, long tMax) {
         Avg result = new Avg();
 
         if (timeTagList.isEmpty()) {

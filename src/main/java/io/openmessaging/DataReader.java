@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -30,20 +27,16 @@ public class DataReader {
      */
     private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
 
+    private ThreadLocal<ByteBuffer> readBuffer = new ThreadLocal<>();
+
+    private ThreadLocal<Integer> bufferMaxIndex = new ThreadLocal<>();
+
+    private ThreadLocal<Integer> bufferMinIndex = new ThreadLocal<>();
+
     /**
      * 消息总数
      */
-    private long messageNum = 0L;
-
-    /**
-     * 缓存中最大消息
-     */
-    private long bufferMaxIndex = -1L;
-
-    /**
-     * 缓存中最小消息
-     */
-    private long bufferMinIndex = -1L;
+    private int messageNum = 0;
 
     private volatile boolean inited = false;
 
@@ -93,7 +86,7 @@ public class DataReader {
         }
     }
 
-    public void getData(long index, Message message) {
+    public void getData(int index, Message message) {
 
         if (!inited) {
             synchronized (this) {
@@ -103,22 +96,30 @@ public class DataReader {
                 }
             }
         }
-
-        if (index >= bufferMinIndex && index < bufferMaxIndex) {
-            buffer.position((int) (index - bufferMinIndex) * Constants.DATA_SIZE);
+        if (bufferMinIndex.get() == null) {
+            bufferMinIndex.set(-1);
+        }
+        if (bufferMaxIndex.get() == null) {
+            bufferMaxIndex.set(-1);
+        }
+        if(readBuffer.get()==null){
+            readBuffer.set(ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM));
+        }
+        if (index >= bufferMinIndex.get() && index < bufferMaxIndex.get()) {
+            readBuffer.get().position((index - bufferMinIndex.get()) * Constants.DATA_SIZE);
         } else {
-            buffer.clear();
+            readBuffer.get().clear();
             try {
-                fileChannel.read(buffer, index * Constants.DATA_SIZE);
-                bufferMinIndex = index;
-                bufferMaxIndex = Math.min(index + Constants.DATA_NUM, messageNum);
+                fileChannel.read(readBuffer.get(), index * Constants.DATA_SIZE);
+                bufferMinIndex.set(index);
+                bufferMaxIndex.set(Math.min(index + Constants.DATA_NUM, messageNum));
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
-            buffer.flip();
+            readBuffer.get().flip();
         }
 
-        buffer.get(message.getBody());
+        readBuffer.get().get(message.getBody());
     }
 
 }
