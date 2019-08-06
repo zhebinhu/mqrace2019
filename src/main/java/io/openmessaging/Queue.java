@@ -130,7 +130,7 @@ public class Queue {
 
     }
 
-    public Avg getAvg(long aMin, long aMax, long tMin, long tMax) {
+    public synchronized Avg getAvg(long aMin, long aMax, long tMin, long tMax) {
         Avg result = new Avg();
 
         if (timeTagList.isEmpty()) {
