@@ -104,6 +104,7 @@ public class TimeReader {
         timePage = pageCache.get(pageIndex);
 
         if (timePage == null) {
+            System.out.println("time uncached");
             try {
                 buffer.clear();
                 fileChannel.read(buffer, pageIndex * Constants.TIME_PAGE_SIZE);

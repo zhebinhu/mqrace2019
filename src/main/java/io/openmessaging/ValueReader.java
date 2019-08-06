@@ -156,6 +156,7 @@ public class ValueReader {
         valuePage = pageCache.get(pageIndex);
 
         if (valuePage == null) {
+            System.out.println("value uncached");
             valuePage = pageCache.getOldest();
             if (valuePage == null) {
                 valuePage = new ValuePage();
