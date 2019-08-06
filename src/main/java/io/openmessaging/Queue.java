@@ -32,8 +32,6 @@ public class Queue {
 
     private TimeReader timeReader;
 
-    private TimeTag timeTag = new TimeTag(0, 0);
-
     /**
      * 合并相关参数
      */
@@ -77,16 +75,13 @@ public class Queue {
         int offsetB;
         // 一级索引
         int thisIndex = 0;
-
         if (tMin > maxTime + 255) {
             return result;
         }
         if (tMin <= timeTagList.get(0).getTime()) {
             offsetA = 0;
         } else {
-            timeTag.setTime(tMin);
-            timeTag.setOffset(0);
-            thisIndex = Collections.binarySearch(timeTagList, timeTag);
+            thisIndex = Collections.binarySearch(timeTagList, new TimeTag(tMin,0));
             if (thisIndex < 0) {
                 thisIndex = Math.max(0, -(thisIndex + 2));
             }
@@ -135,7 +130,7 @@ public class Queue {
 
     }
 
-    public synchronized Avg getAvg(long aMin, long aMax, long tMin, long tMax) {
+    public Avg getAvg(long aMin, long aMax, long tMin, long tMax) {
         Avg result = new Avg();
 
         if (timeTagList.isEmpty()) {
@@ -155,9 +150,7 @@ public class Queue {
         if (tMin <= timeTagList.get(0).getTime()) {
             offsetA = 0;
         } else {
-            timeTag.setTime(tMin);
-            timeTag.setOffset(0);
-            thisIndex = Collections.binarySearch(timeTagList, timeTag);
+            thisIndex = Collections.binarySearch(timeTagList, new TimeTag(tMin,0));
             if (thisIndex < 0) {
                 thisIndex = Math.max(0, -(thisIndex + 2));
             }
