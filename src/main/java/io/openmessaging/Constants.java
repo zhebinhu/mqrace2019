@@ -15,12 +15,12 @@ public class Constants {
 
     public final static int VALUE_PAGE_SIZE = 64 * 1024;
 
-    public final static int VALUE_CACHE_SIZE = 192 * 1024 * 1024;
+    public final static int VALUE_CACHE_SIZE = 176 * 1024 * 1024;
 
     // data 的大小
-    public final static int DATA_SIZE = 34;
+    public final static int DATA_SIZE = 11;
 
-    public final static int DATA_NUM = 2 * 1024;
+    public final static int DATA_NUM = 4 * 1024;
 
     //public final static String URL = "/users/huzhebin/data/";
 
