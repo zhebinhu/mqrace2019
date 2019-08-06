@@ -113,23 +113,23 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-            long starttime = System.currentTimeMillis();
-            int c = count.getAndIncrement();
-            if (c > 20000) {
-
-                if (!end) {
-                    synchronized (this) {
-                        if (!end) {
-                            System.out.println("end:" + System.currentTimeMillis());
-                            end = true;
-                        }
-                    }
-                }
-                return 0L;
-            }
+            //long starttime = System.currentTimeMillis();
+            //int c = count.getAndIncrement();
+//            if (c > 20000) {
+//
+//                if (!end) {
+//                    synchronized (this) {
+//                        if (!end) {
+//                            System.out.println("end:" + System.currentTimeMillis());
+//                            end = true;
+//                        }
+//                    }
+//                }
+//                return 0L;
+//            }
             Avg result = forkJoinPool2.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
-            long endtime = System.currentTimeMillis();
-            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " count:" + result.getCount() + " getAvgValue: " + (endtime - starttime));
+            //long endtime = System.currentTimeMillis();
+            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " count:" + result.getCount() + " getAvgValue: " + (endtime - starttime));
             if (result.getCount() == 0) {
                 return 0L;
             } else {
