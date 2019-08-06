@@ -110,6 +110,7 @@ public class DataReader {
         } else {
             readBuffer.get().clear();
             try {
+                System.out.println("position:"+index * Constants.DATA_SIZE);
                 fileChannel.read(readBuffer.get(), index * Constants.DATA_SIZE);
                 bufferMinIndex.set(index);
                 bufferMaxIndex.set(Math.min(index + Constants.DATA_NUM, messageNum));
