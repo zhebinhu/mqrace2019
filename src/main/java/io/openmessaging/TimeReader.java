@@ -110,6 +110,7 @@ public class TimeReader {
         timePage.set(pageCache.get(pageIndex.get()));
 
         if (timePage.get() == null) {
+            System.out.println("time uncache");
             try {
                 if (readBuffer.get() == null) {
                     readBuffer.set(ByteBuffer.allocateDirect(Constants.TIME_PAGE_SIZE));

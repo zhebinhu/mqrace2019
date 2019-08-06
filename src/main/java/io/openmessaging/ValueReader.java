@@ -168,7 +168,7 @@ public class ValueReader {
         valuePage.set(pageCache.get(pageIndex.get()));
 
         if (valuePage.get() == null) {
-
+            System.out.println("value uncache");
             valuePage.set(new ValuePage());
             try {
                 valuePage.get().byteBuffer.clear();
