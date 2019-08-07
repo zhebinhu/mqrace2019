@@ -21,32 +21,35 @@ public class ValueReader {
 
     private List<ValueTag> valueTags = new ArrayList<>();
 
-    private int tag = -1;
-
     private int msgNum = 0;
 
     private HalfByte halfByte = new HalfByte((byte) 0);
 
     private volatile boolean init = false;
 
-    private int offsetA = 0;
+    private ThreadLocal<Integer> tag = new ThreadLocal<>();
 
-    private int offsetB = 0;
+    private ThreadLocal<Integer> offsetA = new ThreadLocal<>();
+
+    private ThreadLocal<Integer> offsetB = new ThreadLocal<>();
 
     public void put(Message message) {
         long v = message.getA() - message.getT();
         if (v > max) {
             max = v;
         }
+        if (tag.get() == 0) {
+            tag.set(-1);
+        }
         int value = (int) v;
-        if (tag == -1 || value > tag + 15 || value < tag) {
-            tag = value;
+        if (tag.get() == -1 || value > tag.get() + 15 || value < tag.get()) {
+            tag.set(value);
             valueTags.add(new ValueTag(msgNum, value));
         }
         if (msgNum % 2 == 0) {
-            halfByte.setRight((byte) (value - tag));
+            halfByte.setRight((byte) (value - tag.get()));
         } else {
-            halfByte.setLeft((byte) (value - tag));
+            halfByte.setLeft((byte) (value - tag.get()));
             byteBuffer.put(msgNum / 2, halfByte.getByte());
             halfByte.setByte((byte) 0);
         }
@@ -55,7 +58,7 @@ public class ValueReader {
 
     public void init() {
         byteBuffer.put(msgNum / 2, halfByte.getByte());
-        tag = 0;
+        tag.set(0);
         halfByte.setByte((byte) 0);
         System.out.println("value max:" + max + " valueTags size:" + valueTags.size());
         init = true;
@@ -69,23 +72,30 @@ public class ValueReader {
                 }
             }
         }
-        if (offset < offsetA || offset >= offsetB) {
+        if (offsetA.get() == null) {
+            offsetA.set(0);
+        }
+        if (offsetB.get() == null) {
+            offsetB.set(0);
+        }
+        System.out.println("value offset:" + offset);
+        if (offset < offsetA.get() || offset >= offsetB.get()) {
             int tagIndex = Collections.binarySearch(valueTags, new ValueTag(offset, 0), Comparator.comparingInt(ValueTag::getOffset));
             if (tagIndex < 0) {
                 tagIndex = Math.max(0, -(tagIndex + 2));
             }
-            tag = valueTags.get(tagIndex).getValue();
-            offsetA = valueTags.get(tagIndex).getOffset();
+            tag.set(valueTags.get(tagIndex).getValue());
+            offsetA.set(valueTags.get(tagIndex).getOffset());
             if (tagIndex == valueTags.size() - 1) {
-                offsetB = msgNum;
+                offsetB.set(msgNum);
             } else {
-                offsetB = valueTags.get(tagIndex + 1).getOffset();
+                offsetB.set(valueTags.get(tagIndex + 1).getOffset());
             }
         }
         if (offset % 2 == 0) {
-            return tag + HalfByte.getRight(byteBuffer.get(offset / 2));
+            return tag.get() + HalfByte.getRight(byteBuffer.get(offset / 2));
         } else {
-            return tag + HalfByte.getLeft(byteBuffer.get(offset / 2));
+            return tag.get() + HalfByte.getLeft(byteBuffer.get(offset / 2));
         }
     }
 }

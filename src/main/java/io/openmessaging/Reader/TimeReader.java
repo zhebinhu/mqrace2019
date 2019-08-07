@@ -17,32 +17,35 @@ public class TimeReader {
 
     private List<TimeTag> timeTags = new ArrayList<>();
 
-    private int tag = 0;
-
     private int msgNum = 0;
 
     private HalfByte halfByte = new HalfByte((byte) 0);
 
     private volatile boolean init = false;
 
-    private int offsetA = 0;
+    private ThreadLocal<Integer> offsetA = new ThreadLocal<>();
 
-    private int offsetB = 0;
+    private ThreadLocal<Integer> offsetB = new ThreadLocal<>();
+
+    private ThreadLocal<Integer> tag = new ThreadLocal<>();
 
     public void put(Message message) {
         long t = message.getT();
+        if (tag.get() == null) {
+            tag.set(0);
+        }
         if (t > max) {
             max = t;
         }
         int time = (int) t;
-        if (time > tag + 15) {
-            tag = time;
+        if (time > tag.get() + 15) {
+            tag.set(time);
             timeTags.add(new TimeTag(msgNum, time));
         }
         if (msgNum % 2 == 0) {
-            halfByte.setRight((byte) (time - tag));
+            halfByte.setRight((byte) (time - tag.get()));
         } else {
-            halfByte.setLeft((byte) (time - tag));
+            halfByte.setLeft((byte) (time - tag.get()));
             cache[msgNum / 2] = halfByte.getByte();
             halfByte.setByte((byte) 0);
         }
@@ -51,7 +54,7 @@ public class TimeReader {
 
     public void init() {
         cache[msgNum / 2] = halfByte.getByte();
-        tag = 0;
+        tag.set(0);
         halfByte.setByte((byte) 0);
         System.out.println("time max:" + max + " timeTags size:" + timeTags.size());
         init = true;
@@ -91,23 +94,30 @@ public class TimeReader {
                 }
             }
         }
-        if (offset < offsetA || offset >= offsetB) {
+        if (offsetA.get() == null) {
+            offsetA.set(0);
+        }
+        if (offsetB.get() == null) {
+            offsetB.set(0);
+        }
+        System.out.println("time offset:" + offset);
+        if (offset < offsetA.get() || offset >= offsetB.get()) {
             int tagIndex = Collections.binarySearch(timeTags, new TimeTag(offset, 0), Comparator.comparingInt(TimeTag::getOffset));
             if (tagIndex < 0) {
                 tagIndex = Math.max(0, -(tagIndex + 2));
             }
-            tag = timeTags.get(tagIndex).getTime();
-            offsetA = timeTags.get(tagIndex).getOffset();
+            tag.set(timeTags.get(tagIndex).getTime());
+            offsetA.set(timeTags.get(tagIndex).getOffset());
             if (tagIndex == timeTags.size() - 1) {
-                offsetB = msgNum;
+                offsetB.set(msgNum);
             } else {
-                offsetB = timeTags.get(tagIndex + 1).getOffset();
+                offsetB.set(timeTags.get(tagIndex + 1).getOffset());
             }
         }
         if (offset % 2 == 0) {
-            return tag + HalfByte.getRight(cache[offset / 2]);
+            return tag.get() + HalfByte.getRight(cache[offset / 2]);
         } else {
-            return tag + HalfByte.getLeft(cache[offset / 2]);
+            return tag.get() + HalfByte.getLeft(cache[offset / 2]);
         }
     }
 }

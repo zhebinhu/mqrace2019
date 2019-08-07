@@ -34,16 +34,20 @@ public class Reader {
     public List<Message> get(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
         List<Message> result = new ArrayList<>();
         int offsetA = timeReader.getOffset((int) tMin);
+        System.out.println("offsetA:" + offsetA);
         while (offsetA < msgNum) {
+            System.out.println("offsetA:" + offsetA);
             long time = timeReader.get(offsetA);
             if (time > tMax) {
                 return result;
             }
+            System.out.println("time:"+time);
             long value = valueReader.get(offsetA) + time;
             if (value > aMax || value < aMin) {
                 offsetA++;
                 continue;
             }
+            System.out.println("value:"+value);
             Message message = messagePool.get();
             message.setT(time);
             message.setA(value);
