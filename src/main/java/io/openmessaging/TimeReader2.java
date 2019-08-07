@@ -9,7 +9,7 @@ import java.nio.channels.FileChannel;
 /**
  * Created by huzhebin on 2019/07/23.
  */
-public class TimeReader {
+public class TimeReader2 {
     /**
      * 编号
      */
@@ -37,7 +37,7 @@ public class TimeReader {
 
     LRUCache<Integer, TimePage> pageCache = new LRUCache<>(Constants.TIME_CACHE_SIZE / Constants.TIME_PAGE_SIZE);
 
-    public TimeReader(int num) {
+    public TimeReader2(int num) {
         this.num = num;
         RandomAccessFile memoryMappedFile = null;
         try {

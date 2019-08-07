@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Created by huzhebin on 2019/07/23.
  */
-public class ValueReader {
+public class ValueReader2 {
     /**
      * 编号
      */
@@ -65,7 +65,7 @@ public class ValueReader {
 
     LRUCache<Integer, ValuePage> pageCache = new LRUCache<>(Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE);
 
-    public ValueReader(int num) {
+    public ValueReader2(int num) {
         this.num = num;
         RandomAccessFile memoryMappedFile = null;
         try {

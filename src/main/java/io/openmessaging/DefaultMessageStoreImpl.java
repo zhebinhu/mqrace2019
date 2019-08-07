@@ -1,5 +1,7 @@
 package io.openmessaging;
 
+import io.openmessaging.Reader.Reader;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -115,7 +117,31 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private void init() {
-
+        System.out.println("init start:"+System.currentTimeMillis());
+        PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
+            int t = (int) (o1.fst.getT() - o2.fst.getT());
+            if (t == 0) {
+                t = (int) (o1.fst.getA() - o2.fst.getA());
+            }
+            return t;
+        });
+        for (Writer writer : writers.values()) {
+            Message message = writer.get();
+            Pair<Message, Writer> pair = new Pair<>(message, writer);
+            priorityQueue.add(pair);
+        }
+        while (!priorityQueue.isEmpty()) {
+            Pair<Message, Writer> pair = priorityQueue.poll();
+            reader.put(pair.fst);
+            Message newMessage = pair.snd.get();
+            if (newMessage != null) {
+                Pair<Message, Writer> newPair = new Pair<>(newMessage, pair.snd);
+                priorityQueue.add(newPair);
+            }
+        }
+        writers.clear();
+        reader.get();
+        System.out.println("init end:"+System.currentTimeMillis());
     }
 
     @Override
@@ -131,26 +157,26 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
             //long starttime = System.currentTimeMillis();
             //int c = count.getAndIncrement();
-//            if (c > 20000) {
-//
-//                if (!end) {
-//                    synchronized (this) {
-//                        if (!end) {
-//                            System.out.println("end:" + System.currentTimeMillis());
-//                            end = true;
-//                        }
-//                    }
-//                }
-//                return 0L;
-//            }
-            Avg result = forkJoinPool2.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
+            //            if (c > 20000) {
+            //
+            //                if (!end) {
+            //                    synchronized (this) {
+            //                        if (!end) {
+            //                            System.out.println("end:" + System.currentTimeMillis());
+            //                            end = true;
+            //                        }
+            //                    }
+            //                }
+            //                return 0L;
+            //            }
+            //Avg result = forkJoinPool2.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
             //long endtime = System.currentTimeMillis();
             //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " count:" + result.getCount() + " getAvgValue: " + (endtime - starttime));
-            if (result.getCount() == 0) {
-                return 0L;
-            } else {
-                return result.getTotal() / result.getCount();
-            }
+            //            if (result.getCount() == 0) {
+            //                return 0L;
+            //            } else {
+            //                return result.getTotal() / result.getCount();
+            //            }
 
         } catch (Exception e) {
             e.printStackTrace(System.out);

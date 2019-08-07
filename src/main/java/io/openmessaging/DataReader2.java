@@ -11,7 +11,7 @@ import java.util.concurrent.*;
 /**
  * Created by huzhebin on 2019/07/23.
  */
-public class DataReader {
+public class DataReader2 {
     /**
      * 编号
      */
@@ -47,7 +47,7 @@ public class DataReader {
      */
     private Future putFuture;
 
-    public DataReader(int num) {
+    public DataReader2(int num) {
         this.num = num;
         RandomAccessFile memoryMappedFile = null;
         try {
