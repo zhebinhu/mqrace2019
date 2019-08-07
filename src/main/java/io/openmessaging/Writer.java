@@ -16,11 +16,11 @@ public class Writer {
 
     private FileChannel fileChannel;
 
-    private int msgNum = 0;
+    private long msgNum = 0;
 
-    private int offsetA = 0;
+    private long offsetA = 0;
 
-    private int offsetB = 0;
+    private long offsetB = 0;
 
     private Message message = new Message(0, 0, new byte[34]);
 
