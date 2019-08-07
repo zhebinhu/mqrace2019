@@ -39,7 +39,7 @@ public class ValueReader {
             max = v;
         }
         int value = (int) v;
-        if (tag == -1 || value > tag + 15) {
+        if (tag == -1 || value > tag + 15 || value < tag) {
             tag = value;
             valueTags.add(new ValueTag(msgNum, value));
         }
