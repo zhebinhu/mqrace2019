@@ -38,7 +38,7 @@ public class ValueReader {
         if (v > max) {
             max = v;
         }
-        if (tag.get() == 0) {
+        if (tag.get() == null) {
             tag.set(-1);
         }
         int value = (int) v;
