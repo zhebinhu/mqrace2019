@@ -55,7 +55,7 @@ public class Queue {
             maxTime = message.getT();
             timeTagList.add(new TimeTag(maxTime, messageNum));
         }
-
+        System.out.println("Thread" + num + " T:" + message.getT() + " A:" + message.getA() + " C:" + (message.getA() - message.getT()));
         timeReader.put((byte) (message.getT() - maxTime));
         valueReader.put(message);
         dataReader.put(message);
@@ -81,7 +81,7 @@ public class Queue {
         if (tMin <= timeTagList.get(0).getTime()) {
             offsetA = 0;
         } else {
-            thisIndex = Collections.binarySearch(timeTagList, new TimeTag(tMin,0));
+            thisIndex = Collections.binarySearch(timeTagList, new TimeTag(tMin, 0));
             if (thisIndex < 0) {
                 thisIndex = Math.max(0, -(thisIndex + 2));
             }
@@ -150,7 +150,7 @@ public class Queue {
         if (tMin <= timeTagList.get(0).getTime()) {
             offsetA = 0;
         } else {
-            thisIndex = Collections.binarySearch(timeTagList, new TimeTag(tMin,0));
+            thisIndex = Collections.binarySearch(timeTagList, new TimeTag(tMin, 0));
             if (thisIndex < 0) {
                 thisIndex = Math.max(0, -(thisIndex + 2));
             }
