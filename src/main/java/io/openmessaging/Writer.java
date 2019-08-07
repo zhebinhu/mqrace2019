@@ -81,7 +81,7 @@ public class Writer {
         if (offsetA == offsetB) {
             buffer.clear();
             try {
-                fileChannel.write(buffer);
+                fileChannel.read(buffer, offsetA * Constants.MESSAGE_SIZE);
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }

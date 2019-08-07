@@ -120,9 +120,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
         System.out.println("init start:" + System.currentTimeMillis());
         reader = new Reader();
         PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
-            int t = (int) (o1.fst.getT() - o2.fst.getT());
+            int t = (int) (o2.fst.getT()-o1.fst.getT());
             if (t == 0) {
-                t = (int) (o1.fst.getA() - o2.fst.getA());
+                t = (int) (o2.fst.getA() - o1.fst.getA());
             }
             return t;
         });
