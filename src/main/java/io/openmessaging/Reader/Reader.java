@@ -15,7 +15,9 @@ public class Reader {
     private DataReader dataReader;
 
     public Reader(int num) {
-
+        timeReader = new TimeReader();
+        valueReader = new ValueReader();
+        dataReader = new DataReader();
     }
 
     public void put(Message message){

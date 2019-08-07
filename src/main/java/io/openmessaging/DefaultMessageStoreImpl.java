@@ -117,7 +117,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private void init() {
-        System.out.println("init start:"+System.currentTimeMillis());
+        System.out.println("init start:" + System.currentTimeMillis());
+        reader = new Reader(100);
         PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
             int t = (int) (o1.fst.getT() - o2.fst.getT());
             if (t == 0) {
@@ -141,7 +142,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         }
         writers.clear();
         reader.get();
-        System.out.println("init end:"+System.currentTimeMillis());
+        System.out.println("init end:" + System.currentTimeMillis());
     }
 
     @Override
