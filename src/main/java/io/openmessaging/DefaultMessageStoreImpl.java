@@ -16,7 +16,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
      */
     private ConcurrentMap<Thread, Writer> writers = new ConcurrentHashMap<>();
 
-    private Reader reader = new Reader(100);
+    private Reader reader;
 
     private AtomicInteger num = new AtomicInteger(0);
 
@@ -118,7 +118,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private void init() {
         System.out.println("init start:" + System.currentTimeMillis());
-        reader = new Reader(100);
+        reader = new Reader();
         PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
             int t = (int) (o1.fst.getT() - o2.fst.getT());
             if (t == 0) {
