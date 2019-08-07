@@ -47,19 +47,21 @@ public class ValueReader {
 
     private List<ValueTag> valueTagList = new ArrayList<>();
 
-    ThreadLocal<ValuePage> valuePage = new ThreadLocal<>();
+    private int tag = -1;
 
-    ThreadLocal<Integer> pageIndex = new ThreadLocal<>();
+    private byte aByte = 0;
 
-    ThreadLocal<Integer> tag = new ThreadLocal<>();
+    ValuePage valuePage = new ValuePage();
 
-    ThreadLocal<Integer> offsetA = new ThreadLocal<>();
-
-    ThreadLocal<Integer> offsetB = new ThreadLocal<>();
+    int pageIndex = 0;
 
     int i = 0;
 
     int k = 0;
+
+    int offsetA = -1;
+
+    int offsetB = -1;
 
     LRUCache<Integer, ValuePage> pageCache = new LRUCache<>(Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE);
 
@@ -86,34 +88,29 @@ public class ValueReader {
             buffer.clear();
         }
 
-        if (valuePage.get() == null) {
-            valuePage.set(new ValuePage());
-        }
-        if (tag.get() == null) {
-            tag.set(-1);
-        }
-
-        if (tag.get() == -1 || value - tag.get() > Byte.MAX_VALUE || value - tag.get() < Byte.MIN_VALUE) {
-            tag.set(value);
-            valueTagList.add(new ValueTag(tag.get(), messageNum));
+        if (tag == -1 || value - tag > Byte.MAX_VALUE || value - tag < Byte.MIN_VALUE) {
+            tag = value;
+            valueTagList.add(new ValueTag(tag, messageNum));
         }
 
         if (i == Constants.VALUE_PAGE_SIZE) {
-            pageCache.put(k, valuePage.get());
+            pageCache.put(k, valuePage);
             k++;
-            valuePage.set(new ValuePage());
+            valuePage = new ValuePage();
             i = 0;
         }
         if (k < Constants.VALUE_CACHE_SIZE / Constants.VALUE_PAGE_SIZE) {
-            valuePage.get().byteBuffer.put(i,(byte) (value - tag.get()));
+            valuePage.byteBuffer.put(i, (byte) (value - tag));
             i++;
         }
-        buffer.put((byte) (value - tag.get()));
+        buffer.put((byte) (value - tag));
 
         messageNum++;
     }
 
     public void init() {
+        pageIndex = -1;
+        valuePage = null;
         int remain = buffer.remaining();
         if (remain > 0) {
             buffer.flip();
@@ -136,51 +133,45 @@ public class ValueReader {
                 }
             }
         }
-        if (pageIndex.get() == null) {
-            pageIndex.set(-1);
-        }
-        if (offsetA.get() == null) {
-            offsetA.set(-1);
-        }
-        if (offsetB.get() == null) {
-            offsetB.set(-1);
-        }
-        if (offset < offsetA.get() || offset >= offsetB.get()) {
+        if (offset < offsetA || offset >= offsetB) {
             int thisIndex = Collections.binarySearch(valueTagList, new ValueTag(0, offset));
             if (thisIndex < 0) {
                 thisIndex = Math.max(0, -(thisIndex + 2));
             }
-            tag.set(valueTagList.get(thisIndex).getValue());
-            offsetA.set(valueTagList.get(thisIndex).getOffset());
+            tag = valueTagList.get(thisIndex).getValue();
+            offsetA = valueTagList.get(thisIndex).getOffset();
             if (thisIndex < valueTagList.size() - 1) {
-                offsetB.set(valueTagList.get(thisIndex + 1).getOffset());
+                offsetB = valueTagList.get(thisIndex + 1).getOffset();
             } else {
-                offsetB.set(messageNum);
+                offsetB = messageNum;
             }
         }
 
-        if (pageIndex.get() == offset / Constants.VALUE_PAGE_SIZE) {
-            return tag.get() + valuePage.get().byteBuffer.get(offset % Constants.VALUE_PAGE_SIZE);
+        if (pageIndex == offset / Constants.VALUE_PAGE_SIZE) {
+            return tag + valuePage.byteBuffer.get(offset % Constants.VALUE_PAGE_SIZE);
         }
 
-        pageIndex.set(offset / Constants.VALUE_PAGE_SIZE);
+        pageIndex = offset / Constants.VALUE_PAGE_SIZE;
 
-        valuePage.set(pageCache.get(pageIndex.get()));
+        valuePage = pageCache.get(pageIndex);
 
-        if (valuePage.get() == null) {
-            System.out.println("value uncache");
-            valuePage.set(new ValuePage());
+        if (valuePage == null) {
+            System.out.println("value uncached");
+            valuePage = pageCache.getOldest();
+            if (valuePage == null) {
+                valuePage = new ValuePage();
+            }
             try {
-                valuePage.get().byteBuffer.clear();
-                fileChannel.read(valuePage.get().byteBuffer, pageIndex.get() * Constants.VALUE_PAGE_SIZE);
-                valuePage.get().byteBuffer.flip();
+                valuePage.byteBuffer.clear();
+                fileChannel.read(valuePage.byteBuffer, pageIndex * Constants.VALUE_PAGE_SIZE);
+                valuePage.byteBuffer.flip();
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
-            pageCache.put(pageIndex.get(), valuePage.get());
+            pageCache.put(pageIndex, valuePage);
         }
 
-        return tag.get() + valuePage.get().byteBuffer.get(offset % Constants.VALUE_PAGE_SIZE);
+        return tag + valuePage.byteBuffer.get(offset % Constants.VALUE_PAGE_SIZE);
 
         //        if (index >= bufferMinIndex && index < bufferMaxIndex) {
         //            buffer.position((int) (index - bufferMinIndex) * Constants.VALUE_SIZE);

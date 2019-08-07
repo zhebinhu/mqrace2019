@@ -12,7 +12,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
     /**
      * 一个线程对应一个队列
      */
-    private ConcurrentMap<Thread, Queue> queues = new ConcurrentHashMap<>();
+    private ConcurrentMap<Thread, Writer> writers = new ConcurrentHashMap<>();
+
+    private Reader reader = new Reader(100);
 
     private AtomicInteger num = new AtomicInteger(0);
 
@@ -34,16 +36,18 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private AtomicInteger count = new AtomicInteger(0);
 
+    private volatile boolean inited = false;
+
     //private Queue queue = new Queue(100);
 
     //private Set<Thread> threadSet = new HashSet<>();
 
     @Override
     public void put(Message message) {
-        if (!queues.containsKey(Thread.currentThread())) {
+        if (!writers.containsKey(Thread.currentThread())) {
             synchronized (this) {
-                if (!queues.containsKey(Thread.currentThread())) {
-                    queues.put(Thread.currentThread(), new Queue(num.getAndIncrement()));
+                if (!writers.containsKey(Thread.currentThread())) {
+                    writers.put(Thread.currentThread(), new Writer(num.getAndIncrement()));
                 }
             }
         }
@@ -56,12 +60,20 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
 
-        queues.get(Thread.currentThread()).put(message);
+        writers.get(Thread.currentThread()).put(message);
     }
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         List<Message> result = new ArrayList<>();
+        if (!inited) {
+            synchronized (this) {
+                if (!inited) {
+                    init();
+                    inited = true;
+                }
+            }
+        }
         try {
             if (!get) {
                 synchronized (this) {
@@ -86,7 +98,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             //                System.out.println("get message threads:" + threadSet.size());
             //            }
             long starttime = System.currentTimeMillis();
-            result = forkJoinPool1.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
+            //result = forkJoinPool1.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
             List<List<Message>> messageLists = new ArrayList<>();
             //            for (Queue queue : queues.values()) {
             //                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
@@ -100,6 +112,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
             e.printStackTrace(System.out);
         }
         return result;
+    }
+
+    private void init() {
+
     }
 
     @Override
