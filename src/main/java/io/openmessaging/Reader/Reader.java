@@ -24,7 +24,6 @@ public class Reader {
         timeReader.put(message);
         valueReader.put(message);
         dataReader.put(message);
-        System.out.println(message.getT() + " " + message.getA() + " " + (message.getA() - message.getT()));
         msgNum++;
     }
 
