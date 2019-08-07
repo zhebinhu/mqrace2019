@@ -9,7 +9,7 @@ import java.nio.channels.FileChannel;
 /**
  * Created by huzhebin on 2019/07/23.
  */
-public class TimeReader {
+public class TimeReader2 {
     /**
      * 编号
      */
@@ -25,21 +25,19 @@ public class TimeReader {
      */
     private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.TIME_PAGE_SIZE);
 
-    private ThreadLocal<ByteBuffer> readBuffer = new ThreadLocal<>();
-
-    private ThreadLocal<Integer> pageIndex = new ThreadLocal<>();
-
-    private ThreadLocal<TimePage> timePage = new ThreadLocal<>();
-
     private volatile boolean inited = false;
 
     int i = 0;
 
+    TimePage timePage = new TimePage();
+
     int k = 0;
+
+    int pageIndex = 0;
 
     LRUCache<Integer, TimePage> pageCache = new LRUCache<>(Constants.TIME_CACHE_SIZE / Constants.TIME_PAGE_SIZE);
 
-    public TimeReader(int num) {
+    public TimeReader2(int num) {
         this.num = num;
         RandomAccessFile memoryMappedFile = null;
         try {
@@ -51,17 +49,14 @@ public class TimeReader {
     }
 
     public void put(byte t) {
-        if(timePage.get()==null){
-            timePage.set(new TimePage());
-        }
         if (i == Constants.TIME_PAGE_SIZE) {
-            pageCache.put(k, timePage.get());
+            pageCache.put(k, timePage);
             k++;
-            timePage.set(new TimePage());
+            timePage = new TimePage();
             i = 0;
         }
         if (k < Constants.TIME_CACHE_SIZE / Constants.TIME_PAGE_SIZE) {
-            timePage.get().bytes[i] = t;
+            timePage.bytes[i] = t;
             i++;
         }
 
@@ -79,6 +74,8 @@ public class TimeReader {
 
     public void init() {
         int remain = buffer.remaining();
+        pageIndex = -1;
+        timePage = null;
         if (remain > 0) {
             buffer.flip();
             try {
@@ -99,34 +96,31 @@ public class TimeReader {
                 }
             }
         }
-        if (pageIndex.get() == null) {
-            pageIndex.set(-1);
+        if (pageIndex == offset / Constants.TIME_PAGE_SIZE) {
+            return timePage.bytes[offset % Constants.TIME_PAGE_SIZE];
         }
-        if (pageIndex.get() == offset / Constants.TIME_PAGE_SIZE) {
-            return timePage.get().bytes[offset % Constants.TIME_PAGE_SIZE];
-        }
-        pageIndex.set(offset / Constants.TIME_PAGE_SIZE);
+        pageIndex = offset / Constants.TIME_PAGE_SIZE;
 
-        timePage.set(pageCache.get(pageIndex.get()));
+        timePage = pageCache.get(pageIndex);
 
-        if (timePage.get() == null) {
-            System.out.println("time uncache");
+        if (timePage == null) {
+            System.out.println("time uncached");
             try {
-                if (readBuffer.get() == null) {
-                    readBuffer.set(ByteBuffer.allocateDirect(Constants.TIME_PAGE_SIZE));
-                }
-                readBuffer.get().clear();
-                fileChannel.read(readBuffer.get(), pageIndex.get() * Constants.TIME_PAGE_SIZE);
-                readBuffer.get().flip();
+                buffer.clear();
+                fileChannel.read(buffer, pageIndex * Constants.TIME_PAGE_SIZE);
+                buffer.flip();
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
-            timePage.set(new TimePage());
-            readBuffer.get().get(timePage.get().bytes, 0, readBuffer.get().limit());
-            pageCache.put(pageIndex.get(), timePage.get());
+            timePage = pageCache.getOldest();
+            if (timePage == null) {
+                timePage = new TimePage();
+            }
+            buffer.get(timePage.bytes, 0, buffer.limit());
+            pageCache.put(pageIndex, timePage);
         }
 
-        return timePage.get().bytes[offset % Constants.TIME_PAGE_SIZE];
+        return timePage.bytes[offset % Constants.TIME_PAGE_SIZE];
     }
 
 }

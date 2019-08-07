@@ -26,11 +26,11 @@ public class Queue {
      */
     private List<TimeTag> timeTagList = new ArrayList<>();
 
-    private DataReader dataReader;
+    private DataReader2 dataReader2;
 
-    private ValueReader valueReader;
+    private ValueReader2 valueReader2;
 
-    private TimeReader timeReader;
+    private TimeReader2 timeReader2;
 
     /**
      * 合并相关参数
@@ -45,9 +45,9 @@ public class Queue {
 
     public Queue(int num) {
         this.num = num;
-        dataReader = new DataReader(num);
-        valueReader = new ValueReader(num);
-        timeReader = new TimeReader(num);
+        dataReader2 = new DataReader2(num);
+        valueReader2 = new ValueReader2(num);
+        timeReader2 = new TimeReader2(num);
     }
 
     public void put(Message message) {
@@ -55,10 +55,10 @@ public class Queue {
             maxTime = message.getT();
             timeTagList.add(new TimeTag(maxTime, messageNum));
         }
-        System.out.println("Thread" + num + " T:" + message.getT() + " A:" + message.getA() + " C:" + (message.getA() - message.getT()));
-        timeReader.put((byte) (message.getT() - maxTime));
-        valueReader.put(message);
-        dataReader.put(message);
+
+        timeReader2.put((byte) (message.getT() - maxTime));
+        valueReader2.put(message);
+        dataReader2.put(message);
 
         messageNum++;
     }
@@ -81,7 +81,7 @@ public class Queue {
         if (tMin <= timeTagList.get(0).getTime()) {
             offsetA = 0;
         } else {
-            thisIndex = Collections.binarySearch(timeTagList, new TimeTag(tMin, 0));
+            thisIndex = Collections.binarySearch(timeTagList, new TimeTag(tMin,0));
             if (thisIndex < 0) {
                 thisIndex = Math.max(0, -(thisIndex + 2));
             }
@@ -106,7 +106,7 @@ public class Queue {
                 }
                 baseTime = timeTagList.get(thisIndex).getTime();
             }
-            long time = baseTime + (timeReader.getTime(offsetA) + 256) % 256;
+            long time = baseTime + (timeReader2.getTime(offsetA) + 256) % 256;
             if (time < tMin) {
                 offsetA++;
                 continue;
@@ -114,13 +114,13 @@ public class Queue {
             if (time > tMax) {
                 break;
             }
-            long value = time + valueReader.getValue(offsetA);
+            long value = time + valueReader2.getValue(offsetA);
             if (value < aMin || value > aMax) {
                 offsetA++;
                 continue;
             }
             Message message = messagePool.get();
-            dataReader.getData(offsetA, message);
+            dataReader2.getData(offsetA, message);
             message.setT(time);
             message.setA(value);
             result.add(message);
@@ -150,7 +150,7 @@ public class Queue {
         if (tMin <= timeTagList.get(0).getTime()) {
             offsetA = 0;
         } else {
-            thisIndex = Collections.binarySearch(timeTagList, new TimeTag(tMin, 0));
+            thisIndex = Collections.binarySearch(timeTagList, new TimeTag(tMin,0));
             if (thisIndex < 0) {
                 thisIndex = Math.max(0, -(thisIndex + 2));
             }
@@ -175,7 +175,7 @@ public class Queue {
                 }
                 baseTime = timeTagList.get(thisIndex).getTime();
             }
-            long time = baseTime + (timeReader.getTime(offsetA) + 256) % 256;
+            long time = baseTime + (timeReader2.getTime(offsetA) + 256) % 256;
             if (time < tMin) {
                 offsetA++;
                 continue;
@@ -183,7 +183,7 @@ public class Queue {
             if (time > tMax) {
                 break;
             }
-            long value = time + valueReader.getValue(offsetA);
+            long value = time + valueReader2.getValue(offsetA);
             if (value < aMin || value > aMax) {
                 offsetA++;
                 continue;
@@ -213,8 +213,8 @@ public class Queue {
                 mergeOffsetB = timeTagList.get(mergeTagIndex + 1).getOffset();
             }
         }
-        long time = mergeTimeTag + timeReader.getTime(mergeOffset);
-        long value = time + valueReader.getValue(mergeOffset);
+        long time = mergeTimeTag + timeReader2.getTime(mergeOffset);
+        long value = time + valueReader2.getValue(mergeOffset);
         mergeOffset++;
         return new TA(time, value);
     }

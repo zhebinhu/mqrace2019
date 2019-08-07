@@ -5,9 +5,9 @@ package io.openmessaging;
  */
 public class Constants {
     // T 和 A 的大小
-    public final static int VALUE_SIZE = 4;
+    public final static int MESSAGE_SIZE = 50;
 
-    public final static int VALUE_NUM = 16 * 1024;
+    public final static int MESSAGE_NUM = 2 * 1024;
 
     public final static int TIME_PAGE_SIZE = 64 * 1024;
 
