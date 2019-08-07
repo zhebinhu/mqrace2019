@@ -66,7 +66,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     @Override
-    public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         List<Message> result = new ArrayList<>();
         if (!inited) {
             synchronized (this) {
@@ -88,26 +88,16 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (messagePoolThreadLocal.get() == null) {
                 messagePoolThreadLocal.set(new MessagePool());
             }
-            //            if(!merged){
-            //                synchronized (this){
-            //                    if(!merged){
-            //
-            //                    }
-            //                }
-            //            }
-            //            if (!threadSet.contains(Thread.currentThread())) {
-            //                threadSet.add(Thread.currentThread());
-            //                System.out.println("get message threads:" + threadSet.size());
-            //            }
             long starttime = System.currentTimeMillis();
             //result = forkJoinPool1.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
-            List<List<Message>> messageLists = new ArrayList<>();
+            //List<List<Message>> messageLists = new ArrayList<>();
             //            for (Queue queue : queues.values()) {
             //                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
             //            }
             //            for (List<Message> messages : messageLists) {
             //                result = merge(result, messages);
             //            }
+            result = reader.get(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get());
             long endtime = System.currentTimeMillis();
             System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
@@ -120,9 +110,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
         System.out.println("init start:" + System.currentTimeMillis());
         reader = new Reader();
         PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
-            int t = (int) (o2.fst.getT()-o1.fst.getT());
+            int t = (int) (o1.fst.getT()-o2.fst.getT());
             if (t == 0) {
-                t = (int) (o2.fst.getA() - o1.fst.getA());
+                t = (int) (o1.fst.getA() - o2.fst.getA());
             }
             return t;
         });
@@ -141,7 +131,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
         writers.clear();
-        reader.get();
         System.out.println("init end:" + System.currentTimeMillis());
     }
 

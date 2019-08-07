@@ -1,25 +1,12 @@
 package io.openmessaging;
 
 /**
- * Created by huzhebin on 2019/07/31.
+ * Created by huzhebin on 2019/08/07.
  */
-public class TimeTag implements Comparable<TimeTag> {
-    long time;
+public class TimeTag {
+    private int offset;
 
-    int offset;
-
-    TimeTag(long time, int offset) {
-        this.time = time;
-        this.offset = offset;
-    }
-
-    public long getTime() {
-        return time;
-    }
-
-    public void setTime(long time) {
-        this.time = time;
-    }
+    private int time;
 
     public int getOffset() {
         return offset;
@@ -29,14 +16,16 @@ public class TimeTag implements Comparable<TimeTag> {
         this.offset = offset;
     }
 
-    @Override
-    public int compareTo(TimeTag o) {
-        if (time > o.getTime()) {
-            return 1;
-        } else if (time < o.getTime()) {
-            return -1;
-        } else {
-            return 0;
-        }
+    public int getTime() {
+        return time;
+    }
+
+    public void setTime(int time) {
+        this.time = time;
+    }
+
+    public TimeTag(int offset, int time) {
+        this.offset = offset;
+        this.time = time;
     }
 }

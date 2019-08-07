@@ -1,6 +1,10 @@
 package io.openmessaging.Reader;
 
 import io.openmessaging.Message;
+import io.openmessaging.MessagePool;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -27,9 +31,26 @@ public class Reader {
         msgNum++;
     }
 
-    public void get() {
-        timeReader.get();
-        valueReader.get();
-        System.out.println("total:" + msgNum);
+    public List<Message> get(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
+        List<Message> result = new ArrayList<>();
+        int offsetA = timeReader.getOffset((int) tMin);
+        while (offsetA < msgNum) {
+            long time = timeReader.get(offsetA);
+            if (time > tMax) {
+                return result;
+            }
+            long value = valueReader.get(offsetA) + time;
+            if (value > aMax || value < aMin) {
+                offsetA++;
+                continue;
+            }
+            Message message = messagePool.get();
+            message.setT(time);
+            message.setA(value);
+            dataReader.getData(offsetA, message);
+            result.add(message);
+            offsetA++;
+        }
+        return result;
     }
 }

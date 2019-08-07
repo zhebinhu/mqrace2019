@@ -35,4 +35,12 @@ public class HalfByte {
     public void setByte(byte aByte) {
         this.aByte = aByte;
     }
+
+    public static byte getRight(byte b){
+        return (byte) (b & 0x0f);
+    }
+
+    public static byte getLeft(byte b){
+        return (byte) ((b & 0xf0) >>> 4);
+    }
 }
