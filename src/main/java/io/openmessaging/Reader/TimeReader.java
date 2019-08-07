@@ -26,7 +26,7 @@ public class TimeReader {
         if (t < min) {
             min = t;
         }
-        if (t - tag > 255) {
+        if (t - tag > 15) {
             tag = t;
             tagCount++;
         }
