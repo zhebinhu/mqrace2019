@@ -78,9 +78,9 @@ public class ValueReader {
         if (offsetB.get() == null) {
             offsetB.set(0);
         }
-        System.out.println("value offset:" + offset);
+        //System.out.println("value offset:" + offset);
         if (offset < offsetA.get() || offset >= offsetB.get()) {
-            int tagIndex = Collections.binarySearch(valueTags, new ValueTag(offset, 0), Comparator.comparingInt(ValueTag::getOffset));
+            int tagIndex = Collections.binarySearch(valueTags, new ValueTag(0, offset), Comparator.comparingInt(ValueTag::getOffset));
             if (tagIndex < 0) {
                 tagIndex = Math.max(0, -(tagIndex + 2));
             }

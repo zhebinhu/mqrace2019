@@ -100,7 +100,7 @@ public class TimeReader {
         if (offsetB.get() == null) {
             offsetB.set(0);
         }
-        System.out.println("time offset:" + offset);
+        //System.out.println("time offset:" + offset);
         if (offset < offsetA.get() || offset >= offsetB.get()) {
             int tagIndex = Collections.binarySearch(timeTags, new TimeTag(offset, 0), Comparator.comparingInt(TimeTag::getOffset));
             if (tagIndex < 0) {
