@@ -1,7 +1,9 @@
 package io.openmessaging;
 
+import com.sun.management.OperatingSystemMXBean;
 import io.openmessaging.Reader.Reader;
 
+import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,6 +43,17 @@ public class DefaultMessageStoreImpl extends MessageStore {
     private volatile boolean inited = false;
 
     //private Set<Thread> threadSet = new HashSet<>();
+
+    private static OperatingSystemMXBean osmxb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+
+    public static int memoryLoad() {
+        double totalvirtualMemory = osmxb.getTotalPhysicalMemorySize();
+        double freePhysicalMemorySize = osmxb.getFreePhysicalMemorySize();
+
+        double value = freePhysicalMemorySize / totalvirtualMemory;
+        int percentMemoryLoad = (int) ((1 - value) * 100);
+        return percentMemoryLoad;
+    }
 
     @Override
     public void put(Message message) {
@@ -86,10 +99,11 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (messagePoolThreadLocal.get() == null) {
                 messagePoolThreadLocal.set(new MessagePool());
             }
-            //long starttime = System.currentTimeMillis();
+            long starttime = System.currentTimeMillis();
             result = reader.get(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get());
-            //long endtime = System.currentTimeMillis();
-            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            long endtime = System.currentTimeMillis();
+            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            System.out.println("memory:" + memoryLoad());
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -126,35 +140,35 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-//        try {
-//            if (!avg) {
-//                synchronized (this) {
-//                    if (!avg) {
-//                        System.out.println("avg:" + System.currentTimeMillis());
-//                        avg = true;
-//                    }
-//                }
-//            }
-//            long starttime = System.currentTimeMillis();
-//            int c = count.getAndIncrement();
-//            if (c == 20000) {
-//                if (!end) {
-//                    synchronized (this) {
-//                        if (!end) {
-//                            System.out.println("end:" + System.currentTimeMillis());
-//                            end = true;
-//                        }
-//                    }
-//                }
-//            }
-//            long result = reader.avg(aMin, aMax, tMin, tMax);
-//            //long endtime = System.currentTimeMillis();
-//            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
-//            return result;
-//
-//        } catch (Exception e) {
-//            e.printStackTrace(System.out);
-//        }
+        //        try {
+        //            if (!avg) {
+        //                synchronized (this) {
+        //                    if (!avg) {
+        //                        System.out.println("avg:" + System.currentTimeMillis());
+        //                        avg = true;
+        //                    }
+        //                }
+        //            }
+        //            long starttime = System.currentTimeMillis();
+        //            int c = count.getAndIncrement();
+        //            if (c == 20000) {
+        //                if (!end) {
+        //                    synchronized (this) {
+        //                        if (!end) {
+        //                            System.out.println("end:" + System.currentTimeMillis());
+        //                            end = true;
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //            long result = reader.avg(aMin, aMax, tMin, tMax);
+        //            //long endtime = System.currentTimeMillis();
+        //            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
+        //            return result;
+        //
+        //        } catch (Exception e) {
+        //            e.printStackTrace(System.out);
+        //        }
         return 0L;
     }
 }
