@@ -13,8 +13,8 @@ public class Tags {
     private int index;
 
     public Tags(int cap) {
-        tags = ByteBuffer.allocateDirect(cap);
-        offsets = ByteBuffer.allocateDirect(cap);
+        tags = ByteBuffer.allocateDirect(4 * cap);
+        offsets = ByteBuffer.allocateDirect(4 * cap);
         index = 0;
     }
 
@@ -41,11 +41,11 @@ public class Tags {
     }
 
     public int getTag(int tagIndex) {
-        return tags.getInt(tagIndex<<2);
+        return tags.getInt(tagIndex << 2);
     }
 
     public int getOffset(int offsetIndex) {
-        return offsets.getInt(offsetIndex<<2);
+        return offsets.getInt(offsetIndex << 2);
     }
 
     public int size() {
