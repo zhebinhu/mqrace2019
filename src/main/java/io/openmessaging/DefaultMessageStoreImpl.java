@@ -66,7 +66,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     @Override
-    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+    public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         List<Message> result = new ArrayList<>();
         if (!inited) {
             synchronized (this) {

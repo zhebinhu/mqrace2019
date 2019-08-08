@@ -99,24 +99,28 @@ public class DataReader {
         if (bufferMaxIndex.get() == null) {
             bufferMaxIndex.set(-1);
         }
+        ByteBuffer tmpBuffer;
         if (readBuffer.get() == null) {
-            readBuffer.set(ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM));
+            tmpBuffer = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
+            readBuffer.set(tmpBuffer);
+        }else {
+            tmpBuffer = readBuffer.get();
         }
         if (index >= bufferMinIndex.get() && index < bufferMaxIndex.get()) {
-            readBuffer.get().position((index - bufferMinIndex.get()) * Constants.DATA_SIZE);
+            tmpBuffer.position((index - bufferMinIndex.get()) * Constants.DATA_SIZE);
         } else {
-            readBuffer.get().clear();
+            tmpBuffer.clear();
             try {
-                fileChannel.read(readBuffer.get(), ((long) index) * Constants.DATA_SIZE);
+                fileChannel.read(tmpBuffer, ((long) index) * Constants.DATA_SIZE);
                 bufferMinIndex.set(index);
                 bufferMaxIndex.set(Math.min(index + Constants.DATA_NUM, messageNum));
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
-            readBuffer.get().flip();
+            tmpBuffer.flip();
         }
 
-        readBuffer.get().get(message.getBody());
+        tmpBuffer.get(message.getBody());
     }
 
 }
