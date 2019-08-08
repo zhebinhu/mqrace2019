@@ -32,7 +32,7 @@ public class ValueReader {
 
     private ThreadLocal<Integer> offsetB = new ThreadLocal<>();
 
-    private ThreadLocal<ValueTag> valueTag = new ThreadLocal<>();
+    //private ThreadLocal<ValueTag> valueTag = new ThreadLocal<>();
 
     public void put(Message message) {
         long v = message.getA() - message.getT();
@@ -78,11 +78,11 @@ public class ValueReader {
         }
 
         if (offset < offsetA.get() || offset >= offsetB.get()) {
-            if (valueTag.get() == null) {
-                valueTag.set(new ValueTag(0, 0));
-            }
-            ValueTag tmpValueTag = valueTag.get();
-            tmpValueTag.setOffset(offset);
+//            if (valueTag.get() == null) {
+//                valueTag.set(new ValueTag(0, 0));
+//            }
+//            ValueTag tmpValueTag = valueTag.get();
+//            tmpValueTag.setOffset(offset);
             int tagIndex = valueTags.offsetIndex(offset);
             tag.set(valueTags.getTag(tagIndex));
             offsetA.set(valueTags.getOffset(tagIndex));

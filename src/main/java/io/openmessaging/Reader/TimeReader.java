@@ -31,7 +31,7 @@ public class TimeReader {
 
     private ThreadLocal<Integer> tag = new ThreadLocal<>();
 
-    private ThreadLocal<TimeTag> timeTag = new ThreadLocal<>();
+    //private ThreadLocal<TimeTag> timeTag = new ThreadLocal<>();
 
     public void put(Message message) {
         long t = message.getT();
@@ -70,11 +70,11 @@ public class TimeReader {
                 }
             }
         }
-        if(timeTag.get()==null){
-            timeTag.set(new TimeTag(0,0));
-        }
-        TimeTag tmpTimeTag = timeTag.get();
-        tmpTimeTag.setTime(time);
+//        if(timeTag.get()==null){
+//            timeTag.set(new TimeTag(0,0));
+//        }
+//        TimeTag tmpTimeTag = timeTag.get();
+//        tmpTimeTag.setTime(time);
         int tagIndex = timeTags.tagIndex(time);
         int pTag = timeTags.getTag(tagIndex);
         int pOffset = timeTags.getOffset(tagIndex);
@@ -104,8 +104,8 @@ public class TimeReader {
         if (offsetB.get() == null) {
             offsetB.set(0);
         }
-        TimeTag tmpTimeTag = timeTag.get();
-        tmpTimeTag.setOffset(offset);
+//        TimeTag tmpTimeTag = timeTag.get();
+//        tmpTimeTag.setOffset(offset);
         if (offset < offsetA.get() || offset >= offsetB.get()) {
             int tagIndex = timeTags.offsetIndex(offset);
             tag.set(timeTags.getTag(tagIndex));
