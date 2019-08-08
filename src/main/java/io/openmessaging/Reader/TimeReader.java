@@ -13,7 +13,7 @@ public class TimeReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE / 2];
 
-    private Tags timeTags = new Tags(2000000);
+    private Tags timeTags = new Tags(70000000);
 
     private int msgNum = 0;
 

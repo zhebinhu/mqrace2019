@@ -13,9 +13,9 @@ import java.nio.ByteBuffer;
 public class ValueReader {
     private long max = 0;
 
-    private ByteBuffer byteBuffer = ByteBuffer.allocateDirect(Integer.MAX_VALUE / 2);
+    private byte[] cache = new byte[Integer.MAX_VALUE / 2];
 
-    private Tags valueTags = new Tags(2000000);
+    private Tags valueTags = new Tags(30000000);
 
     private int msgNum = 0;
 
@@ -25,29 +25,32 @@ public class ValueReader {
 
     private int tag = -1;
 
+    private int count = 0;
+
     public void put(Message message) {
         long v = message.getA() - message.getT();
         if (v > max) {
             max = v;
         }
         int value = (int) v;
-        if (tag == -1 || value > tag + 15 || value < tag) {
+        if (tag == -1 || value > tag + 3 || value < tag) {
             tag = value;
-            valueTags.add(value, msgNum);
+            count++;
+            //valueTags.add(value, msgNum);
         }
-        if (msgNum % 2 == 0) {
-            halfByte.setRight((byte) (value - tag));
-        } else {
-            halfByte.setLeft((byte) (value - tag));
-            byteBuffer.put(msgNum / 2, halfByte.getByte());
-            halfByte.setByte((byte) 0);
-        }
-        msgNum++;
+//        if (msgNum % 2 == 0) {
+//            halfByte.setRight((byte) (value - tag));
+//        } else {
+//            halfByte.setLeft((byte) (value - tag));
+//            cache[msgNum / 2] = halfByte.getByte();
+//            halfByte.setByte((byte) 0);
+//        }
+//        msgNum++;
     }
 
     public void init() {
-        byteBuffer.put(msgNum / 2, halfByte.getByte());
-        System.out.println("value max:" + max + " valueTags size:" + valueTags.size());
+        //cache[msgNum / 2] = halfByte.getByte();
+        System.out.println("value max:" + max + " count:" + count);
         init = true;
     }
 
@@ -71,9 +74,9 @@ public class ValueReader {
             }
         }
         if (offset % 2 == 0) {
-            return context.tag + HalfByte.getRight(byteBuffer.get(offset / 2));
+            return context.tag + HalfByte.getRight(cache[offset / 2]);
         } else {
-            return context.tag + HalfByte.getLeft(byteBuffer.get(offset / 2));
+            return context.tag + HalfByte.getLeft(cache[offset / 2]);
         }
     }
 }

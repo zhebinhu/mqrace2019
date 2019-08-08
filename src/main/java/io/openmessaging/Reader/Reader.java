@@ -20,8 +20,6 @@ public class Reader {
 
     private long msgNum;
 
-    private volatile boolean init = false;
-
     private ThreadLocal<Context> timeContextThreadLocal = new ThreadLocal<>();
 
     private ThreadLocal<Context> valueContextThreadLocal = new ThreadLocal<>();
