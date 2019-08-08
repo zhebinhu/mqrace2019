@@ -1,5 +1,6 @@
 package io.openmessaging.Reader;
 
+import io.openmessaging.Context;
 import io.openmessaging.HalfByte;
 import io.openmessaging.Message;
 import io.openmessaging.Tags;
@@ -24,10 +25,6 @@ public class ValueReader {
 
     private int tag = -1;
 
-    private int offsetA = 0;
-
-    private int offsetB = 0;
-
     public void put(Message message) {
         long v = message.getA() - message.getT();
         if (v > max) {
@@ -50,13 +47,11 @@ public class ValueReader {
 
     public void init() {
         byteBuffer.put(msgNum / 2, halfByte.getByte());
-        tag = 0;
-        halfByte.setByte((byte) 0);
         System.out.println("value max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
 
-    public int get(int offset) {
+    public int get(int offset, Context context) {
         if (!init) {
             synchronized (this) {
                 if (!init) {
@@ -65,20 +60,20 @@ public class ValueReader {
             }
         }
 
-        if (offset < offsetA || offset >= offsetB) {
+        if (offset < context.offsetA || offset >= context.offsetB) {
             int tagIndex = valueTags.offsetIndex(offset);
-            tag = valueTags.getTag(tagIndex);
-            offsetA = valueTags.getOffset(tagIndex);
+            context.tag = valueTags.getTag(tagIndex);
+            context.offsetA = valueTags.getOffset(tagIndex);
             if (tagIndex == valueTags.size() - 1) {
-                offsetB = msgNum;
+                context.offsetB = msgNum;
             } else {
-                offsetB = valueTags.getOffset(tagIndex + 1);
+                context.offsetB = valueTags.getOffset(tagIndex + 1);
             }
         }
         if (offset % 2 == 0) {
-            return tag + HalfByte.getRight(byteBuffer.get(offset / 2));
+            return context.tag + HalfByte.getRight(byteBuffer.get(offset / 2));
         } else {
-            return tag + HalfByte.getLeft(byteBuffer.get(offset / 2));
+            return context.tag + HalfByte.getLeft(byteBuffer.get(offset / 2));
         }
     }
 }

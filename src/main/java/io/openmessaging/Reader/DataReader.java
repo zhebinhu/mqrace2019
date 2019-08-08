@@ -1,6 +1,7 @@
 package io.openmessaging.Reader;
 
 import io.openmessaging.Constants;
+import io.openmessaging.DataContext;
 import io.openmessaging.Message;
 
 import java.io.FileNotFoundException;
@@ -23,18 +24,12 @@ public class DataReader {
     /**
      * 文件通道
      */
-    private FileChannel fileChannel;
+    private static FileChannel fileChannel;
 
     /**
      * 堆外内存
      */
     private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
-
-    private ThreadLocal<ByteBuffer> readBuffer = new ThreadLocal<>();
-
-    private ThreadLocal<Integer> bufferMaxIndex = new ThreadLocal<>();
-
-    private ThreadLocal<Integer> bufferMinIndex = new ThreadLocal<>();
 
     /**
      * 消息总数
@@ -44,11 +39,10 @@ public class DataReader {
     private volatile boolean inited = false;
 
 
-    public DataReader() {
-        this.num = num;
+    static{
         RandomAccessFile memoryMappedFile = null;
         try {
-            memoryMappedFile = new RandomAccessFile(Constants.URL + num + "100.data", "rw");
+            memoryMappedFile = new RandomAccessFile(Constants.URL + "100.data", "rw");
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }
@@ -83,7 +77,7 @@ public class DataReader {
         }
     }
 
-    public void getData(int index, Message message) {
+    public void getData(int index, Message message, DataContext dataContext) {
 
         if (!inited) {
             synchronized (this) {
@@ -93,34 +87,21 @@ public class DataReader {
                 }
             }
         }
-        if (bufferMinIndex.get() == null) {
-            bufferMinIndex.set(-1);
-        }
-        if (bufferMaxIndex.get() == null) {
-            bufferMaxIndex.set(-1);
-        }
-        ByteBuffer tmpBuffer;
-        if (readBuffer.get() == null) {
-            tmpBuffer = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
-            readBuffer.set(tmpBuffer);
-        }else {
-            tmpBuffer = readBuffer.get();
-        }
-        if (index >= bufferMinIndex.get() && index < bufferMaxIndex.get()) {
-            tmpBuffer.position((index - bufferMinIndex.get()) * Constants.DATA_SIZE);
+        if (index >= dataContext.bufferMinIndex && index < dataContext.bufferMaxIndex) {
+            dataContext.buffer.position((index - dataContext.bufferMinIndex) * Constants.DATA_SIZE);
         } else {
-            tmpBuffer.clear();
+            dataContext.buffer.clear();
             try {
-                fileChannel.read(tmpBuffer, ((long) index) * Constants.DATA_SIZE);
-                bufferMinIndex.set(index);
-                bufferMaxIndex.set(Math.min(index + Constants.DATA_NUM, messageNum));
+                fileChannel.read(dataContext.buffer, ((long) index) * Constants.DATA_SIZE);
+                dataContext.bufferMinIndex = index;
+                dataContext.bufferMaxIndex = Math.min(index + Constants.DATA_NUM, messageNum);
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
-            tmpBuffer.flip();
+            dataContext.buffer.flip();
         }
 
-        tmpBuffer.get(message.getBody());
+        dataContext.buffer.get(message.getBody());
     }
 
 }

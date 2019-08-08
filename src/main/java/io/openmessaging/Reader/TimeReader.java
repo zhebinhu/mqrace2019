@@ -1,5 +1,6 @@
 package io.openmessaging.Reader;
 
+import io.openmessaging.Context;
 import io.openmessaging.HalfByte;
 import io.openmessaging.Message;
 import io.openmessaging.Tags;
@@ -19,10 +20,6 @@ public class TimeReader {
     private HalfByte halfByte = new HalfByte((byte) 0);
 
     private volatile boolean init = false;
-
-    private int offsetA = 0;
-
-    private int offsetB = 0;
 
     private int tag = 0;
 
@@ -48,9 +45,6 @@ public class TimeReader {
 
     public void init() {
         cache[msgNum / 2] = halfByte.getByte();
-        tag = 0;
-        halfByte.setByte((byte) 0);
-
         System.out.println("time max:" + max + " timeTags size:" + timeTags.size());
         init = true;
     }
@@ -78,7 +72,7 @@ public class TimeReader {
         return pOffset;
     }
 
-    public int get(int offset) {
+    public int get(int offset, Context context) {
         if (!init) {
             synchronized (this) {
                 if (!init) {
@@ -86,20 +80,21 @@ public class TimeReader {
                 }
             }
         }
-        if (offset < offsetA || offset >= offsetB) {
+
+        if (offset < context.offsetA || offset >= context.offsetB) {
             int tagIndex = timeTags.offsetIndex(offset);
-            tag = timeTags.getTag(tagIndex);
-            offsetA = timeTags.getOffset(tagIndex);
+            context.tag = timeTags.getTag(tagIndex);
+            context.offsetA = timeTags.getOffset(tagIndex);
             if (tagIndex == timeTags.size() - 1) {
-                offsetB = msgNum;
+                context.offsetB = msgNum;
             } else {
-                offsetB = timeTags.getOffset(tagIndex + 1);
+                context.offsetB = timeTags.getOffset(tagIndex + 1);
             }
         }
         if (offset % 2 == 0) {
-            return tag + HalfByte.getRight(cache[offset / 2]);
+            return context.tag + HalfByte.getRight(cache[offset / 2]);
         } else {
-            return tag + HalfByte.getLeft(cache[offset / 2]);
+            return context.tag + HalfByte.getLeft(cache[offset / 2]);
         }
     }
 }

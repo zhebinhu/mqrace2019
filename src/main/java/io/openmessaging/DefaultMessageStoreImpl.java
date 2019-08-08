@@ -40,8 +40,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean inited = false;
 
-    //private Queue queue = new Queue(100);
-
     //private Set<Thread> threadSet = new HashSet<>();
 
     @Override
@@ -66,7 +64,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     @Override
-    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+    public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         List<Message> result = new ArrayList<>();
         if (!inited) {
             synchronized (this) {
@@ -89,14 +87,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 messagePoolThreadLocal.set(new MessagePool());
             }
             //long starttime = System.currentTimeMillis();
-            //result = forkJoinPool1.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
-            //List<List<Message>> messageLists = new ArrayList<>();
-            //            for (Queue queue : queues.values()) {
-            //                messageLists.add(queue.getMessage(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get()));
-            //            }
-            //            for (List<Message> messages : messageLists) {
-            //                result = merge(result, messages);
-            //            }
             result = reader.get(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get());
             //long endtime = System.currentTimeMillis();
             //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
@@ -135,7 +125,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     @Override
-    public synchronized long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
+    public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
         try {
             if (!avg) {
                 synchronized (this) {
@@ -157,167 +147,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-            //Avg result = forkJoinPool2.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
-
-            //            if (result.getCount() == 0) {
-            //                return 0L;
-            //            } else {
-            //                return result.getTotal() / result.getCount();
-            //            }
             long result = reader.avg(aMin, aMax, tMin, tMax);
-            long endtime = System.currentTimeMillis();
-            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
+            //long endtime = System.currentTimeMillis();
+            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
             return result;
 
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
         return 0L;
-    }
-
-    private List<Message> merge(List<Message> a, List<Message> b) {
-        List<Message> result = new ArrayList<>();
-        int i = 0;
-        int j = 0;
-        while (i < a.size() && j < b.size()) {
-            if (a.get(i).getT() <= b.get(j).getT()) {
-                result.add(a.get(i++));
-            } else {
-                result.add(b.get(j++));
-            }
-        }
-        while (i < a.size()) {
-            result.add(a.get(i++));
-        }
-        while (j < b.size()) {
-            result.add(b.get(j++));
-        }
-        return result;
-    }
-
-    public class AvgTask extends RecursiveTask<Avg> {
-        private int start;
-
-        private int end;
-
-        private List<Queue> queues;
-
-        private long aMin;
-
-        private long aMax;
-
-        private long tMin;
-
-        private long tMax;
-
-        AvgTask(List<Queue> queues, int start, int end, long aMin, long aMax, long tMin, long tMax) {
-            this.queues = queues;
-            this.start = start;
-            this.end = end;
-            this.aMin = aMin;
-            this.aMax = aMax;
-            this.tMin = tMin;
-            this.tMax = tMax;
-        }
-
-        @Override
-        protected Avg compute() {
-            Avg result = new Avg();
-            try {
-                if (start == end) {
-                    return queues.get(start).getAvg(aMin, aMax, tMin, tMax);
-                } else {
-                    int mid = (start + end) / 2;
-                    AvgTask leftTask = new AvgTask(queues, start, mid, aMin, aMax, tMin, tMax);
-                    AvgTask rightTask = new AvgTask(queues, mid + 1, end, aMin, aMax, tMin, tMax);
-
-                    leftTask.fork();
-                    rightTask.fork();
-
-                    Avg leftResult = leftTask.join();
-                    Avg rightResult = rightTask.join();
-
-                    result.setCount(leftResult.getCount() + rightResult.getCount());
-                    result.setTotal(leftResult.getTotal() + rightResult.getTotal());
-                    return result;
-                }
-            } catch (Exception e) {
-                e.printStackTrace(System.out);
-            }
-            return result;
-        }
-    }
-
-    public class MergeTask extends RecursiveTask<List<Message>> {
-        private int start;
-
-        private int end;
-
-        private List<Queue> queues;
-
-        private long aMin;
-
-        private long aMax;
-
-        private long tMin;
-
-        private long tMax;
-
-        private MessagePool messagePool;
-
-        MergeTask(List<Queue> queues, int start, int end, long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
-            this.queues = queues;
-            this.start = start;
-            this.end = end;
-            this.aMin = aMin;
-            this.aMax = aMax;
-            this.tMin = tMin;
-            this.tMax = tMax;
-            this.messagePool = messagePool;
-        }
-
-        protected List<Message> compute() {
-            List<Message> result = new ArrayList<>();
-            try {
-                if (start == end) {
-                    return queues.get(start).getMessage(aMin, aMax, tMin, tMax, messagePool);
-                } else {
-                    int mid = (start + end) / 2;
-                    MergeTask leftTask = new MergeTask(queues, start, mid, aMin, aMax, tMin, tMax, messagePool);
-                    MergeTask rightTask = new MergeTask(queues, mid + 1, end, aMin, aMax, tMin, tMax, messagePool);
-
-                    leftTask.fork();
-                    rightTask.fork();
-
-                    List<Message> leftResult = leftTask.join();
-                    List<Message> rightResult = rightTask.join();
-
-                    result = merge(leftResult, rightResult);
-                }
-            } catch (Exception e) {
-                e.printStackTrace(System.out);
-            }
-            return result;
-        }
-
-        private List<Message> merge(List<Message> a, List<Message> b) {
-            List<Message> result = new ArrayList<>();
-            int i = 0;
-            int j = 0;
-            while (i < a.size() && j < b.size()) {
-                if (a.get(i).getT() <= b.get(j).getT()) {
-                    result.add(a.get(i++));
-                } else {
-                    result.add(b.get(j++));
-                }
-            }
-            while (i < a.size()) {
-                result.add(a.get(i++));
-            }
-            while (j < b.size()) {
-                result.add(b.get(j++));
-            }
-            return result;
-        }
     }
 }

@@ -1,5 +1,7 @@
 package io.openmessaging.Reader;
 
+import io.openmessaging.Context;
+import io.openmessaging.DataContext;
 import io.openmessaging.Message;
 import io.openmessaging.MessagePool;
 
@@ -18,6 +20,14 @@ public class Reader {
 
     private long msgNum;
 
+    private volatile boolean init = false;
+
+    private ThreadLocal<Context> timeContextThreadLocal = new ThreadLocal<>();
+
+    private ThreadLocal<Context> valueContextThreadLocal = new ThreadLocal<>();
+
+    private ThreadLocal<DataContext> dataContextThreadLocal = new ThreadLocal<>();
+
     public Reader() {
         timeReader = new TimeReader();
         valueReader = new ValueReader();
@@ -33,13 +43,25 @@ public class Reader {
 
     public List<Message> get(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
         List<Message> result = new ArrayList<>();
+        if (timeContextThreadLocal.get() == null) {
+            timeContextThreadLocal.set(new Context());
+        }
+        Context timeContext = timeContextThreadLocal.get();
+        if (valueContextThreadLocal.get() == null) {
+            valueContextThreadLocal.set(new Context());
+        }
+        Context valueContext = valueContextThreadLocal.get();
+        if (dataContextThreadLocal.get() == null) {
+            dataContextThreadLocal.set(new DataContext());
+        }
+        DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset((int) tMin);
         while (offsetA < msgNum) {
-            long time = timeReader.get(offsetA);
+            long time = timeReader.get(offsetA, timeContext);
             if (time > tMax) {
                 return result;
             }
-            long value = valueReader.get(offsetA) + time;
+            long value = valueReader.get(offsetA, valueContext) + time;
             if (value > aMax || value < aMin) {
                 offsetA++;
                 continue;
@@ -47,7 +69,7 @@ public class Reader {
             Message message = messagePool.get();
             message.setT(time);
             message.setA(value);
-            dataReader.getData(offsetA, message);
+            dataReader.getData(offsetA, message, dataContext);
             result.add(message);
             offsetA++;
         }
@@ -55,15 +77,23 @@ public class Reader {
     }
 
     public long avg(long aMin, long aMax, long tMin, long tMax) {
+        if (timeContextThreadLocal.get() == null) {
+            timeContextThreadLocal.set(new Context());
+        }
+        Context timeContext = timeContextThreadLocal.get();
+        if (valueContextThreadLocal.get() == null) {
+            valueContextThreadLocal.set(new Context());
+        }
+        Context valueContext = valueContextThreadLocal.get();
         int offsetA = timeReader.getOffset((int) tMin);
         long total = 0;
         int count = 0;
         while (offsetA < msgNum) {
-            long time = timeReader.get(offsetA);
+            long time = timeReader.get(offsetA, timeContext);
             if (time > tMax) {
                 return count == 0 ? 0 : total / count;
             }
-            long value = valueReader.get(offsetA) + time;
+            long value = valueReader.get(offsetA, valueContext) + time;
             if (value > aMax || value < aMin) {
                 offsetA++;
                 continue;
