@@ -140,35 +140,35 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-        //        try {
-        //            if (!avg) {
-        //                synchronized (this) {
-        //                    if (!avg) {
-        //                        System.out.println("avg:" + System.currentTimeMillis());
-        //                        avg = true;
-        //                    }
-        //                }
-        //            }
-        //            long starttime = System.currentTimeMillis();
-        //            int c = count.getAndIncrement();
-        //            if (c == 20000) {
-        //                if (!end) {
-        //                    synchronized (this) {
-        //                        if (!end) {
-        //                            System.out.println("end:" + System.currentTimeMillis());
-        //                            end = true;
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //            long result = reader.avg(aMin, aMax, tMin, tMax);
-        //            //long endtime = System.currentTimeMillis();
-        //            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
-        //            return result;
-        //
-        //        } catch (Exception e) {
-        //            e.printStackTrace(System.out);
-        //        }
+        try {
+            if (!avg) {
+                synchronized (this) {
+                    if (!avg) {
+                        System.out.println("avg:" + System.currentTimeMillis());
+                        avg = true;
+                    }
+                }
+            }
+            long starttime = System.currentTimeMillis();
+            int c = count.getAndIncrement();
+            if (c == 20000) {
+                if (!end) {
+                    synchronized (this) {
+                        if (!end) {
+                            System.out.println("end:" + System.currentTimeMillis());
+                            end = true;
+                        }
+                    }
+                }
+            }
+            long result = reader.avg(aMin, aMax, tMin, tMax);
+            //long endtime = System.currentTimeMillis();
+            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
+            return result;
+
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+        }
         return 0L;
     }
 }
