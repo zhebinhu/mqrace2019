@@ -55,7 +55,7 @@ public class TimeReader {
         cache[msgNum / 2] = halfByte.getByte();
         tag.set(0);
         halfByte.setByte((byte) 0);
-        timeTag.set(new TimeTag(0,0));
+
         System.out.println("time max:" + max + " timeTags size:" + timeTags.size());
         init = true;
     }
@@ -67,6 +67,9 @@ public class TimeReader {
                     init();
                 }
             }
+        }
+        if(timeTag.get()==null){
+            timeTag.set(new TimeTag(0,0));
         }
         TimeTag tmpTimeTag = timeTag.get();
         tmpTimeTag.setTime(time);

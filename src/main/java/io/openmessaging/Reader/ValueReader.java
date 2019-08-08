@@ -59,7 +59,6 @@ public class ValueReader {
         byteBuffer.put(msgNum / 2, halfByte.getByte());
         tag.set(0);
         halfByte.setByte((byte) 0);
-        valueTag.set(new ValueTag(0,0));
         System.out.println("value max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
@@ -80,6 +79,9 @@ public class ValueReader {
         }
 
         if (offset < offsetA.get() || offset >= offsetB.get()) {
+            if (valueTag.get() == null) {
+                valueTag.set(new ValueTag(0, 0));
+            }
             ValueTag tmpValueTag = valueTag.get();
             tmpValueTag.setOffset(offset);
             int tagIndex = Collections.binarySearch(valueTags, tmpValueTag, Comparator.comparingInt(ValueTag::getOffset));
@@ -93,10 +95,10 @@ public class ValueReader {
             } else {
                 offsetB.set(valueTags.get(tagIndex + 1).getOffset());
             }
-//            System.out.println("tagIndex:" + tagIndex);
-//            System.out.println("offsetA:" + offsetA.get());
-//            System.out.println("offsetB:" + offsetB.get());
-//            System.out.println("tag:" + tag.get());
+            //            System.out.println("tagIndex:" + tagIndex);
+            //            System.out.println("offsetA:" + offsetA.get());
+            //            System.out.println("offsetB:" + offsetB.get());
+            //            System.out.println("tag:" + tag.get());
         }
         if (offset % 2 == 0) {
             return tag.get() + HalfByte.getRight(byteBuffer.get(offset / 2));
