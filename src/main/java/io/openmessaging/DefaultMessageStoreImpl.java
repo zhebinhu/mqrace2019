@@ -66,7 +66,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     @Override
-    public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
+    public synchronized List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         List<Message> result = new ArrayList<>();
         if (!inited) {
             synchronized (this) {
@@ -135,7 +135,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     @Override
-    public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
+    public synchronized long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
         try {
             if (!avg) {
                 synchronized (this) {
@@ -146,19 +146,17 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 }
             }
             long starttime = System.currentTimeMillis();
-            //int c = count.getAndIncrement();
-            //            if (c > 20000) {
-            //
-            //                if (!end) {
-            //                    synchronized (this) {
-            //                        if (!end) {
-            //                            System.out.println("end:" + System.currentTimeMillis());
-            //                            end = true;
-            //                        }
-            //                    }
-            //                }
-            //                return 0L;
-            //            }
+            int c = count.getAndIncrement();
+            if (c == 20000) {
+                if (!end) {
+                    synchronized (this) {
+                        if (!end) {
+                            System.out.println("end:" + System.currentTimeMillis());
+                            end = true;
+                        }
+                    }
+                }
+            }
             //Avg result = forkJoinPool2.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
 
             //            if (result.getCount() == 0) {
