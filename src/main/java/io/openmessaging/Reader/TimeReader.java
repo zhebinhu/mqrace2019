@@ -1,11 +1,8 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.*;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import io.openmessaging.HalfByte;
+import io.openmessaging.Message;
+import io.openmessaging.Tags;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -14,8 +11,6 @@ public class TimeReader {
     private long max = 0;
 
     private byte[] cache = new byte[Integer.MAX_VALUE / 2];
-
-    //private List<TimeTag> timeTags = new ArrayList<>();
 
     private Tags timeTags = new Tags(2000000);
 
@@ -30,8 +25,6 @@ public class TimeReader {
     private ThreadLocal<Integer> offsetB = new ThreadLocal<>();
 
     private ThreadLocal<Integer> tag = new ThreadLocal<>();
-
-    //private ThreadLocal<TimeTag> timeTag = new ThreadLocal<>();
 
     public void put(Message message) {
         long t = message.getT();
@@ -70,11 +63,6 @@ public class TimeReader {
                 }
             }
         }
-//        if(timeTag.get()==null){
-//            timeTag.set(new TimeTag(0,0));
-//        }
-//        TimeTag tmpTimeTag = timeTag.get();
-//        tmpTimeTag.setTime(time);
         int tagIndex = timeTags.tagIndex(time);
         int pTag = timeTags.getTag(tagIndex);
         int pOffset = timeTags.getOffset(tagIndex);
@@ -104,8 +92,6 @@ public class TimeReader {
         if (offsetB.get() == null) {
             offsetB.set(0);
         }
-//        TimeTag tmpTimeTag = timeTag.get();
-//        tmpTimeTag.setOffset(offset);
         if (offset < offsetA.get() || offset >= offsetB.get()) {
             int tagIndex = timeTags.offsetIndex(offset);
             tag.set(timeTags.getTag(tagIndex));

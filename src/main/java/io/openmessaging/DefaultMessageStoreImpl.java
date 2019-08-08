@@ -88,7 +88,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (messagePoolThreadLocal.get() == null) {
                 messagePoolThreadLocal.set(new MessagePool());
             }
-            long starttime = System.currentTimeMillis();
+            //long starttime = System.currentTimeMillis();
             //result = forkJoinPool1.submit(new MergeTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax, messagePoolThreadLocal.get())).get();
             //List<List<Message>> messageLists = new ArrayList<>();
             //            for (Queue queue : queues.values()) {
@@ -98,8 +98,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
             //                result = merge(result, messages);
             //            }
             result = reader.get(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get());
-            long endtime = System.currentTimeMillis();
-            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            //long endtime = System.currentTimeMillis();
+            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -110,7 +110,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         System.out.println("init start:" + System.currentTimeMillis());
         reader = new Reader();
         PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
-            int t = (int) (o1.fst.getT()-o2.fst.getT());
+            int t = (int) (o1.fst.getT() - o2.fst.getT());
             if (t == 0) {
                 t = (int) (o1.fst.getA() - o2.fst.getA());
             }
@@ -145,7 +145,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-            //long starttime = System.currentTimeMillis();
+            long starttime = System.currentTimeMillis();
             //int c = count.getAndIncrement();
             //            if (c > 20000) {
             //
@@ -160,13 +160,16 @@ public class DefaultMessageStoreImpl extends MessageStore {
             //                return 0L;
             //            }
             //Avg result = forkJoinPool2.submit(new AvgTask(new ArrayList<>(queues.values()), 0, queues.size() - 1, aMin, aMax, tMin, tMax)).get();
-            //long endtime = System.currentTimeMillis();
-            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " count:" + result.getCount() + " getAvgValue: " + (endtime - starttime));
+
             //            if (result.getCount() == 0) {
             //                return 0L;
             //            } else {
             //                return result.getTotal() / result.getCount();
             //            }
+            long result = reader.avg(aMin, aMax, tMin, tMax);
+            long endtime = System.currentTimeMillis();
+            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
+            return result;
 
         } catch (Exception e) {
             e.printStackTrace(System.out);

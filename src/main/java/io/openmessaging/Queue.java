@@ -195,28 +195,4 @@ public class Queue {
         return result;
     }
 
-    /**
-     * 用于合并
-     *
-     * @return
-     */
-    public TA get() {
-        if (mergeOffset == messageNum) {
-            return null;
-        }
-        if (mergeTimeTag == -1 || mergeOffset == mergeOffsetB) {
-            mergeTagIndex++;
-            mergeTimeTag = timeTag2List.get(mergeTagIndex).getTime();
-            if (mergeTagIndex + 1 == timeTag2List.size()) {
-                mergeOffsetB = messageNum;
-            } else {
-                mergeOffsetB = timeTag2List.get(mergeTagIndex + 1).getOffset();
-            }
-        }
-        long time = mergeTimeTag + timeReader2.getTime(mergeOffset);
-        long value = time + valueReader2.getValue(mergeOffset);
-        mergeOffset++;
-        return new TA(time, value);
-    }
-
 }

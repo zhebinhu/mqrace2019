@@ -1,12 +1,10 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.*;
+import io.openmessaging.HalfByte;
+import io.openmessaging.Message;
+import io.openmessaging.Tags;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -15,8 +13,6 @@ public class ValueReader {
     private long max = 0;
 
     private ByteBuffer byteBuffer = ByteBuffer.allocateDirect(Integer.MAX_VALUE / 2);
-
-    //private List<ValueTag> valueTags = new ArrayList<>();
 
     private Tags valueTags = new Tags(2000000);
 
@@ -31,8 +27,6 @@ public class ValueReader {
     private ThreadLocal<Integer> offsetA = new ThreadLocal<>();
 
     private ThreadLocal<Integer> offsetB = new ThreadLocal<>();
-
-    //private ThreadLocal<ValueTag> valueTag = new ThreadLocal<>();
 
     public void put(Message message) {
         long v = message.getA() - message.getT();
@@ -78,11 +72,6 @@ public class ValueReader {
         }
 
         if (offset < offsetA.get() || offset >= offsetB.get()) {
-//            if (valueTag.get() == null) {
-//                valueTag.set(new ValueTag(0, 0));
-//            }
-//            ValueTag tmpValueTag = valueTag.get();
-//            tmpValueTag.setOffset(offset);
             int tagIndex = valueTags.offsetIndex(offset);
             tag.set(valueTags.getTag(tagIndex));
             offsetA.set(valueTags.getOffset(tagIndex));
@@ -91,10 +80,6 @@ public class ValueReader {
             } else {
                 offsetB.set(valueTags.getOffset(tagIndex + 1));
             }
-            //            System.out.println("tagIndex:" + tagIndex);
-            //            System.out.println("offsetA:" + offsetA.get());
-            //            System.out.println("offsetB:" + offsetB.get());
-            //            System.out.println("tag:" + tag.get());
         }
         if (offset % 2 == 0) {
             return tag.get() + HalfByte.getRight(byteBuffer.get(offset / 2));
