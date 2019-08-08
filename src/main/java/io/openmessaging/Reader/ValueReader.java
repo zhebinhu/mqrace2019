@@ -33,6 +33,8 @@ public class ValueReader {
 
     private ThreadLocal<Integer> offsetB = new ThreadLocal<>();
 
+    private ThreadLocal<ValueTag> valueTag = new ThreadLocal<>();
+
     public void put(Message message) {
         long v = message.getA() - message.getT();
         if (v > max) {
@@ -57,6 +59,7 @@ public class ValueReader {
         byteBuffer.put(msgNum / 2, halfByte.getByte());
         tag.set(0);
         halfByte.setByte((byte) 0);
+        valueTag.set(new ValueTag(0,0));
         System.out.println("value max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
@@ -77,7 +80,9 @@ public class ValueReader {
         }
 
         if (offset < offsetA.get() || offset >= offsetB.get()) {
-            int tagIndex = Collections.binarySearch(valueTags, new ValueTag(0, offset), Comparator.comparingInt(ValueTag::getOffset));
+            ValueTag tmpValueTag = valueTag.get();
+            tmpValueTag.setOffset(offset);
+            int tagIndex = Collections.binarySearch(valueTags, tmpValueTag, Comparator.comparingInt(ValueTag::getOffset));
             if (tagIndex < 0) {
                 tagIndex = Math.max(0, -(tagIndex + 2));
             }
