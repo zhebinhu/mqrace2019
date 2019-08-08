@@ -41,7 +41,7 @@ public class ValueReader {
         int value = (int) v;
         if (tag.get() == null || value > tag.get() + 15 || value < tag.get()) {
             tag.set(value);
-            valueTags.add(new ValueTag(msgNum, value));
+            valueTags.add(new ValueTag(value, msgNum));
         }
         if (msgNum % 2 == 0) {
             halfByte.setRight((byte) (value - tag.get()));
@@ -88,10 +88,10 @@ public class ValueReader {
             } else {
                 offsetB.set(valueTags.get(tagIndex + 1).getOffset());
             }
-            System.out.println("tagIndex:" + tagIndex);
-            System.out.println("offsetA:" + offsetA.get());
-            System.out.println("offsetB:" + offsetB.get());
-            System.out.println("tag:" + tag.get());
+//            System.out.println("tagIndex:" + tagIndex);
+//            System.out.println("offsetA:" + offsetA.get());
+//            System.out.println("offsetB:" + offsetB.get());
+//            System.out.println("tag:" + tag.get());
         }
         if (offset % 2 == 0) {
             return tag.get() + HalfByte.getRight(byteBuffer.get(offset / 2));

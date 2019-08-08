@@ -31,14 +31,11 @@ public class TimeReader {
 
     public void put(Message message) {
         long t = message.getT();
-        if (tag.get() == null) {
-            tag.set(0);
-        }
         if (t > max) {
             max = t;
         }
         int time = (int) t;
-        if (time > tag.get() + 15) {
+        if (tag.get() == null || time > tag.get() + 15) {
             tag.set(time);
             timeTags.add(new TimeTag(msgNum, time));
         }
