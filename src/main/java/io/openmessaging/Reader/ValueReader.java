@@ -1,9 +1,6 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.HalfByte;
-import io.openmessaging.Message;
-import io.openmessaging.TimeTag;
-import io.openmessaging.ValueTag;
+import io.openmessaging.*;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -19,7 +16,9 @@ public class ValueReader {
 
     private ByteBuffer byteBuffer = ByteBuffer.allocateDirect(Integer.MAX_VALUE / 2);
 
-    private List<ValueTag> valueTags = new ArrayList<>();
+    //private List<ValueTag> valueTags = new ArrayList<>();
+
+    private Tags valueTags = new Tags(2000000);
 
     private int msgNum = 0;
 
@@ -43,7 +42,7 @@ public class ValueReader {
         int value = (int) v;
         if (tag.get() == null || value > tag.get() + 15 || value < tag.get()) {
             tag.set(value);
-            valueTags.add(new ValueTag(value, msgNum));
+            valueTags.add(value,msgNum);
         }
         if (msgNum % 2 == 0) {
             halfByte.setRight((byte) (value - tag.get()));
@@ -84,16 +83,13 @@ public class ValueReader {
             }
             ValueTag tmpValueTag = valueTag.get();
             tmpValueTag.setOffset(offset);
-            int tagIndex = Collections.binarySearch(valueTags, tmpValueTag, Comparator.comparingInt(ValueTag::getOffset));
-            if (tagIndex < 0) {
-                tagIndex = Math.max(0, -(tagIndex + 2));
-            }
-            tag.set(valueTags.get(tagIndex).getValue());
-            offsetA.set(valueTags.get(tagIndex).getOffset());
+            int tagIndex = valueTags.offsetIndex(offset);
+            tag.set(valueTags.getTag(tagIndex));
+            offsetA.set(valueTags.getOffset(tagIndex));
             if (tagIndex == valueTags.size() - 1) {
                 offsetB.set(msgNum);
             } else {
-                offsetB.set(valueTags.get(tagIndex + 1).getOffset());
+                offsetB.set(valueTags.getOffset(tagIndex + 1));
             }
             //            System.out.println("tagIndex:" + tagIndex);
             //            System.out.println("offsetA:" + offsetA.get());

@@ -4,8 +4,8 @@ package io.openmessaging;
  * Created by huzhebin on 2019/08/05.
  */
 public class ValueTag implements Comparable<ValueTag>{
-    int value;
-    int offset;
+    private int value;
+    private int offset;
 
     public ValueTag(int value, int offset) {
         this.value = value;

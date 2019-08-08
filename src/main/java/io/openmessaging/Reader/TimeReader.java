@@ -15,7 +15,9 @@ public class TimeReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE / 2];
 
-    private List<TimeTag> timeTags = new ArrayList<>();
+    //private List<TimeTag> timeTags = new ArrayList<>();
+
+    private Tags timeTags = new Tags(2000000);
 
     private int msgNum = 0;
 
@@ -39,7 +41,7 @@ public class TimeReader {
         int time = (int) t;
         if (tag.get() == null || time > tag.get() + 15) {
             tag.set(time);
-            timeTags.add(new TimeTag(msgNum, time));
+            timeTags.add(time,msgNum);
         }
         if (msgNum % 2 == 0) {
             halfByte.setRight((byte) (time - tag.get()));
@@ -73,12 +75,9 @@ public class TimeReader {
         }
         TimeTag tmpTimeTag = timeTag.get();
         tmpTimeTag.setTime(time);
-        int tagIndex = Collections.binarySearch(timeTags, tmpTimeTag, Comparator.comparingInt(TimeTag::getTime));
-        if (tagIndex < 0) {
-            tagIndex = Math.max(0, -(tagIndex + 2));
-        }
-        int pTag = timeTags.get(tagIndex).getTime();
-        int pOffset = timeTags.get(tagIndex).getOffset();
+        int tagIndex = timeTags.tagIndex(time);
+        int pTag = timeTags.getTag(tagIndex);
+        int pOffset = timeTags.getOffset(tagIndex);
         int pTime = pTag;
         while (pTime < time && pOffset < msgNum) {
             pOffset++;
@@ -108,16 +107,13 @@ public class TimeReader {
         TimeTag tmpTimeTag = timeTag.get();
         tmpTimeTag.setOffset(offset);
         if (offset < offsetA.get() || offset >= offsetB.get()) {
-            int tagIndex = Collections.binarySearch(timeTags, tmpTimeTag, Comparator.comparingInt(TimeTag::getOffset));
-            if (tagIndex < 0) {
-                tagIndex = Math.max(0, -(tagIndex + 2));
-            }
-            tag.set(timeTags.get(tagIndex).getTime());
-            offsetA.set(timeTags.get(tagIndex).getOffset());
+            int tagIndex = timeTags.offsetIndex(offset);
+            tag.set(timeTags.getTag(tagIndex));
+            offsetA.set(timeTags.getOffset(tagIndex));
             if (tagIndex == timeTags.size() - 1) {
                 offsetB.set(msgNum);
             } else {
-                offsetB.set(timeTags.get(tagIndex + 1).getOffset());
+                offsetB.set(timeTags.getOffset(tagIndex + 1));
             }
         }
         if (offset % 2 == 0) {
