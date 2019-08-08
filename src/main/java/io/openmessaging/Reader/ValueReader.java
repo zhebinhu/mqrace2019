@@ -25,32 +25,29 @@ public class ValueReader {
 
     private int tag = -1;
 
-    private int count = 0;
-
     public void put(Message message) {
         long v = message.getA() - message.getT();
         if (v > max) {
             max = v;
         }
         int value = (int) v;
-        if (tag == -1 || value > tag + 3 || value < tag) {
+        if (tag == -1 || value > tag + 15 || value < tag) {
             tag = value;
-            count++;
-            //valueTags.add(value, msgNum);
+            valueTags.add(value, msgNum);
         }
-//        if (msgNum % 2 == 0) {
-//            halfByte.setRight((byte) (value - tag));
-//        } else {
-//            halfByte.setLeft((byte) (value - tag));
-//            cache[msgNum / 2] = halfByte.getByte();
-//            halfByte.setByte((byte) 0);
-//        }
-//        msgNum++;
+        if (msgNum % 2 == 0) {
+            halfByte.setRight((byte) (value - tag));
+        } else {
+            halfByte.setLeft((byte) (value - tag));
+            cache[msgNum / 2] = halfByte.getByte();
+            halfByte.setByte((byte) 0);
+        }
+        msgNum++;
     }
 
     public void init() {
-        //cache[msgNum / 2] = halfByte.getByte();
-        System.out.println("value max:" + max + " count:" + count);
+        cache[msgNum / 2] = halfByte.getByte();
+        System.out.println("value max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
 
