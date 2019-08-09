@@ -84,7 +84,7 @@ public class ValueReader {
         }
     }
 
-    public long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
+    public synchronized long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
         long total = 0;
         int count = 0;
         if (offsetA < context.offsetA || offsetA >= context.offsetB) {
@@ -99,7 +99,7 @@ public class ValueReader {
         }
         int value;
         while (offsetA < offsetB) {
-            if (context.tag + 15 <= aMax && context.tag >= aMin) {
+            if (context.tag + 15 <= aMax && context.tag >= aMin && context.offsetA == offsetA && context.offsetB < offsetB) {
                 int num = context.offsetB - context.offsetA;
                 total += num * context.tag + (valueTags.getAdd(context.tagIndex) + 256) % 256;
                 count += num;
@@ -123,6 +123,7 @@ public class ValueReader {
                 } else {
                     context.offsetB = valueTags.getOffset(context.tagIndex + 1);
                 }
+                continue;
             }
             if (offsetA % 2 == 0) {
                 value = context.tag + HalfByte.getRight(cache[offsetA / 2]);
