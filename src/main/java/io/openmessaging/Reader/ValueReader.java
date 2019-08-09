@@ -84,7 +84,7 @@ public class ValueReader {
         }
     }
 
-    public synchronized long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
+    public long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
         long total = 0;
         int count = 0;
         if (offsetA < context.offsetA || offsetA >= context.offsetB) {
