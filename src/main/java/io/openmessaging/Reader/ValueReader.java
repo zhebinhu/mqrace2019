@@ -81,4 +81,43 @@ public class ValueReader {
             return context.tag + HalfByte.getLeft(cache[offset / 2]);
         }
     }
+
+    public long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
+        long total = 0;
+        int count = 0;
+        if (offsetA < context.offsetA || offsetA >= context.offsetB) {
+            context.tagIndex = valueTags.offsetIndex(offsetA);
+            context.tag = valueTags.getTag(context.tagIndex);
+            context.offsetA = valueTags.getOffset(context.tagIndex);
+            if (context.tagIndex == valueTags.size() - 1) {
+                context.offsetB = msgNum;
+            } else {
+                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+            }
+        }
+        int value = 0;
+        while (offsetA < offsetB) {
+            if (offsetA < context.offsetA || offsetA >= context.offsetB) {
+                context.tagIndex++;
+                context.tag = valueTags.getTag(context.tagIndex);
+                context.offsetA = valueTags.getOffset(context.tagIndex);
+                if (context.tagIndex == valueTags.size() - 1) {
+                    context.offsetB = msgNum;
+                } else {
+                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                }
+            }
+            if (offsetA % 2 == 0) {
+                value = context.tag + HalfByte.getRight(cache[offsetA / 2]);
+            } else {
+                value = context.tag + HalfByte.getLeft(cache[offsetA / 2]);
+            }
+            if (value >= aMin && value <= aMax) {
+                total += value;
+                count++;
+            }
+            offsetA++;
+        }
+        return count == 0 ? 0 : total / count;
+    }
 }

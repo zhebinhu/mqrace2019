@@ -85,22 +85,23 @@ public class Reader {
         Context valueContext = valueContextThreadLocal.get();
         int offsetA = timeReader.getOffset((int) tMin);
         int offsetB = timeReader.getOffset((int)tMax+1);
-        long total = 0;
-        int count = 0;
-        while (offsetA < offsetB) {
-//            long time = timeReader.get(offsetA, timeContext);
-//            if (time > tMax) {
-//                return count == 0 ? 0 : total / count;
+        return valueReader.avg(offsetA,offsetB,aMin,aMax,valueContext);
+//        long total = 0;
+//        int count = 0;
+//        while (offsetA < offsetB) {
+////            long time = timeReader.get(offsetA, timeContext);
+////            if (time > tMax) {
+////                return count == 0 ? 0 : total / count;
+////            }
+//            long value = valueReader.get(offsetA, valueContext);
+//            if (value > aMax || value < aMin) {
+//                offsetA++;
+//                continue;
 //            }
-            long value = valueReader.get(offsetA, valueContext);
-            if (value > aMax || value < aMin) {
-                offsetA++;
-                continue;
-            }
-            total += value;
-            count++;
-            offsetA++;
-        }
-        return count == 0 ? 0 : total / count;
+//            total += value;
+//            count++;
+//            offsetA++;
+//        }
+//        return count == 0 ? 0 : total / count;
     }
 }
