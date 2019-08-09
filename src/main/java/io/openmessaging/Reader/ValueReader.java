@@ -25,8 +25,17 @@ public class ValueReader {
 
     private int tag = -1;
 
+    private int atag = -1;
+
+    private int acount = 0;
+
     public void put(Message message) {
         long v = message.getA() - message.getT();
+        long a = message.getA();
+        if (atag == -1 || a > atag + 15 || a < atag) {
+            atag = (int)a;
+            acount++;
+        }
         if (v > max) {
             max = v;
         }
@@ -47,7 +56,7 @@ public class ValueReader {
 
     public void init() {
         cache[msgNum / 2] = halfByte.getByte();
-        System.out.println("value max:" + max + " valueTags size:" + valueTags.size());
+        System.out.println("value max:" + max + " count:" + acount);
         init = true;
     }
 
