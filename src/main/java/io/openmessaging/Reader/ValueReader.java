@@ -99,11 +99,19 @@ public class ValueReader {
         }
         int value;
         while (offsetA < offsetB) {
-            if (tag + 15 <= aMax && tag >= aMin) {
-                int num = offsetB - offsetA;
-                total += num * tag + valueTags.getAdd(context.tagIndex);
+            if (context.tag + 15 <= aMax && context.tag >= aMin) {
+                int num = context.offsetB - context.offsetA;
+                total += num * context.tag + valueTags.getAdd(context.tagIndex);
                 count += num;
-                offsetA = offsetB;
+                offsetA = context.offsetB;
+                context.tagIndex++;
+                context.tag = valueTags.getTag(context.tagIndex);
+                context.offsetA = valueTags.getOffset(context.tagIndex);
+                if (context.tagIndex == valueTags.size() - 1) {
+                    context.offsetB = msgNum;
+                } else {
+                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                }
                 continue;
             }
             if (offsetA < context.offsetA || offsetA >= context.offsetB) {
