@@ -79,10 +79,11 @@ public class Reader {
 //            timeContextThreadLocal.set(new Context());
 //        }
         //Context timeContext = timeContextThreadLocal.get();
-        if (valueContextThreadLocal.get() == null) {
-            valueContextThreadLocal.set(new Context());
-        }
         Context valueContext = valueContextThreadLocal.get();
+        if(valueContext==null){
+            valueContext = new Context();
+            valueContextThreadLocal.set(valueContext);
+        }
         int offsetA = timeReader.getOffset((int) tMin);
         int offsetB = timeReader.getOffset((int)tMax+1);
         return valueReader.avg(offsetA,offsetB,aMin,aMax,valueContext);

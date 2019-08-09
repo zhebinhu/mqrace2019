@@ -25,21 +25,19 @@ public class ValueReader {
 
     private int tag = -1;
 
-    private int atag = -1;
-
-    private int acount = 0;
+    private int total = 0;
 
     public void put(Message message) {
-        long v = message.getA();
-
-        if (v > max) {
-            max = v;
-        }
-        int value = (int) v;
+        int value = (int) message.getA();
         if (tag == -1 || value > tag + 15 || value < tag) {
             tag = value;
             valueTags.add(value, msgNum);
+            if (total > max) {
+                max = total;
+            }
+            total = 0;
         }
+        total = total + value - tag;
         if (msgNum % 2 == 0) {
             halfByte.setRight((byte) (value - tag));
         } else {
@@ -52,7 +50,7 @@ public class ValueReader {
 
     public void init() {
         cache[msgNum / 2] = halfByte.getByte();
-        System.out.println("value max:" + max + " count:" + acount);
+        System.out.println("max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
 
