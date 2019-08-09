@@ -130,8 +130,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
             reader.put(pair.fst);
             Message newMessage = pair.snd.get();
             if (newMessage != null) {
-                Pair<Message, Writer> newPair = new Pair<>(newMessage, pair.snd);
-                priorityQueue.add(newPair);
+                pair.fst = newMessage;
+                priorityQueue.add(pair);
             }
         }
         writers.clear();

@@ -15,7 +15,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE / 2];
 
-    private Tags valueTags = new Tags(30000000);
+    private Tags valueTags = new Tags(100000000);
 
     private int msgNum = 0;
 
@@ -30,12 +30,8 @@ public class ValueReader {
     private int acount = 0;
 
     public void put(Message message) {
-        long v = message.getA() - message.getT();
-        long a = message.getA();
-        if (atag == -1 || a > atag + 15 || a < atag) {
-            atag = (int)a;
-            acount++;
-        }
+        long v = message.getA();
+
         if (v > max) {
             max = v;
         }
