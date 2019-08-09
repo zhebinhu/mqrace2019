@@ -157,7 +157,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
                         if (!end) {
                             System.out.println("end:" + System.currentTimeMillis());
                             end = true;
-                            return 0L;
+                            //return 0L;
                         }
                     }
                 }
@@ -165,7 +165,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             long result = reader.avg(aMin, aMax, tMin, tMax);
             long endtime = System.currentTimeMillis();
             System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
-            System.out.println("memory:" + memoryLoad());
+            //System.out.println("memory:" + memoryLoad());
             return result;
 
         } catch (Exception e) {
