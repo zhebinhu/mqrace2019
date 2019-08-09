@@ -3,9 +3,7 @@ package io.openmessaging.Reader;
 import io.openmessaging.Context;
 import io.openmessaging.HalfByte;
 import io.openmessaging.Message;
-import io.openmessaging.Tags;
-
-import java.nio.ByteBuffer;
+import io.openmessaging.ValueTags;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -15,7 +13,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE / 2];
 
-    private Tags valueTags = new Tags(100000000);
+    private ValueTags valueTags = new ValueTags(100000000);
 
     private int msgNum = 0;
 
@@ -25,19 +23,22 @@ public class ValueReader {
 
     private int tag = -1;
 
-    private int total = 0;
+    private byte add = 0;
 
     public void put(Message message) {
         int value = (int) message.getA();
         if (tag == -1 || value > tag + 15 || value < tag) {
+            if (add != 0) {
+                valueTags.add(add);
+                add = 0;
+            }
             tag = value;
             valueTags.add(value, msgNum);
-            if (total > max) {
-                max = total;
+            if (add > max) {
+                max = add;
             }
-            total = 0;
         }
-        total = total + value - tag;
+        add = (byte) (add + value - tag);
         if (msgNum % 2 == 0) {
             halfByte.setRight((byte) (value - tag));
         } else {
@@ -50,6 +51,9 @@ public class ValueReader {
 
     public void init() {
         cache[msgNum / 2] = halfByte.getByte();
+        if (add != 0) {
+            valueTags.add(add);
+        }
         System.out.println("max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
@@ -93,8 +97,15 @@ public class ValueReader {
                 context.offsetB = valueTags.getOffset(context.tagIndex + 1);
             }
         }
-        int value = 0;
+        int value;
         while (offsetA < offsetB) {
+            if (tag + 15 <= aMax && tag >= aMin) {
+                int num = offsetB - offsetA;
+                total += num * tag + valueTags.getAdd(context.tagIndex);
+                count += num;
+                offsetA = offsetB;
+                continue;
+            }
             if (offsetA < context.offsetA || offsetA >= context.offsetB) {
                 context.tagIndex++;
                 context.tag = valueTags.getTag(context.tagIndex);

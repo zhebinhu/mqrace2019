@@ -10,7 +10,7 @@ public class Tags {
 
     private ByteBuffer offsets;
 
-    private int index;
+    protected int index;
 
     public Tags(int cap) {
         tags = ByteBuffer.allocateDirect(4 * cap);
