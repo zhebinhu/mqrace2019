@@ -111,7 +111,7 @@ public class ValueReader {
             }
             if (context.tag + 15 <= aMax && context.tag >= aMin && context.offsetA == offsetA && context.offsetB < offsetB) {
                 int num = context.offsetB - context.offsetA;
-                total += num * context.tag + (valueTags.getAdd(context.tagIndex) + 256) % 256;
+                total += num * (long)context.tag + (valueTags.getAdd(context.tagIndex) + 256) % 256;
                 count += num;
                 offsetA = context.offsetB;
                 context.tagIndex++;
