@@ -25,27 +25,30 @@ public class ValueReader {
 
     private byte add = 0;
 
+    private int count = 0;
+
     public void put(Message message) {
         int value = (int) message.getA();
-        if (tag == -1 || value > tag + 15 || value < tag) {
-            if (add > max) {
-                max = add;
-            }
-            if (add != 0) {
-                valueTags.add(add);
-                add = 0;
-            }
+        if (tag == -1 || value > tag + 255 || value < tag) {
+//            if (add > max) {
+//                max = add;
+//            }
+//            if (add != 0) {
+//                valueTags.add(add);
+//                add = 0;
+//            }
             tag = value;
-            valueTags.add(value, msgNum);
+            count++;
+            //valueTags.add(value, msgNum);
         }
-        add = (byte) (add + value - tag);
-        if (msgNum % 2 == 0) {
-            halfByte.setRight((byte) (value - tag));
-        } else {
-            halfByte.setLeft((byte) (value - tag));
-            cache[msgNum / 2] = halfByte.getByte();
-            halfByte.setByte((byte) 0);
-        }
+//        add = (byte) (add + value - tag);
+//        if (msgNum % 2 == 0) {
+//            halfByte.setRight((byte) (value - tag));
+//        } else {
+//            halfByte.setLeft((byte) (value - tag));
+//            cache[msgNum / 2] = halfByte.getByte();
+//            halfByte.setByte((byte) 0);
+//        }
         msgNum++;
     }
 
@@ -54,7 +57,7 @@ public class ValueReader {
         if (add != 0) {
             valueTags.add(add);
         }
-        System.out.println("max:" + max + " valueTags size:" + valueTags.size());
+        System.out.println("max:" + max + " count:" + count);
         init = true;
     }
 

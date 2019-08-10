@@ -3,7 +3,7 @@ package io.openmessaging.Reader;
 import io.openmessaging.Context;
 import io.openmessaging.HalfByte;
 import io.openmessaging.Message;
-import io.openmessaging.Tags;
+import io.openmessaging.TimeTags;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -13,7 +13,7 @@ public class TimeReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE / 2];
 
-    private Tags timeTags = new Tags(70000000);
+    private TimeTags timeTags = new TimeTags(70000000);
 
     private int msgNum = 0;
 

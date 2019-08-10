@@ -5,14 +5,14 @@ import java.nio.ByteBuffer;
 /**
  * Created by huzhebin on 2019/08/08.
  */
-public class Tags {
+public class TimeTags {
     private ByteBuffer tags;
 
     private ByteBuffer offsets;
 
-    protected int index;
+    private int index;
 
-    public Tags(int cap) {
+    public TimeTags(int cap) {
         tags = ByteBuffer.allocateDirect(4 * cap);
         offsets = ByteBuffer.allocateDirect(4 * cap);
         index = 0;
