@@ -11,21 +11,19 @@ import io.openmessaging.ValueTags;
 public class ValueReader {
     private long max = 0;
 
-    private byte[] cache = new byte[Integer.MAX_VALUE / 2];
+    private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
-    private ValueTags valueTags = new ValueTags(100000000);
+    private ValueTags valueTags = new ValueTags(10000000);
 
     private int msgNum = 0;
 
-    private HalfByte halfByte = new HalfByte((byte) 0);
+    //private HalfByte halfByte = new HalfByte((byte) 0);
 
     private volatile boolean init = false;
 
     private int tag = -1;
 
-    private long add = 0;
-
-    private int count = 0;
+    private int add = 0;
 
     public void put(Message message) {
         int value = (int) message.getA();
@@ -33,32 +31,31 @@ public class ValueReader {
             if (add > max) {
                 max = add;
             }
-//            if (add != 0) {
-//                valueTags.add(add);
-//                add = 0;
-//            }
+            if (add != 0) {
+                valueTags.add(add);
+                add = 0;
+            }
             tag = value;
-            count++;
-            add = 0;
-            //valueTags.add(value, msgNum);
+            valueTags.add(value, msgNum);
         }
         add = add + value - tag;
-//        if (msgNum % 2 == 0) {
-//            halfByte.setRight((byte) (value - tag));
-//        } else {
-//            halfByte.setLeft((byte) (value - tag));
-//            cache[msgNum / 2] = halfByte.getByte();
-//            halfByte.setByte((byte) 0);
-//        }
+        cache[msgNum] = (byte) (value - tag);
+        //        if (msgNum % 2 == 0) {
+        //            halfByte.setRight((byte) (value - tag));
+        //        } else {
+        //            halfByte.setLeft((byte) (value - tag));
+        //            cache[msgNum / 2] = halfByte.getByte();
+        //            halfByte.setByte((byte) 0);
+        //        }
         msgNum++;
     }
 
     public void init() {
-        cache[msgNum / 2] = halfByte.getByte();
-//        if (add != 0) {
-//            valueTags.add(add);
-//        }
-        System.out.println("max:" + max + " count:" + count);
+        //cache[msgNum / 2] = halfByte.getByte();
+        if (add != 0) {
+            valueTags.add(add);
+        }
+        System.out.println("max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
 
@@ -81,11 +78,12 @@ public class ValueReader {
                 context.offsetB = valueTags.getOffset(tagIndex + 1);
             }
         }
-        if (offset % 2 == 0) {
-            return context.tag + HalfByte.getRight(cache[offset / 2]);
-        } else {
-            return context.tag + HalfByte.getLeft(cache[offset / 2]);
-        }
+        return context.tag + (cache[offset] + 256) % 256;
+        //        if (offset % 2 == 0) {
+        //            return context.tag + HalfByte.getRight(cache[offset / 2]);
+        //        } else {
+        //            return context.tag + HalfByte.getLeft(cache[offset / 2]);
+        //        }
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
@@ -113,9 +111,9 @@ public class ValueReader {
                     context.offsetB = valueTags.getOffset(context.tagIndex + 1);
                 }
             }
-            if (context.tag + 15 <= aMax && context.tag >= aMin && context.offsetA == offsetA && context.offsetB < offsetB) {
+            if (context.tag + 255 <= aMax && context.tag >= aMin && context.offsetA == offsetA && context.offsetB < offsetB) {
                 int num = context.offsetB - context.offsetA;
-                total += num * (long)context.tag + (valueTags.getAdd(context.tagIndex) + 256) % 256;
+                total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
                 count += num;
                 offsetA = context.offsetB;
                 context.tagIndex++;
@@ -128,12 +126,12 @@ public class ValueReader {
                 }
                 continue;
             }
-
-            if (offsetA % 2 == 0) {
-                value = context.tag + HalfByte.getRight(cache[offsetA / 2]);
-            } else {
-                value = context.tag + HalfByte.getLeft(cache[offsetA / 2]);
-            }
+            value = context.tag + (cache[offsetA] + 256) % 256;
+            //            if (offsetA % 2 == 0) {
+            //                value = context.tag + HalfByte.getRight(cache[offsetA / 2]);
+            //            } else {
+            //                value = context.tag + HalfByte.getLeft(cache[offsetA / 2]);
+            //            }
             if (value >= aMin && value <= aMax) {
                 total += value;
                 count++;

@@ -1,39 +1,35 @@
 package io.openmessaging;
 
-import java.nio.ByteBuffer;
-
 /**
  * Created by huzhebin on 2019/08/09.
  */
-public class ValueTags{
-    private ByteBuffer tags;
+public class ValueTags {
+    private int[] tags;
 
-    private ByteBuffer offsets;
+    private int[] offsets;
 
-    private ByteBuffer adds;
+    private int[] adds;
 
     private int index;
 
     public ValueTags(int cap) {
-        tags = ByteBuffer.allocateDirect(4 * cap);
-        offsets = ByteBuffer.allocateDirect(4 * cap);
+        tags = new int[cap];
+        offsets = new int[cap];
+        adds = new int[cap];
         index = 0;
-        adds = ByteBuffer.allocateDirect(cap);
     }
 
-    public void add(byte add) {
-        adds.put(index - 1, add);
+    public void add(int add) {
+        adds[index - 1] = add;
     }
 
-    public byte getAdd(int addIndex) {
-        return adds.get(addIndex);
+    public int getAdd(int addIndex) {
+        return adds[addIndex];
     }
-
-
 
     public void add(int tag, int offset) {
-        tags.putInt(index << 2, tag);
-        offsets.putInt(index << 2, offset);
+        tags[index] = tag;
+        offsets[index] = offset;
         index++;
     }
 
@@ -54,24 +50,24 @@ public class ValueTags{
     }
 
     public int getTag(int tagIndex) {
-        return tags.getInt(tagIndex << 2);
+        return tags[tagIndex];
     }
 
     public int getOffset(int offsetIndex) {
-        return offsets.getInt(offsetIndex << 2);
+        return offsets[offsetIndex];
     }
 
     public int size() {
         return index;
     }
 
-    private int binarySearch(ByteBuffer a, int key) {
+    private int binarySearch(int[] a, int key) {
         int low = 0;
         int high = index - 1;
 
         while (low <= high) {
             int mid = (low + high) >>> 1;
-            int midVal = a.getInt(mid << 2);
+            int midVal = a[mid];
 
             if (midVal < key) {
                 low = mid + 1;
