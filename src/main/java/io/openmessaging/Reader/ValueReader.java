@@ -39,6 +39,7 @@ public class ValueReader {
 //            }
             tag = value;
             count++;
+            add = 0;
             //valueTags.add(value, msgNum);
         }
         add = add + value - tag;
