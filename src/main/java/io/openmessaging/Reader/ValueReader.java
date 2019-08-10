@@ -23,16 +23,16 @@ public class ValueReader {
 
     private int tag = -1;
 
-    private byte add = 0;
+    private long add = 0;
 
     private int count = 0;
 
     public void put(Message message) {
         int value = (int) message.getA();
         if (tag == -1 || value > tag + 255 || value < tag) {
-//            if (add > max) {
-//                max = add;
-//            }
+            if (add > max) {
+                max = add;
+            }
 //            if (add != 0) {
 //                valueTags.add(add);
 //                add = 0;
@@ -41,7 +41,7 @@ public class ValueReader {
             count++;
             //valueTags.add(value, msgNum);
         }
-//        add = (byte) (add + value - tag);
+        add = add + value - tag;
 //        if (msgNum % 2 == 0) {
 //            halfByte.setRight((byte) (value - tag));
 //        } else {
@@ -54,9 +54,9 @@ public class ValueReader {
 
     public void init() {
         cache[msgNum / 2] = halfByte.getByte();
-        if (add != 0) {
-            valueTags.add(add);
-        }
+//        if (add != 0) {
+//            valueTags.add(add);
+//        }
         System.out.println("max:" + max + " count:" + count);
         init = true;
     }
