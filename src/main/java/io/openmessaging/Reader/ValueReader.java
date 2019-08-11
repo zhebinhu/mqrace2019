@@ -1,9 +1,10 @@
 package io.openmessaging.Reader;
 
 import io.openmessaging.Context;
-import io.openmessaging.HalfByte;
 import io.openmessaging.Message;
 import io.openmessaging.ValueTags;
+
+import java.util.*;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -25,9 +26,23 @@ public class ValueReader {
 
     private int add = 0;
 
+    private long pre32Add = 0L;
+
+    private Deque<Integer> pre32Queue = new LinkedList<>();
+
     public void put(Message message) {
         int value = (int) message.getA();
         if (tag == -1 || value > tag + 255 || value < tag) {
+            if (valueTags.size() > 0) {
+                int endIndex = valueTags.size() - 1;
+                pre32Add += (msgNum - valueTags.getOffset(endIndex)) * (long) valueTags.getTag(endIndex) + add;
+            }
+            if (valueTags.size() > 31) {
+                int start32Index = valueTags.size() - 32;
+                valueTags.add32(pre32Add, Collections.max(pre32Queue), Collections.min(pre32Queue), start32Index);
+                pre32Add -= ((valueTags.getOffset(start32Index + 1) - valueTags.getOffset(start32Index)) * (long) valueTags.getTag(start32Index) + valueTags.getAdd(start32Index));
+                pre32Queue.removeFirst();
+            }
             if (add > max) {
                 max = add;
             }
@@ -36,7 +51,8 @@ public class ValueReader {
                 add = 0;
             }
             tag = value;
-            valueTags.add(value, msgNum);
+            pre32Queue.addLast(tag);
+            valueTags.add(tag, msgNum);
         }
         add = add + value - tag;
         cache[msgNum] = (byte) (value - tag);
@@ -52,8 +68,16 @@ public class ValueReader {
 
     public void init() {
         //cache[msgNum / 2] = halfByte.getByte();
+        int endIndex = valueTags.size() - 1;
+        pre32Add += (msgNum - valueTags.getOffset(endIndex)) * (long) valueTags.getTag(endIndex) + add;
         if (add != 0) {
             valueTags.add(add);
+        }
+        for (int i = 0; i < 32; i++) {
+            int start32Index = valueTags.size() - 32 + i;
+            valueTags.add32(pre32Add, Collections.max(pre32Queue), Collections.min(pre32Queue), start32Index);
+            pre32Add -= ((valueTags.getOffset(start32Index + 1) - valueTags.getOffset(start32Index)) * (long) valueTags.getTag(start32Index) + valueTags.getAdd(start32Index));
+            pre32Queue.removeFirst();
         }
         System.out.println("max:" + max + " valueTags size:" + valueTags.size());
         init = true;
@@ -67,7 +91,6 @@ public class ValueReader {
                 }
             }
         }
-
         if (offset < context.offsetA || offset >= context.offsetB) {
             int tagIndex = valueTags.offsetIndex(offset);
             context.tag = valueTags.getTag(tagIndex);
@@ -76,6 +99,11 @@ public class ValueReader {
                 context.offsetB = msgNum;
             } else {
                 context.offsetB = valueTags.getOffset(tagIndex + 1);
+            }
+            if (tagIndex >= valueTags.size() - 32) {
+                context.offsetB32 = msgNum;
+            } else {
+                context.offsetB32 = valueTags.getOffset(tagIndex + 32);
             }
         }
         return context.tag + (cache[offset] + 256) % 256;
@@ -98,6 +126,11 @@ public class ValueReader {
             } else {
                 context.offsetB = valueTags.getOffset(context.tagIndex + 1);
             }
+            if (context.tagIndex >= valueTags.size() - 32) {
+                context.offsetB32 = msgNum;
+            } else {
+                context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
+            }
         }
         int value;
         while (offsetA < offsetB) {
@@ -110,6 +143,31 @@ public class ValueReader {
                 } else {
                     context.offsetB = valueTags.getOffset(context.tagIndex + 1);
                 }
+                if (context.tagIndex >= valueTags.size() - 32) {
+                    context.offsetB32 = msgNum;
+                } else {
+                    context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
+                }
+            }
+            if (valueTags.getPre32Max(context.tagIndex) + 255 <= aMax && valueTags.getPre32Min(context.tagIndex) >= aMin && context.offsetA == offsetA && context.offsetB32 < offsetB) {
+                int num = context.offsetB32 - context.offsetA;
+                total += valueTags.getPre32(context.tagIndex);
+                count += num;
+                offsetA = context.offsetB32;
+                context.tagIndex += 32;
+                context.tag = valueTags.getTag(context.tagIndex);
+                context.offsetA = valueTags.getOffset(context.tagIndex);
+                if (context.tagIndex == valueTags.size() - 1) {
+                    context.offsetB = msgNum;
+                } else {
+                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                }
+                if (context.tagIndex >= valueTags.size() - 32) {
+                    context.offsetB32 = msgNum;
+                } else {
+                    context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
+                }
+                continue;
             }
             if (context.tag + 255 <= aMax && context.tag >= aMin && context.offsetA == offsetA && context.offsetB < offsetB) {
                 int num = context.offsetB - context.offsetA;
@@ -123,6 +181,11 @@ public class ValueReader {
                     context.offsetB = msgNum;
                 } else {
                     context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                }
+                if (context.tagIndex >= valueTags.size() - 32) {
+                    context.offsetB32 = msgNum;
+                } else {
+                    context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
                 }
                 continue;
             }

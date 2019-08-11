@@ -8,4 +8,5 @@ public class Context {
     public int offsetB = 0;
     public int tag = 0;
     public int tagIndex = 0;
+    public int offsetB32 = 0;
 }
