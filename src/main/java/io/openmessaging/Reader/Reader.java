@@ -86,7 +86,7 @@ public class Reader {
         }
         int offsetA = timeReader.getOffset((int) tMin);
         int offsetB = timeReader.getOffset((int)tMax+1);
-        valueContext.clear();
+        //valueContext.clear();
         return valueReader.avg(offsetA,offsetB,aMin,aMax,valueContext);
 //        long total = 0;
 //        int count = 0;
