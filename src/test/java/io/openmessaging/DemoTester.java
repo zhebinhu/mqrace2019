@@ -214,8 +214,8 @@ public class DemoTester {
                     if (index1 - 1 != index2) {
                         checkError();
                     }
-
                     numCounter.getAndAdd(msgs.size());
+                    break;
                 } catch (Throwable t) {
                     t.printStackTrace();
                     System.exit(-1);

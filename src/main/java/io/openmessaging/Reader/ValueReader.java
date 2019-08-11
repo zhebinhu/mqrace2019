@@ -5,6 +5,7 @@ import io.openmessaging.Message;
 import io.openmessaging.ValueTags;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -29,6 +30,8 @@ public class ValueReader {
     private long pre32Add = 0L;
 
     private Deque<Integer> pre32Queue = new LinkedList<>();
+
+    private boolean pre32 = true;
 
     public void put(Message message) {
         int value = (int) message.getA();
@@ -117,84 +120,104 @@ public class ValueReader {
     public long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
         long total = 0;
         int count = 0;
-        if (offsetA < context.offsetA || offsetA >= context.offsetB) {
-            context.tagIndex = valueTags.offsetIndex(offsetA);
-            context.tag = valueTags.getTag(context.tagIndex);
-            context.offsetA = valueTags.getOffset(context.tagIndex);
-            if (context.tagIndex == valueTags.size() - 1) {
-                context.offsetB = msgNum;
-            } else {
-                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-            }
-            if (context.tagIndex >= valueTags.size() - 32) {
-                context.offsetB32 = msgNum;
-            } else {
-                context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
-            }
+        context.tagIndex = valueTags.offsetIndex(offsetA);
+        context.tag = valueTags.getTag(context.tagIndex);
+        context.offsetA = valueTags.getOffset(context.tagIndex);
+        if (context.tagIndex == valueTags.size() - 1) {
+            context.offsetB = msgNum;
+        } else {
+            context.offsetB = valueTags.getOffset(context.tagIndex + 1);
         }
+        //            if (context.tagIndex >= valueTags.size() - 32) {
+        //                context.offsetB32 = msgNum;
+        //            } else {
+        //                context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
+        //            }
+        //            context.pre32Max = valueTags.getPre32Max(context.tagIndex);
+        //            context.pre32Min = valueTags.getPre32Min(context.tagIndex);
+
         int value;
         while (offsetA < offsetB) {
-            if (offsetA < context.offsetA || offsetA >= context.offsetB) {
+            if (offsetA >= context.offsetB) {
                 context.tagIndex++;
                 context.tag = valueTags.getTag(context.tagIndex);
-                context.offsetA = valueTags.getOffset(context.tagIndex);
+                context.offsetA = context.offsetB;
                 if (context.tagIndex == valueTags.size() - 1) {
                     context.offsetB = msgNum;
                 } else {
                     context.offsetB = valueTags.getOffset(context.tagIndex + 1);
                 }
-                if (context.tagIndex >= valueTags.size() - 32) {
-                    context.offsetB32 = msgNum;
-                } else {
-                    context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
-                }
+                //                if (offsetA == context.offsetA) {
+                //                    if (context.tagIndex >= valueTags.size() - 32) {
+                //                        context.offsetB32 = msgNum;
+                //                    } else {
+                //                        context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
+                //                    }
+                //                    if (context.offsetB32 < offsetB) {
+                //                        context.pre32Max = valueTags.getPre32Max(context.tagIndex);
+                //                        context.pre32Min = valueTags.getPre32Min(context.tagIndex);
+                //                    }
+                //                }
             }
-            if (valueTags.getPre32Max(context.tagIndex) + 255 <= aMax && valueTags.getPre32Min(context.tagIndex) >= aMin && context.offsetA == offsetA && context.offsetB32 < offsetB) {
-                int num = context.offsetB32 - context.offsetA;
-                total += valueTags.getPre32(context.tagIndex);
-                count += num;
-                offsetA = context.offsetB32;
-                context.tagIndex += 32;
-                context.tag = valueTags.getTag(context.tagIndex);
-                context.offsetA = valueTags.getOffset(context.tagIndex);
-                if (context.tagIndex == valueTags.size() - 1) {
-                    context.offsetB = msgNum;
-                } else {
-                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+
+            if (context.offsetA == offsetA && context.offsetB < offsetB && context.tag + 255 <= aMax && context.tag >= aMin) {
+                if (context.pre32Min >= aMin && pre32 && context.offsetB32 < offsetB && context.pre32Max + 255 <= aMax) {
+                    int num = context.offsetB32 - context.offsetA;
+                    total += valueTags.getPre32(context.tagIndex);
+                    count += num;
+                    offsetA = context.offsetB32;
+                    context.tagIndex += 32;
+                    context.tag = valueTags.getTag(context.tagIndex);
+                    context.offsetA = context.offsetB32;
+                    if (context.tagIndex == valueTags.size() - 1) {
+                        context.offsetB = msgNum;
+                    } else {
+                        context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                    }
+                    if (context.tagIndex >= valueTags.size() - 32) {
+                        pre32 = false;
+                        context.offsetB32 = msgNum;
+                    } else {
+                        context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
+                        if (context.offsetB32 < offsetB) {
+                            context.pre32Max = valueTags.getPre32Max(context.tagIndex);
+                            context.pre32Min = valueTags.getPre32Min(context.tagIndex);
+                        } else {
+                            pre32 = false;
+                        }
+                    }
+                    continue;
                 }
-                if (context.tagIndex >= valueTags.size() - 32) {
-                    context.offsetB32 = msgNum;
-                } else {
-                    context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
-                }
-                continue;
-            }
-            if (context.tag + 255 <= aMax && context.tag >= aMin && context.offsetA == offsetA && context.offsetB < offsetB) {
                 int num = context.offsetB - context.offsetA;
                 total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
                 count += num;
                 offsetA = context.offsetB;
                 context.tagIndex++;
                 context.tag = valueTags.getTag(context.tagIndex);
-                context.offsetA = valueTags.getOffset(context.tagIndex);
+                context.offsetA = context.offsetB;
                 if (context.tagIndex == valueTags.size() - 1) {
                     context.offsetB = msgNum;
                 } else {
                     context.offsetB = valueTags.getOffset(context.tagIndex + 1);
                 }
+                //                if (offsetA == context.offsetA) {
                 if (context.tagIndex >= valueTags.size() - 32) {
+                    pre32 = false;
                     context.offsetB32 = msgNum;
                 } else {
                     context.offsetB32 = valueTags.getOffset(context.tagIndex + 32);
+                    if (context.offsetB32 < offsetB) {
+                        context.pre32Max = valueTags.getPre32Max(context.tagIndex);
+                        context.pre32Min = valueTags.getPre32Min(context.tagIndex);
+                    } else {
+                        pre32 = false;
+                    }
                 }
+
+                //                }
                 continue;
             }
             value = context.tag + (cache[offsetA] + 256) % 256;
-            //            if (offsetA % 2 == 0) {
-            //                value = context.tag + HalfByte.getRight(cache[offsetA / 2]);
-            //            } else {
-            //                value = context.tag + HalfByte.getLeft(cache[offsetA / 2]);
-            //            }
             if (value >= aMin && value <= aMax) {
                 total += value;
                 count++;
