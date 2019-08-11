@@ -33,14 +33,6 @@ public class ValueTags {
         index++;
     }
 
-    public int tagIndex(int tag) {
-        int tagIndex = binarySearch(tags, tag);
-        if (tagIndex < 0) {
-            tagIndex = Math.max(0, -(tagIndex + 2));
-        }
-        return tagIndex;
-    }
-
     public int offsetIndex(int offset) {
         int offsetIndex = binarySearch(offsets, offset);
         if (offsetIndex < 0) {
