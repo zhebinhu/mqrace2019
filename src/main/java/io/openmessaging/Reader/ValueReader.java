@@ -67,7 +67,7 @@ public class ValueReader {
                 context.offsetB = valueTags.getOffset(tagIndex + 1);
             }
         }
-        return context.tag + (cache[offset] + 256) % 256;
+        return context.tag + (cache[offset] & 0xff);
     }
 
     long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
@@ -90,7 +90,7 @@ public class ValueReader {
                 updateContext(context);
                 continue;
             }
-            value = context.tag + (cache[offsetA] + 256) % 256;
+            value = context.tag + (cache[offsetA] & 0xff);
             if (value >= aMin && value <= aMax) {
                 total += value;
                 count++;
