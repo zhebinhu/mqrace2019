@@ -1,6 +1,7 @@
 package io.openmessaging.Reader;
 
 import io.openmessaging.Context;
+import io.openmessaging.HalfByte;
 import io.openmessaging.Message;
 import io.openmessaging.ValueTags;
 
@@ -12,9 +13,11 @@ public class ValueReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
-    private ValueTags valueTags = new ValueTags(6000000);
+    private ValueTags valueTags = new ValueTags(10000000);
 
     private int msgNum = 0;
+
+    //private HalfByte halfByte = new HalfByte((byte) 0);
 
     private volatile boolean init = false;
 
@@ -37,10 +40,18 @@ public class ValueReader {
         }
         add = add + value - tag;
         cache[msgNum] = (byte) (value - tag);
+        //        if (msgNum % 2 == 0) {
+        //            halfByte.setRight((byte) (value - tag));
+        //        } else {
+        //            halfByte.setLeft((byte) (value - tag));
+        //            cache[msgNum / 2] = halfByte.getByte();
+        //            halfByte.setByte((byte) 0);
+        //        }
         msgNum++;
     }
 
     public void init() {
+        //cache[msgNum / 2] = halfByte.getByte();
         if (add != 0) {
             valueTags.add(add);
         }
@@ -68,6 +79,11 @@ public class ValueReader {
             }
         }
         return context.tag + (cache[offset] + 256) % 256;
+        //        if (offset % 2 == 0) {
+        //            return context.tag + HalfByte.getRight(cache[offset / 2]);
+        //        } else {
+        //            return context.tag + HalfByte.getLeft(cache[offset / 2]);
+        //        }
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
@@ -88,7 +104,7 @@ public class ValueReader {
             if (offsetA >= context.offsetB) {
                 context.tagIndex++;
                 context.tag = valueTags.getTag(context.tagIndex);
-                context.offsetA = context.offsetB;
+                context.offsetA = valueTags.getOffset(context.tagIndex);
                 if (context.tagIndex == valueTags.size() - 1) {
                     context.offsetB = msgNum;
                 } else {
@@ -102,7 +118,7 @@ public class ValueReader {
                 offsetA = context.offsetB;
                 context.tagIndex++;
                 context.tag = valueTags.getTag(context.tagIndex);
-                context.offsetA = context.offsetB;
+                context.offsetA = valueTags.getOffset(context.tagIndex);
                 if (context.tagIndex == valueTags.size() - 1) {
                     context.offsetB = msgNum;
                 } else {
@@ -111,6 +127,11 @@ public class ValueReader {
                 continue;
             }
             value = context.tag + (cache[offsetA] + 256) % 256;
+            //            if (offsetA % 2 == 0) {
+            //                value = context.tag + HalfByte.getRight(cache[offsetA / 2]);
+            //            } else {
+            //                value = context.tag + HalfByte.getLeft(cache[offsetA / 2]);
+            //            }
             if (value >= aMin && value <= aMax) {
                 total += value;
                 count++;
