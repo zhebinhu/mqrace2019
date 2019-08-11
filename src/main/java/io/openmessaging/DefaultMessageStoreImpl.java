@@ -44,17 +44,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     //private Set<Thread> threadSet = new HashSet<>();
 
-    private static OperatingSystemMXBean osmxb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-
-    public static int memoryLoad() {
-        double totalvirtualMemory = osmxb.getTotalPhysicalMemorySize();
-        double freePhysicalMemorySize = osmxb.getFreePhysicalMemorySize();
-
-        double value = freePhysicalMemorySize / totalvirtualMemory;
-        int percentMemoryLoad = (int) ((1 - value) * 100);
-        return percentMemoryLoad;
-    }
-
     @Override
     public void put(Message message) {
         if (!writers.containsKey(Thread.currentThread())) {

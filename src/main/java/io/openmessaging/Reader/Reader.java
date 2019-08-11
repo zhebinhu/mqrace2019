@@ -75,10 +75,6 @@ public class Reader {
     }
 
     public long avg(long aMin, long aMax, long tMin, long tMax) {
-//        if (timeContextThreadLocal.get() == null) {
-//            timeContextThreadLocal.set(new Context());
-//        }
-        //Context timeContext = timeContextThreadLocal.get();
         Context valueContext = valueContextThreadLocal.get();
         if(valueContext==null){
             valueContext = new Context();
@@ -86,24 +82,6 @@ public class Reader {
         }
         int offsetA = timeReader.getOffset((int) tMin);
         int offsetB = timeReader.getOffset((int)tMax+1);
-        //valueContext.clear();
         return valueReader.avg(offsetA,offsetB,aMin,aMax,valueContext);
-//        long total = 0;
-//        int count = 0;
-//        while (offsetA < offsetB) {
-////            long time = timeReader.get(offsetA, timeContext);
-////            if (time > tMax) {
-////                return count == 0 ? 0 : total / count;
-////            }
-//            long value = valueReader.get(offsetA, valueContext);
-//            if (value > aMax || value < aMin) {
-//                offsetA++;
-//                continue;
-//            }
-//            total += value;
-//            count++;
-//            offsetA++;
-//        }
-//        return count == 0 ? 0 : total / count;
     }
 }

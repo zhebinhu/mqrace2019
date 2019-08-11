@@ -12,38 +12,11 @@ public class ValueTags {
 
     private int index;
 
-    private long[] pre32;
-
-    private int[] pre32Max;
-
-    private int[] pre32Min;
-
     public ValueTags(int cap) {
         tags = new int[cap];
         offsets = new int[cap];
         adds = new int[cap];
-        pre32 = new long[cap];
-        pre32Max = new int[cap];
-        pre32Min = new int[cap];
         index = 0;
-    }
-
-    public void add32(long add32, int max32, int min32, int pre32Index) {
-        pre32[pre32Index] = add32;
-        pre32Max[pre32Index] = max32;
-        pre32Min[pre32Index] = min32;
-    }
-
-    public long getPre32(int pre32Index){
-        return pre32[pre32Index];
-    }
-
-    public int getPre32Max(int pre32Index){
-        return pre32Max[pre32Index];
-    }
-
-    public int getPre32Min(int pre32Index){
-        return pre32Min[pre32Index];
     }
 
     public void add(int add) {
@@ -58,6 +31,14 @@ public class ValueTags {
         tags[index] = tag;
         offsets[index] = offset;
         index++;
+    }
+
+    public int tagIndex(int tag) {
+        int tagIndex = binarySearch(tags, tag);
+        if (tagIndex < 0) {
+            tagIndex = Math.max(0, -(tagIndex + 2));
+        }
+        return tagIndex;
     }
 
     public int offsetIndex(int offset) {
