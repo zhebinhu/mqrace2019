@@ -8,22 +8,22 @@ public class ValueTags {
 
     private int[] offsets;
 
-    private int[] adds;
+    private long[] adds;
 
     private int index;
 
     public ValueTags(int cap) {
         tags = new int[cap];
         offsets = new int[cap];
-        adds = new int[cap];
+        adds = new long[cap];
         index = 0;
     }
 
-    public void add(int add) {
-        adds[index - 1] = add;
+    public void addFinal(int add, int msgNum) {
+        adds[index - 1] = tags[index - 1] * (long) (msgNum - offsets[index - 1]) + add;
     }
 
-    public int getAdd(int addIndex) {
+    public final long getAdd(int addIndex) {
         return adds[addIndex];
     }
 
@@ -41,15 +41,15 @@ public class ValueTags {
         return offsetIndex;
     }
 
-    public int getTag(int tagIndex) {
+    public final int getTag(int tagIndex) {
         return tags[tagIndex];
     }
 
-    public int getOffset(int offsetIndex) {
+    public final int getOffset(int offsetIndex) {
         return offsets[offsetIndex];
     }
 
-    public int size() {
+    public final int size() {
         return index;
     }
 
@@ -71,5 +71,4 @@ public class ValueTags {
         }
         return -(low + 1);
     }
-
 }

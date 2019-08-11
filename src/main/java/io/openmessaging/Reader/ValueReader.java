@@ -12,7 +12,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[2100000000];
 
-    private ValueTags valueTags = new ValueTags(9000000);
+    private ValueTags valueTags = new ValueTags(6000000);
 
     private int msgNum = 0;
 
@@ -29,7 +29,7 @@ public class ValueReader {
                 max = add;
             }
             if (add != 0) {
-                valueTags.add(add);
+                valueTags.addFinal(add, msgNum);
                 add = 0;
             }
             tag = value;
@@ -42,13 +42,13 @@ public class ValueReader {
 
     private void init() {
         if (add != 0) {
-            valueTags.add(add);
+            valueTags.addFinal(add, msgNum);
         }
         System.out.println("max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
 
-     int get(int offset, Context context) {
+    int get(int offset, Context context) {
         if (!init) {
             synchronized (this) {
                 if (!init) {
@@ -82,9 +82,9 @@ public class ValueReader {
             if (offsetA >= context.offsetB) {
                 updateContext(context);
             }
-            if (context.offsetA == offsetA && context.tag + 255 <= aMax && context.tag >= aMin &&  context.offsetB < offsetB) {
+            if (context.offsetA == offsetA && context.tag + 255 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
                 int num = context.offsetB - context.offsetA;
-                total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
+                total += valueTags.getAdd(context.tagIndex);
                 count += num;
                 offsetA = context.offsetB;
                 updateContext(context);
