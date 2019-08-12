@@ -43,6 +43,7 @@ public class ValueReader {
     private void init() {
         if (add != 0) {
             valueTags.addFinal(add, msgNum);
+            add = 0;
         }
         System.out.println("max:" + max + " valueTags size:" + valueTags.size());
         init = true;
