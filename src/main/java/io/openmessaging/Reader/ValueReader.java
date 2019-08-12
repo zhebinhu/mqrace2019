@@ -10,7 +10,7 @@ import io.openmessaging.ValueTags;
 public class ValueReader {
     private long max = 0;
 
-    private byte[] cache = new byte[2100000000];
+    private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
     private ValueTags valueTags = new ValueTags(10000000);
 
@@ -22,14 +22,14 @@ public class ValueReader {
 
     private int add = 0;
 
-    void put(Message message) {
+    public void put(Message message) {
         int value = (int) message.getA();
         if (tag == -1 || value > tag + 255 || value < tag) {
             if (add > max) {
                 max = add;
             }
             if (add != 0) {
-                valueTags.addFinal(add, msgNum);
+                valueTags.add(add);
                 add = 0;
             }
             tag = value;
@@ -40,16 +40,15 @@ public class ValueReader {
         msgNum++;
     }
 
-    private void init() {
+    public void init() {
         if (add != 0) {
-            valueTags.addFinal(add, msgNum);
-            add = 0;
+            valueTags.add(add);
         }
         System.out.println("max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
 
-    int get(int offset, Context context) {
+    public int get(int offset, Context context) {
         if (!init) {
             synchronized (this) {
                 if (!init) {
@@ -71,24 +70,44 @@ public class ValueReader {
         return context.tag + (cache[offset] & 0xff);
     }
 
-    long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
+    public long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
         long total = 0;
         int count = 0;
         if (offsetA < context.offsetA || offsetA >= context.offsetB) {
             context.tagIndex = valueTags.offsetIndex(offsetA);
-            updateParam(context);
+            context.tag = valueTags.getTag(context.tagIndex);
+            context.offsetA = valueTags.getOffset(context.tagIndex);
+            if (context.tagIndex == valueTags.size() - 1) {
+                context.offsetB = msgNum;
+            } else {
+                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+            }
         }
         int value;
         while (offsetA < offsetB) {
             if (offsetA >= context.offsetB) {
-                updateContext(context);
+                context.tagIndex++;
+                context.tag = valueTags.getTag(context.tagIndex);
+                context.offsetA = valueTags.getOffset(context.tagIndex);
+                if (context.tagIndex == valueTags.size() - 1) {
+                    context.offsetB = msgNum;
+                } else {
+                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                }
             }
-            if (context.offsetA == offsetA && context.tag + 255 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
+            if (context.offsetA == offsetA&& context.tag + 255 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
                 int num = context.offsetB - context.offsetA;
-                total += valueTags.getAdd(context.tagIndex);
+                total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
                 count += num;
                 offsetA = context.offsetB;
-                updateContext(context);
+                context.tagIndex++;
+                context.tag = valueTags.getTag(context.tagIndex);
+                context.offsetA = valueTags.getOffset(context.tagIndex);
+                if (context.tagIndex == valueTags.size() - 1) {
+                    context.offsetB = msgNum;
+                } else {
+                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                }
                 continue;
             }
             value = context.tag + (cache[offsetA] & 0xff);
@@ -99,20 +118,5 @@ public class ValueReader {
             offsetA++;
         }
         return count == 0 ? 0 : total / count;
-    }
-
-    private void updateContext(Context context) {
-        context.tagIndex++;
-        updateParam(context);
-    }
-
-    private void updateParam(Context context) {
-        context.tag = valueTags.getTag(context.tagIndex);
-        context.offsetA = valueTags.getOffset(context.tagIndex);
-        if (context.tagIndex == valueTags.size() - 1) {
-            context.offsetB = msgNum;
-        } else {
-            context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-        }
     }
 }
