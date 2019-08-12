@@ -12,7 +12,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[2100000000];
 
-    private ValueTags valueTags = new ValueTags(6000000);
+    private ValueTags valueTags = new ValueTags(10000000);
 
     private int msgNum = 0;
 
@@ -22,23 +22,13 @@ public class ValueReader {
 
     private int add = 0;
 
-    private int count256 = 0;
-
-    private int count300 = 0;
-
     void put(Message message) {
         int value = (int) message.getA();
-        if (msgNum == 0 || value > tag + 255 || value < tag) {
-            if (value == tag + 256) {
-                count256++;
-            }
-            if (value <= tag + 300) {
-                count300++;
-            }
+        if (tag == -1 || value > tag + 255 || value < tag) {
             if (add > max) {
                 max = add;
             }
-            if (msgNum != 0) {
+            if (add != 0) {
                 valueTags.addFinal(add, msgNum);
                 add = 0;
             }
@@ -51,9 +41,10 @@ public class ValueReader {
     }
 
     private void init() {
-        valueTags.addFinal(add, msgNum);
-        add = 0;
-        System.out.println("max:" + max + " valueTags size:" + valueTags.size() + " count256:" + count256 + " count300:" + count300);
+        if (add != 0) {
+            valueTags.addFinal(add, msgNum);
+        }
+        System.out.println("max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
 
