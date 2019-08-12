@@ -22,20 +22,29 @@ public class ValueReader {
 
     private int add = 0;
 
+    private long total = 0;
+
+    private int count = 0;
+
     public void put(Message message) {
         int value = (int) message.getA();
         if (tag == -1 || value > tag + 255 || value < tag) {
-            if (add > max) {
-                max = add;
-            }
             if (add != 0) {
                 valueTags.add(add);
                 add = 0;
+            }
+            if (value == tag + 256 && count < 32) {
+                count++;
+            } else {
+                valueTags.addTotal(total, count);
+                count = 1;
+                total = 0;
             }
             tag = value;
             valueTags.add(value, msgNum);
         }
         add = add + value - tag;
+        total = total + value;
         cache[msgNum] = (byte) (value - tag);
         msgNum++;
     }
@@ -43,6 +52,8 @@ public class ValueReader {
     public void init() {
         if (add != 0) {
             valueTags.add(add);
+            valueTags.addTotal(total, count);
+            valueTags.addFinal(0, msgNum);
         }
         System.out.println("max:" + max + " valueTags size:" + valueTags.size());
         init = true;
@@ -60,12 +71,9 @@ public class ValueReader {
         if (offset < context.offsetA || offset >= context.offsetB) {
             int tagIndex = valueTags.offsetIndex(offset);
             context.tag = valueTags.getTag(tagIndex);
-            context.offsetA = valueTags.getOffset(tagIndex);
-            if (tagIndex == valueTags.size() - 1) {
-                context.offsetB = msgNum;
-            } else {
-                context.offsetB = valueTags.getOffset(tagIndex + 1);
-            }
+            context.offsetA = valueTags.getOffset(context.tagIndex);
+            context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+            context.offsetC = valueTags.getOffset(context.tagIndex + valueTags.getJump(context.tagIndex));
         }
         return context.tag + (cache[offset] & 0xff);
     }
@@ -77,40 +85,30 @@ public class ValueReader {
             context.tagIndex = valueTags.offsetIndex(offsetA);
             context.tag = valueTags.getTag(context.tagIndex);
             context.offsetA = valueTags.getOffset(context.tagIndex);
-            if (context.tagIndex == valueTags.size() - 1) {
-                context.offsetB = msgNum;
-            } else {
-                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-            }
+            context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+            context.offsetC = valueTags.getOffset(context.tagIndex + valueTags.getJump(context.tagIndex));
         }
-        int value;
         while (offsetA < offsetB) {
             if (offsetA >= context.offsetB) {
                 context.tagIndex++;
                 context.tag = valueTags.getTag(context.tagIndex);
                 context.offsetA = valueTags.getOffset(context.tagIndex);
-                if (context.tagIndex == valueTags.size() - 1) {
-                    context.offsetB = msgNum;
-                } else {
-                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-                }
+                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                context.offsetC = valueTags.getOffset(context.tagIndex + valueTags.getJump(context.tagIndex));
             }
-            if (context.offsetA == offsetA&& context.tag + 255 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
-                int num = context.offsetB - context.offsetA;
-                total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
+            if (context.offsetA == offsetA && context.tag + 256 * valueTags.getJump(context.tagIndex) <= aMax && context.tag >= aMin && context.offsetC < offsetB) {
+                int num = context.offsetC - context.offsetA;
+                total += valueTags.getTotal(context.tagIndex);
                 count += num;
-                offsetA = context.offsetB;
-                context.tagIndex++;
+                offsetA = context.offsetC;
+                context.tagIndex += valueTags.getJump(context.tagIndex);
                 context.tag = valueTags.getTag(context.tagIndex);
                 context.offsetA = valueTags.getOffset(context.tagIndex);
-                if (context.tagIndex == valueTags.size() - 1) {
-                    context.offsetB = msgNum;
-                } else {
-                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-                }
+                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                context.offsetC = valueTags.getOffset(context.tagIndex + valueTags.getJump(context.tagIndex));
                 continue;
             }
-            value = context.tag + (cache[offsetA] & 0xff);
+            int value = context.tag + (cache[offsetA] & 0xff);
             if (value >= aMin && value <= aMax) {
                 total += value;
                 count++;

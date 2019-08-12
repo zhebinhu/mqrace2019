@@ -31,7 +31,7 @@ public class TimeReader {
             max = t;
         }
         int time = (int) t;
-        if (time > tag + 15) {
+        if (tag == 0 || time > tag + 15) {
             tag = time;
             timeTags.add(time, msgNum);
         }
