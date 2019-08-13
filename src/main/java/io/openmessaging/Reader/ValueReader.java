@@ -170,6 +170,7 @@ public class ValueReader {
                 continue;
             }
             if (context.tag + 255 < aMin) {
+                offsetA = context.offsetB;
                 context.tagIndex++;
                 context.tag = valueTags.getTag(context.tagIndex);
                 context.offsetA = valueTags.getOffset(context.tagIndex);
