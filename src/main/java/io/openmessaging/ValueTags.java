@@ -30,6 +30,9 @@ public class ValueTags {
     public void add(int tag, int offset) {
         tags[index] = tag;
         offsets[index] = offset;
+        if (index % 100 == 1) {
+            System.out.println("offset:" + (offsets[index] - offsets[index - 1]));
+        }
         index++;
     }
 

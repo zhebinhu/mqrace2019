@@ -21,6 +21,9 @@ public class TimeTags {
     public void add(int tag, int offset) {
         tags.putInt(index << 2, tag);
         offsets.putInt(index << 2, offset);
+        if (index % 100 == 1) {
+            System.out.println("time:" + (offsets.getInt(index << 2) - offsets.getInt((index - 1) << 2)));
+        }
         index++;
     }
 

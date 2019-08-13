@@ -15,7 +15,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
-    private ValueTags valueTags = new ValueTags(30000000);
+    private ValueTags valueTags = new ValueTags(10000000);
 
     private int msgNum = 0;
 
@@ -39,7 +39,7 @@ public class ValueReader {
 
     public void put(Message message) {
         int value = (int) message.getA();
-        if (tag == -1 || value > tag + 63 || value < tag) {
+        if (tag == -1 || value > tag + 255 || value < tag) {
             if (add > max) {
                 max = add;
             }
@@ -47,7 +47,6 @@ public class ValueReader {
                 valueTags.add(add);
                 add = 0;
             }
-
 
             tag = value;
             valueTags.add(value, msgNum);
@@ -115,31 +114,31 @@ public class ValueReader {
                     context.offsetB = valueTags.getOffset(context.tagIndex + 1);
                 }
             }
-//            if (context.offsetA == offsetA) {
-//                c1.getAndIncrement();
-//                if (context.tag + 63 <= aMax) {
-//                    c2.getAndIncrement();
-//                    if (context.tag >= aMin) {
-//                        c3.getAndIncrement();
-//                        if (context.offsetB < offsetB) {
-//                            c4.getAndIncrement();
-//                            int num = context.offsetB - context.offsetA;
-//                            total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
-//                            count += num;
-//                            offsetA = context.offsetB;
-//                            context.tagIndex++;
-//                            context.tag = valueTags.getTag(context.tagIndex);
-//                            context.offsetA = valueTags.getOffset(context.tagIndex);
-//                            if (context.tagIndex == valueTags.size() - 1) {
-//                                context.offsetB = msgNum;
-//                            } else {
-//                                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-//                            }
-//                            continue;
-//                        }
-//                    }
-//                }
-//            }
+            if (context.offsetA == offsetA) {
+                c1.getAndIncrement();
+                if (context.tag + 255 <= aMax) {
+                    c2.getAndIncrement();
+                    if (context.tag >= aMin) {
+                        c3.getAndIncrement();
+                        if (context.offsetB < offsetB) {
+                            c4.getAndIncrement();
+                            int num = context.offsetB - context.offsetA;
+                            total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
+                            count += num;
+                            offsetA = context.offsetB;
+                            context.tagIndex++;
+                            context.tag = valueTags.getTag(context.tagIndex);
+                            context.offsetA = valueTags.getOffset(context.tagIndex);
+                            if (context.tagIndex == valueTags.size() - 1) {
+                                context.offsetB = msgNum;
+                            } else {
+                                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                            }
+                            continue;
+                        }
+                    }
+                }
+            }
 
             //            if (context.offsetA == offsetA && context.tag + 255 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
             //                c1.getAndIncrement();
@@ -164,7 +163,7 @@ public class ValueReader {
             }
             offsetA++;
         }
-        System.out.println("c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue());
+        System.out.println("count:" + count + " c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue());
         return count == 0 ? 0 : total / count;
     }
 }
