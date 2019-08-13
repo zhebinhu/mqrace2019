@@ -10,12 +10,15 @@ public class ValueTags {
 
     private int[] adds;
 
+    private int[] minValues;
+
     private int index;
 
     public ValueTags(int cap) {
         tags = new int[cap];
         offsets = new int[cap];
         adds = new int[cap];
+        minValues = new int[cap];
         index = 0;
     }
 
@@ -30,10 +33,19 @@ public class ValueTags {
     public void add(int tag, int offset) {
         tags[index] = tag;
         offsets[index] = offset;
-        if (index % 10 == 4) {
-            System.out.println("offset:" + (offsets[index] - offsets[index - 1]));
-        }
         index++;
+    }
+
+    public void inited() {
+        int min = Integer.MAX_VALUE;
+        for (int i = index-1; i >= 0; i--) {
+            min = Math.min(tags[i], min);
+            minValues[i] = min;
+        }
+    }
+
+    public final int getMin(int offset) {
+        return minValues[offset];
     }
 
     public int offsetIndex(int offset) {
