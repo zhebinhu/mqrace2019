@@ -79,19 +79,18 @@ public class Reader {
         return result;
     }
 
-    public synchronized long avg(long aMin, long aMax, long tMin, long tMax) {
+    public long avg(long aMin, long aMax, long tMin, long tMax) {
         Context valueContext = valueContextThreadLocal.get();
         if (valueContext == null) {
             valueContext = new Context();
             valueContextThreadLocal.set(valueContext);
         }
-        long start = System.nanoTime();
+        //long start = System.nanoTime();
         int offsetA = timeReader.getOffset((int) tMin);
         int offsetB = timeReader.getOffset((int) tMax + 1);
-        long mid = System.nanoTime();
-        long result = valueReader.avg(offsetA, offsetB, aMin, aMax, valueContext);
-        long end = System.nanoTime();
-        System.out.println("one:" + one.addAndGet(mid - start) + " two:" + two.addAndGet(end - mid));
-        return result;
+        //long mid = System.nanoTime();
+        return valueReader.avg(offsetA, offsetB, aMin, aMax, valueContext);
+        //long end = System.nanoTime();
+        //System.out.println("one:" + one.addAndGet(mid - start) + " two:" + two.addAndGet(end - mid));
     }
 }
