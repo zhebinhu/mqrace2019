@@ -175,18 +175,18 @@ public class ValueReader {
                 }
                 continue;
             }
-            //            if (context.tag + 255 < aMin) {
-            //                offsetA = context.offsetB;
-            //                context.tagIndex++;
-            //                context.tag = valueTags.getTag(context.tagIndex);
-            //                context.offsetA = valueTags.getOffset(context.tagIndex);
-            //                if (context.tagIndex == valueTags.size() - 1) {
-            //                    context.offsetB = msgNum;
-            //                } else {
-            //                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-            //                }
-            //                continue;
-            //            }
+            if (context.tag + 255 < aMin) {
+                offsetA = context.offsetB;
+                context.tagIndex++;
+                context.tag = valueTags.getTag(context.tagIndex);
+                context.offsetA = valueTags.getOffset(context.tagIndex);
+                if (context.tagIndex == valueTags.size() - 1) {
+                    context.offsetB = msgNum;
+                } else {
+                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                }
+                continue;
+            }
             value = context.tag + (cache[offsetA] & 0xff);
             if (value >= aMin && value <= aMax) {
                 total += value;

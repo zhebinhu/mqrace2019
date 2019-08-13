@@ -129,7 +129,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-        try {
 //            if (!avg) {
 //                synchronized (this) {
 //                    if (!avg) {
@@ -158,9 +157,5 @@ public class DefaultMessageStoreImpl extends MessageStore {
             return reader.avg(aMin, aMax, tMin, tMax);
             //return 0L;
 
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
-        }
-        return 0L;
     }
 }
