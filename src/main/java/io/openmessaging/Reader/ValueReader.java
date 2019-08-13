@@ -5,6 +5,7 @@ import io.openmessaging.Message;
 import io.openmessaging.ValueTags;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -24,7 +25,7 @@ public class ValueReader {
 
     private int add = 0;
 
-    private AtomicInteger c = new AtomicInteger();
+    private AtomicLong c = new AtomicLong();
 
     private AtomicInteger c1 = new AtomicInteger();
 
@@ -114,31 +115,31 @@ public class ValueReader {
                     context.offsetB = valueTags.getOffset(context.tagIndex + 1);
                 }
             }
-            if (context.offsetA == offsetA) {
-                c1.getAndIncrement();
-                if (context.tag + 63 <= aMax) {
-                    c2.getAndIncrement();
-                    if (context.tag >= aMin) {
-                        c3.getAndIncrement();
-                        if (context.offsetB < offsetB) {
-                            c4.getAndIncrement();
-                            int num = context.offsetB - context.offsetA;
-                            total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
-                            count += num;
-                            offsetA = context.offsetB;
-                            context.tagIndex++;
-                            context.tag = valueTags.getTag(context.tagIndex);
-                            context.offsetA = valueTags.getOffset(context.tagIndex);
-                            if (context.tagIndex == valueTags.size() - 1) {
-                                context.offsetB = msgNum;
-                            } else {
-                                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-                            }
-                            continue;
-                        }
-                    }
-                }
-            }
+//            if (context.offsetA == offsetA) {
+//                c1.getAndIncrement();
+//                if (context.tag + 63 <= aMax) {
+//                    c2.getAndIncrement();
+//                    if (context.tag >= aMin) {
+//                        c3.getAndIncrement();
+//                        if (context.offsetB < offsetB) {
+//                            c4.getAndIncrement();
+//                            int num = context.offsetB - context.offsetA;
+//                            total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
+//                            count += num;
+//                            offsetA = context.offsetB;
+//                            context.tagIndex++;
+//                            context.tag = valueTags.getTag(context.tagIndex);
+//                            context.offsetA = valueTags.getOffset(context.tagIndex);
+//                            if (context.tagIndex == valueTags.size() - 1) {
+//                                context.offsetB = msgNum;
+//                            } else {
+//                                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+//                            }
+//                            continue;
+//                        }
+//                    }
+//                }
+//            }
 
             //            if (context.offsetA == offsetA && context.tag + 255 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
             //                c1.getAndIncrement();
@@ -163,7 +164,7 @@ public class ValueReader {
             }
             offsetA++;
         }
-        System.out.println("c:" + c.intValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue());
+        System.out.println("c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue());
         return count == 0 ? 0 : total / count;
     }
 }
