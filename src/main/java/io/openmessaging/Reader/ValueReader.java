@@ -25,18 +25,6 @@ public class ValueReader {
 
     private int add = 0;
 
-    private AtomicLong c = new AtomicLong();
-
-    private AtomicInteger c1 = new AtomicInteger();
-
-    private AtomicInteger c2 = new AtomicInteger();
-
-    private AtomicInteger c3 = new AtomicInteger();
-
-    private AtomicInteger c4 = new AtomicInteger();
-
-    private AtomicInteger c5 = new AtomicInteger();
-
     public void put(Message message) {
         int value = (int) message.getA();
         if (tag == -1 || value > tag + 255 || value < tag) {
@@ -88,6 +76,18 @@ public class ValueReader {
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
+        AtomicLong c = new AtomicLong();
+
+        AtomicInteger c1 = new AtomicInteger();
+
+        AtomicInteger c2 = new AtomicInteger();
+
+        AtomicInteger c3 = new AtomicInteger();
+
+        AtomicInteger c4 = new AtomicInteger();
+
+        AtomicInteger c5 = new AtomicInteger();
+
         long total = 0;
         int count = 0;
         if (offsetA < context.offsetA || offsetA >= context.offsetB) {
@@ -163,7 +163,7 @@ public class ValueReader {
             }
             offsetA++;
         }
-        System.out.println("count:" + count + " c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue());
+        System.out.println("count:" + count + " c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue() + " c1/c5:" + c1.longValue() / c5.intValue() + " aMin:" + aMin + " aMax:" + aMax);
         return count == 0 ? 0 : total / count;
     }
 }
