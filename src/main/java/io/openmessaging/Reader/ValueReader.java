@@ -4,6 +4,8 @@ import io.openmessaging.Context;
 import io.openmessaging.Message;
 import io.openmessaging.ValueTags;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Created by huzhebin on 2019/08/07.
  */
@@ -26,6 +28,8 @@ public class ValueReader {
 
     private int count = 0;
 
+    private AtomicInteger c = new AtomicInteger();
+
     public void put(Message message) {
         int value = (int) message.getA();
         if (tag == -1 || value > tag + 255 || value < tag) {
@@ -33,7 +37,7 @@ public class ValueReader {
                 valueTags.add(add);
                 add = 0;
             }
-            if (value == tag + 256 && count < 32) {
+            if (value == tag + 256 && count < 1) {
                 count++;
             } else {
                 valueTags.addTotal(total, count);
@@ -89,6 +93,7 @@ public class ValueReader {
             context.offsetC = valueTags.getOffset(context.tagIndex + valueTags.getJump(context.tagIndex));
         }
         while (offsetA < offsetB) {
+            c.getAndIncrement();
             if (offsetA >= context.offsetB) {
                 context.tagIndex++;
                 context.tag = valueTags.getTag(context.tagIndex);
@@ -115,6 +120,7 @@ public class ValueReader {
             }
             offsetA++;
         }
+        System.out.println("c:"+c.intValue());
         return count == 0 ? 0 : total / count;
     }
 }
