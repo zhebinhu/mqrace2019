@@ -1,7 +1,5 @@
 package io.openmessaging;
 
-import java.util.Arrays;
-
 /**
  * Created by huzhebin on 2019/08/09.
  */
@@ -12,18 +10,12 @@ public class ValueTags {
 
     private int[] adds;
 
-    private int[] jumps;
-
-    private long[] totals;
-
     private int index;
 
     public ValueTags(int cap) {
         tags = new int[cap];
         offsets = new int[cap];
         adds = new int[cap];
-        jumps = new int[cap];
-        totals = new long[cap];
         index = 0;
     }
 
@@ -31,23 +23,14 @@ public class ValueTags {
         adds[index - 1] = add;
     }
 
-    public final int getAdd(int addIndex) {
+    public int getAdd(int addIndex) {
         return adds[addIndex];
-    }
-
-    public final int getJump(int jumpIndex) {
-        return jumps[jumpIndex];
     }
 
     public void add(int tag, int offset) {
         tags[index] = tag;
         offsets[index] = offset;
         index++;
-    }
-
-    public void addFinal(int tag, int offset) {
-        tags[index] = tag;
-        Arrays.fill(offsets, index, offsets.length, offset);
     }
 
     public int offsetIndex(int offset) {
@@ -58,15 +41,15 @@ public class ValueTags {
         return offsetIndex;
     }
 
-    public final int getTag(int tagIndex) {
+    public int getTag(int tagIndex) {
         return tags[tagIndex];
     }
 
-    public final int getOffset(int offsetIndex) {
+    public int getOffset(int offsetIndex) {
         return offsets[offsetIndex];
     }
 
-    public final int size() {
+    public int size() {
         return index;
     }
 
@@ -89,15 +72,4 @@ public class ValueTags {
         return -(low + 1);
     }
 
-    public void addTotal(long total, int count) {
-        for (int i = 0; i < count; i++) {
-            totals[index - count + i] = total;
-            jumps[index - count + i] = count-i;
-            total -= (tags[index - count + i] * (long) (offsets[index - count + i + 1] - offsets[index - count + i]) + adds[index - count + i]);
-        }
-    }
-
-    public final long getTotal(int totalOffset) {
-        return totals[totalOffset];
-    }
 }
