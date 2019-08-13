@@ -14,7 +14,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
-    private ValueTags valueTags = new ValueTags(10000000);
+    private ValueTags valueTags = new ValueTags(20000000);
 
     private int msgNum = 0;
 
@@ -38,7 +38,7 @@ public class ValueReader {
 
     public void put(Message message) {
         int value = (int) message.getA();
-        if (tag == -1 || value > tag + 255 || value < tag) {
+        if (tag == -1 || value > tag + 127 || value < tag) {
             if (add > max) {
                 max = add;
             }
@@ -114,7 +114,7 @@ public class ValueReader {
             }
             if (context.offsetA == offsetA) {
                 c1.getAndIncrement();
-                if (context.tag + 255 <= aMax) {
+                if (context.tag + 127 <= aMax) {
                     c2.getAndIncrement();
                     if (context.tag >= aMin) {
                         c3.getAndIncrement();
