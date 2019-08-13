@@ -79,7 +79,7 @@ public class Reader {
         return result;
     }
 
-    public long avg(long aMin, long aMax, long tMin, long tMax) {
+    public synchronized long avg(long aMin, long aMax, long tMin, long tMax) {
         Context valueContext = valueContextThreadLocal.get();
         if (valueContext == null) {
             valueContext = new Context();
