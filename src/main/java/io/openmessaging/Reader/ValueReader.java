@@ -115,9 +115,11 @@ public class ValueReader {
             //c.getAndIncrement();
             if (offsetA >= context.offsetB) {
                 context.tagIndex++;
-//                if (valueTags.getMin(context.tagIndex) > aMax) {
-//                    return count == 0 ? 0 : total / count;
-//                }
+                if (valueTags.getMin(context.tagIndex) > aMax) {
+                    long end = System.nanoTime();
+                    System.out.println("three:" + three.addAndGet(mid - start)+" four:"+four.addAndGet(end-mid));
+                    return count == 0 ? 0 : total / count;
+                }
                 context.tag = valueTags.getTag(context.tagIndex);
                 context.offsetA = valueTags.getOffset(context.tagIndex);
                 if (context.tagIndex == valueTags.size() - 1) {
@@ -161,9 +163,11 @@ public class ValueReader {
                 count += num;
                 offsetA = context.offsetB;
                 context.tagIndex++;
-//                if (valueTags.getMin(context.tagIndex) > aMax) {
-//                    return count == 0 ? 0 : total / count;
-//                }
+                if (valueTags.getMin(context.tagIndex) > aMax) {
+                    long end = System.nanoTime();
+                    System.out.println("three:" + three.addAndGet(mid - start)+" four:"+four.addAndGet(end-mid));
+                    return count == 0 ? 0 : total / count;
+                }
                 context.tag = valueTags.getTag(context.tagIndex);
                 context.offsetA = valueTags.getOffset(context.tagIndex);
                 if (context.tagIndex == valueTags.size() - 1) {
