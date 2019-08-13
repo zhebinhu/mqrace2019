@@ -13,8 +13,8 @@ public class TimeTags {
     private int index;
 
     public TimeTags(int cap) {
-        tags = ByteBuffer.allocateDirect(8 * cap);
-        offsets = ByteBuffer.allocateDirect(8 * cap);
+        tags = ByteBuffer.allocateDirect(4 * cap);
+        offsets = ByteBuffer.allocateDirect(4 * cap);
         index = 0;
     }
 
