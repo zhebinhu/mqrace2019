@@ -25,7 +25,7 @@ public class ValueReader {
 
     private int add = 0;
 
-    AtomicLong c = new AtomicLong();
+    //AtomicLong c = new AtomicLong();
 
     public void put(Message message) {
         int value = (int) message.getA();
@@ -108,7 +108,7 @@ public class ValueReader {
         }
         int value;
         while (offsetA < offsetB) {
-            c.getAndIncrement();
+            //c.getAndIncrement();
             if (offsetA >= context.offsetB) {
                 context.tagIndex++;
                 if (valueTags.getMin(context.tagIndex) > aMax) {
@@ -188,7 +188,7 @@ public class ValueReader {
             }
             offsetA++;
         }
-        System.out.println("c:" + c.intValue());
+        //System.out.println("c:" + c.intValue());
         //System.out.println("count:" + count + " c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue() + " c/c4:" + (c4.intValue() == 0 ? 0 : c.longValue() / c4.intValue()) + " aMin:" + aMin + " aMax:" + aMax);
         return count == 0 ? 0 : total / count;
     }
