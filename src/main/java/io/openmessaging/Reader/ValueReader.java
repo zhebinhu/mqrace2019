@@ -14,7 +14,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
-    private ValueTags valueTags = new ValueTags(20000000);
+    private ValueTags valueTags = new ValueTags(30000000);
 
     private int msgNum = 0;
 
@@ -36,13 +36,9 @@ public class ValueReader {
 
     private AtomicInteger c5 = new AtomicInteger();
 
-    private int vt = 0;
-
-    private int count255 = 0;
-
     public void put(Message message) {
         int value = (int) message.getA();
-        if (tag == -1 || value > tag + 255 || value < tag) {
+        if (tag == -1 || value > tag + 63 || value < tag) {
             if (add > max) {
                 max = add;
             }
@@ -50,17 +46,12 @@ public class ValueReader {
                 valueTags.add(add);
                 add = 0;
             }
-            if (vt == 255) {
-                count255++;
-            }
-            vt = Integer.MIN_VALUE;
+
+
             tag = value;
             valueTags.add(value, msgNum);
         }
         add = add + value - tag;
-        if (value - tag > vt) {
-            vt = value - tag;
-        }
         cache[msgNum] = (byte) (value - tag);
         msgNum++;
     }
@@ -70,7 +61,7 @@ public class ValueReader {
             valueTags.add(add);
             add = 0;
         }
-        System.out.println("max:" + max + " valueTags size:" + valueTags.size() + " count255:" + count255);
+        System.out.println("max:" + max + " valueTags size:" + valueTags.size());
         init = true;
     }
 
@@ -125,7 +116,7 @@ public class ValueReader {
             }
             if (context.offsetA == offsetA) {
                 c1.getAndIncrement();
-                if (context.tag + 255 <= aMax) {
+                if (context.tag + 63 <= aMax) {
                     c2.getAndIncrement();
                     if (context.tag >= aMin) {
                         c3.getAndIncrement();
