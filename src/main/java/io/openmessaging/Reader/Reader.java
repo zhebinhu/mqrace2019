@@ -7,6 +7,7 @@ import io.openmessaging.MessagePool;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -25,6 +26,10 @@ public class Reader {
     private ThreadLocal<Context> valueContextThreadLocal = new ThreadLocal<>();
 
     private ThreadLocal<DataContext> dataContextThreadLocal = new ThreadLocal<>();
+
+    AtomicLong one = new AtomicLong();
+
+    AtomicLong two = new AtomicLong();
 
     public Reader() {
         timeReader = new TimeReader();
@@ -76,12 +81,17 @@ public class Reader {
 
     public long avg(long aMin, long aMax, long tMin, long tMax) {
         Context valueContext = valueContextThreadLocal.get();
-        if(valueContext==null){
+        if (valueContext == null) {
             valueContext = new Context();
             valueContextThreadLocal.set(valueContext);
         }
+        long start = System.nanoTime();
         int offsetA = timeReader.getOffset((int) tMin);
-        int offsetB = timeReader.getOffset((int)tMax+1);
-        return valueReader.avg(offsetA,offsetB,aMin,aMax,valueContext);
+        int offsetB = timeReader.getOffset((int) tMax + 1);
+        long mid = System.nanoTime();
+        long result = valueReader.avg(offsetA, offsetB, aMin, aMax, valueContext);
+        long end = System.nanoTime();
+        System.out.println("one:" + one.addAndGet(mid - start) + " two:" + two.addAndGet(end - mid));
+        return result;
     }
 }
