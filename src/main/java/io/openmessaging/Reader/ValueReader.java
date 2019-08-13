@@ -99,26 +99,35 @@ public class ValueReader {
         if (offsetA < context.offsetA || offsetA >= context.offsetB) {
             context.tagIndex = valueTags.offsetIndex(offsetA);
             context.tag = valueTags.getTag(context.tagIndex);
-            context.offsetA = valueTags.getOffset(context.tagIndex);
-            if (context.tagIndex == valueTags.size() - 1) {
-                context.offsetB = msgNum;
-            } else {
-                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-            }
-            if (valueTags.getMin(context.tagIndex) > aMax) {
-                return 0;
-            }
         }
+        while (context.tag + 255 < aMin && offsetA < offsetB) {
+            context.tagIndex++;
+            context.tag = valueTags.getTag(context.tagIndex);
+            offsetA = valueTags.getOffset(context.tagIndex);
+        }
+        context.offsetA = valueTags.getOffset(context.tagIndex);
+        if (context.tagIndex == valueTags.size() - 1) {
+            context.offsetB = msgNum;
+        } else {
+            context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+        }
+
+        int maxIndex = valueTags.offsetIndex(offsetB);
+        while (valueTags.getMin(maxIndex) > aMax && offsetA < offsetB) {
+            offsetB = valueTags.getOffset(maxIndex);
+            maxIndex--;
+        }
+
         int value;
         //long mid = System.nanoTime();
         while (offsetA < offsetB) {
             //c.getAndIncrement();
             if (offsetA >= context.offsetB) {
                 context.tagIndex++;
-                if (valueTags.getMin(context.tagIndex) > aMax) {
-                    context.tagIndex--;
-                    return count == 0 ? 0 : total / count;
-                }
+//                if (valueTags.getMin(context.tagIndex) > aMax) {
+//                    context.tagIndex--;
+//                    return count == 0 ? 0 : total / count;
+//                }
                 context.tag = valueTags.getTag(context.tagIndex);
                 context.offsetA = valueTags.getOffset(context.tagIndex);
                 if (context.tagIndex == valueTags.size() - 1) {
@@ -162,10 +171,10 @@ public class ValueReader {
                 count += num;
                 offsetA = context.offsetB;
                 context.tagIndex++;
-                if (valueTags.getMin(context.tagIndex) > aMax) {
-                    context.tagIndex--;
-                    return count == 0 ? 0 : total / count;
-                }
+//                if (valueTags.getMin(context.tagIndex) > aMax) {
+//                    context.tagIndex--;
+//                    return count == 0 ? 0 : total / count;
+//                }
                 context.tag = valueTags.getTag(context.tagIndex);
                 context.offsetA = valueTags.getOffset(context.tagIndex);
                 if (context.tagIndex == valueTags.size() - 1) {
@@ -175,18 +184,18 @@ public class ValueReader {
                 }
                 continue;
             }
-            if (context.tag + 255 < aMin) {
-                offsetA = context.offsetB;
-                context.tagIndex++;
-                context.tag = valueTags.getTag(context.tagIndex);
-                context.offsetA = valueTags.getOffset(context.tagIndex);
-                if (context.tagIndex == valueTags.size() - 1) {
-                    context.offsetB = msgNum;
-                } else {
-                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-                }
-                continue;
-            }
+//            if (context.tag + 255 < aMin) {
+//                offsetA = context.offsetB;
+//                context.tagIndex++;
+//                context.tag = valueTags.getTag(context.tagIndex);
+//                context.offsetA = valueTags.getOffset(context.tagIndex);
+//                if (context.tagIndex == valueTags.size() - 1) {
+//                    context.offsetB = msgNum;
+//                } else {
+//                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+//                }
+//                continue;
+//            }
             value = context.tag + (cache[offsetA] & 0xff);
             if (value >= aMin && value <= aMax) {
                 total += value;
