@@ -93,7 +93,7 @@ public class DemoTester {
         System.out.printf("Value Check: %d ms Num: %d\n", checkEnd - checkStart, valueCheckNum.get());
 
         //评测结果
-        System.out.printf("Total Score:%d\n", (msgNum / (sendSend- sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
+        System.out.printf("Total Score:%d\n", (msgNum / (sendSend - sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
     }
 
     static class Producer implements Runnable {
@@ -212,7 +212,7 @@ public class DemoTester {
                         checkError();
                     }
                     numCounter.getAndAdd(msgs.size());
-                    break;
+                    //break;
                 } catch (Throwable t) {
                     t.printStackTrace();
                     System.exit(-1);
