@@ -28,7 +28,7 @@ public class ValueTags {
         adds[index - 1] = add;
     }
 
-    public int getAdd(int addIndex) {
+    public final int getAdd(int addIndex) {
         return adds[addIndex];
     }
 
@@ -59,15 +59,15 @@ public class ValueTags {
         return offsetIndex;
     }
 
-    public int getTag(int tagIndex) {
+    public final int getTag(int tagIndex) {
         return tags[tagIndex];
     }
 
-    public int getOffset(int offsetIndex) {
+    public final int getOffset(int offsetIndex) {
         return offsets[offsetIndex];
     }
 
-    public int size() {
+    public final int size() {
         return index;
     }
 

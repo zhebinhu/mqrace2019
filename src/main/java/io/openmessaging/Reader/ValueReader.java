@@ -15,7 +15,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
-    private ValueTags valueTags = new ValueTags(15000000);
+    private ValueTags valueTags = new ValueTags(10000000);
 
     private int msgNum = 0;
 
@@ -25,25 +25,25 @@ public class ValueReader {
 
     private int add = 0;
 
-//    AtomicLong three = new AtomicLong();
-//
-//    AtomicLong four = new AtomicLong();
-//
-//    AtomicLong c = new AtomicLong();
-//
-//    AtomicInteger c1 = new AtomicInteger();
-//
-//    AtomicInteger c2 = new AtomicInteger();
-//
-//    AtomicInteger c3 = new AtomicInteger();
-//
-//    AtomicInteger c4 = new AtomicInteger();
-//
-//    AtomicInteger c5 = new AtomicInteger();
+    //    AtomicLong three = new AtomicLong();
+    //
+    //    AtomicLong four = new AtomicLong();
+    //
+    //    AtomicLong c = new AtomicLong();
+    //
+    //    AtomicInteger c1 = new AtomicInteger();
+    //
+    //    AtomicInteger c2 = new AtomicInteger();
+    //
+    //    AtomicInteger c3 = new AtomicInteger();
+    //
+    //    AtomicInteger c4 = new AtomicInteger();
+    //
+    //    AtomicInteger c5 = new AtomicInteger();
 
     public void put(Message message) {
         int value = (int) message.getA();
-        if (tag == -1 || value > tag + 127 || value < tag) {
+        if (tag == -1 || value > tag + 255 || value < tag) {
             if (add > max) {
                 max = add;
             }
@@ -85,7 +85,7 @@ public class ValueReader {
             context.offsetA = valueTags.getOffset(tagIndex);
             context.offsetB = valueTags.getOffset(tagIndex + 1);
         }
-        return context.tag + cache[offset];
+        return context.tag + (cache[offset] & 0xff);
     }
 
     long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
@@ -96,7 +96,7 @@ public class ValueReader {
             context.tagIndex = valueTags.offsetIndex(offsetA);
             context.tag = valueTags.getTag(context.tagIndex);
         }
-        while (context.tag + 127 < aMin && offsetA < offsetB) {
+        while (context.tag + 255 < aMin && offsetA < offsetB) {
             context.tagIndex++;
             context.tag = valueTags.getTag(context.tagIndex);
             offsetA = valueTags.getOffset(context.tagIndex);
@@ -140,7 +140,7 @@ public class ValueReader {
             //                    }
             //                }
             //            }
-            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
+            if (context.offsetA == offsetA && context.tag + 255 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
                 //c1.getAndIncrement();
                 int num = context.offsetB - context.offsetA;
                 total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
@@ -151,27 +151,27 @@ public class ValueReader {
                 }
                 continue;
             }
-//            if (context.tag + 255 < aMin) {
-//                offsetA = context.offsetB;
-//                context.tagIndex++;
-//                context.tag = valueTags.getTag(context.tagIndex);
-//                context.offsetA = valueTags.getOffset(context.tagIndex);
-//                if (context.tagIndex == valueTags.size() - 1) {
-//                    context.offsetB = msgNum;
-//                } else {
-//                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-//                }
-//                continue;
-//            }
-            int value = context.tag + cache[offsetA];
+            //            if (context.tag + 255 < aMin) {
+            //                offsetA = context.offsetB;
+            //                context.tagIndex++;
+            //                context.tag = valueTags.getTag(context.tagIndex);
+            //                context.offsetA = valueTags.getOffset(context.tagIndex);
+            //                if (context.tagIndex == valueTags.size() - 1) {
+            //                    context.offsetB = msgNum;
+            //                } else {
+            //                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+            //                }
+            //                continue;
+            //            }
+            int value = context.tag + (cache[offsetA] & 0xff);
             if (value >= aMin && value <= aMax) {
                 total += value;
                 count++;
             }
             offsetA++;
         }
-//        long end = System.nanoTime();
-//        System.out.println("three:" + three.addAndGet(mid - start) + " four:" + four.addAndGet(end - mid));
+        //        long end = System.nanoTime();
+        //        System.out.println("three:" + three.addAndGet(mid - start) + " four:" + four.addAndGet(end - mid));
         //System.out.println("c:" + c.intValue());
         //System.out.println("count:" + count + " c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue() + " c/c4:" + (c4.intValue() == 0 ? 0 : c.longValue() / c4.intValue()) + " aMin:" + aMin + " aMax:" + aMax);
         return count == 0 ? 0 : total / count;
