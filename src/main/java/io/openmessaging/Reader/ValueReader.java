@@ -29,17 +29,17 @@ public class ValueReader {
     //
     //    AtomicLong four = new AtomicLong();
     //
-//        AtomicLong c = new AtomicLong();
-//
-//        AtomicInteger c1 = new AtomicInteger();
-//
-//        AtomicInteger c2 = new AtomicInteger();
-//
-//        AtomicInteger c3 = new AtomicInteger();
-//
-//        AtomicInteger c4 = new AtomicInteger();
-//
-//        AtomicInteger c5 = new AtomicInteger();
+    //        AtomicLong c = new AtomicLong();
+    //
+    //        AtomicInteger c1 = new AtomicInteger();
+    //
+    //        AtomicInteger c2 = new AtomicInteger();
+    //
+    //        AtomicInteger c3 = new AtomicInteger();
+    //
+    //        AtomicInteger c4 = new AtomicInteger();
+    //
+    //        AtomicInteger c5 = new AtomicInteger();
 
     public void put(Message message) {
         int value = (int) message.getA();
@@ -107,36 +107,33 @@ public class ValueReader {
         //long mid = System.nanoTime();
         while (offsetA < offsetB) {
             //c.getAndIncrement();
-            if (offsetA >= context.offsetB) {
-                if (upDateContext(aMax, context)) {
-                    break;
-                }
+            if (offsetA >= context.offsetB && upDateContext(aMax, context)) {
+                break;
             }
-//            if (context.offsetA == offsetA) {
-//                c1.getAndIncrement();
-//                if (context.tag + 63 <= aMax) {
-//                    c2.getAndIncrement();
-//                    if (context.tag >= aMin) {
-//                        c3.getAndIncrement();
-//                        if (context.offsetB < offsetB) {
-//                            c4.getAndIncrement();
-//                            int num = context.offsetB - context.offsetA;
-//                            total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
-//                            count += num;
-//                            offsetA = context.offsetB;
-//                            if (upDateContext(aMax, context)) {
-//                                break;
-//                            }
-//                            continue;
-//                        }
-//                    }
-//                }
-//            }
+            //            if (context.offsetA == offsetA) {
+            //                c1.getAndIncrement();
+            //                if (context.tag + 63 <= aMax) {
+            //                    c2.getAndIncrement();
+            //                    if (context.tag >= aMin) {
+            //                        c3.getAndIncrement();
+            //                        if (context.offsetB < offsetB) {
+            //                            c4.getAndIncrement();
+            //                            int num = context.offsetB - context.offsetA;
+            //                            total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
+            //                            count += num;
+            //                            offsetA = context.offsetB;
+            //                            if (upDateContext(aMax, context)) {
+            //                                break;
+            //                            }
+            //                            continue;
+            //                        }
+            //                    }
+            //                }
+            //            }
             if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
                 //c1.getAndIncrement();
-                int num = context.offsetB - context.offsetA;
                 total += valueTags.getAdd(context.tagIndex);
-                count += num;
+                count += context.offsetB - context.offsetA;
                 offsetA = context.offsetB;
                 if (upDateContext(aMax, context)) {
                     break;
