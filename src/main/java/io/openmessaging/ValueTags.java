@@ -14,6 +14,8 @@ public class ValueTags {
 
     private int[] minValues;
 
+    private int[] maxValues;
+
     private int index;
 
     public ValueTags(int cap) {
@@ -21,14 +23,20 @@ public class ValueTags {
         offsets = new int[cap];
         adds = new long[cap];
         minValues = new int[cap];
+        maxValues = new int[cap];
         index = 0;
     }
 
-    public void add(long add) {
+    public void addBack(long add, int maxValue) {
         adds[index - 1] = add;
+        maxValues[index-1] = maxValue;
     }
 
-    public final long getAdd(int addIndex) {
+    public int getMaxValue(int index) {
+        return maxValues[index];
+    }
+
+    public long getAdd(int addIndex) {
         return adds[addIndex];
     }
 
@@ -47,11 +55,11 @@ public class ValueTags {
         }
     }
 
-    public final int getMin(int offset) {
+    public int getMin(int offset) {
         return minValues[offset];
     }
 
-    public final int offsetIndex(int offset) {
+    public int offsetIndex(int offset) {
         int offsetIndex = binarySearch(offsets, offset);
         if (offsetIndex < 0) {
             offsetIndex = Math.max(0, -(offsetIndex + 2));
@@ -59,15 +67,15 @@ public class ValueTags {
         return offsetIndex;
     }
 
-    public final int getTag(int tagIndex) {
+    public int getTag(int tagIndex) {
         return tags[tagIndex];
     }
 
-    public final int getOffset(int offsetIndex) {
+    public int getOffset(int offsetIndex) {
         return offsets[offsetIndex];
     }
 
-    public final int size() {
+    public int size() {
         return index;
     }
 
