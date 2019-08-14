@@ -90,20 +90,14 @@ public class ValueReader {
                     break;
                 }
             }
-            if (context.tag + 127 <= aMax) {
-                if (context.offsetA == offsetA) {
-                    if (context.tag >= aMin) {
-                        if (context.offsetB < offsetB) {
-                            total += valueTags.getAdd(context.tagIndex);
-                            count += context.offsetB - context.offsetA;
-                            offsetA = context.offsetB;
-                            if (upDateContext(aMax, context)) {
-                                break;
-                            }
-                            continue;
-                        }
-                    }
+            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
+                total += valueTags.getAdd(context.tagIndex);
+                count += context.offsetB - context.offsetA;
+                offsetA = context.offsetB;
+                if (upDateContext(aMax, context)) {
+                    break;
                 }
+                continue;
             }
             int value = context.tag + cache[offsetA];
             if (value >= aMin && value <= aMax) {

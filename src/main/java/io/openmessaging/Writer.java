@@ -27,11 +27,11 @@ public class Writer {
 
     private boolean inited = false;
 
-    private long time = -1;
-
-    private Message temp;
-
-    private LinkedList<Message> queue = new LinkedList<>();
+//    private long time = -1;
+//
+//    private Message temp;
+//
+//    private LinkedList<Message> queue = new LinkedList<>();
 
     public void init() {
         int remain = buffer.remaining();
