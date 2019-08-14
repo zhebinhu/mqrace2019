@@ -14,8 +14,6 @@ public class ValueTags {
 
     private int[] minValues;
 
-    private int[] maxValues;
-
     private int index;
 
     public ValueTags(int cap) {
@@ -23,17 +21,11 @@ public class ValueTags {
         offsets = new int[cap];
         adds = new long[cap];
         minValues = new int[cap];
-        maxValues = new int[cap];
         index = 0;
     }
 
-    public void addBack(long add, int maxValue) {
+    public void add(long add) {
         adds[index - 1] = add;
-        maxValues[index-1] = maxValue;
-    }
-
-    public int getMaxValue(int index) {
-        return maxValues[index];
     }
 
     public long getAdd(int addIndex) {

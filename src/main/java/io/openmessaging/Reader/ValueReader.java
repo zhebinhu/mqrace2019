@@ -25,8 +25,6 @@ public class ValueReader {
 
     private long add = 0;
 
-    private int maxValue = Integer.MIN_VALUE;
-
     //    AtomicLong three = new AtomicLong();
     //
     //    AtomicLong four = new AtomicLong();
@@ -50,8 +48,7 @@ public class ValueReader {
                 max = add;
             }
             if (add != 0) {
-                valueTags.addBack(add, maxValue);
-                maxValue = Integer.MIN_VALUE;
+                valueTags.add(add);
                 add = 0;
             }
 
@@ -59,14 +56,13 @@ public class ValueReader {
             valueTags.add(value, msgNum);
         }
         add = add + value;
-        maxValue = Math.max(value, maxValue);
         cache[msgNum] = (byte) (value - tag);
         msgNum++;
     }
 
     public void init() {
         if (add != 0) {
-            valueTags.addBack(add, maxValue);
+            valueTags.add(add);
             add = 0;
             valueTags.inited(msgNum);
         }
@@ -100,7 +96,7 @@ public class ValueReader {
             context.tagIndex = valueTags.offsetIndex(offsetA);
             context.tag = valueTags.getTag(context.tagIndex);
         }
-        while (valueTags.getMaxValue(context.tagIndex) < aMin && offsetA < offsetB) {
+        while (context.tag + 127 < aMin && offsetA < offsetB) {
             context.tagIndex++;
             context.tag = valueTags.getTag(context.tagIndex);
             offsetA = valueTags.getOffset(context.tagIndex);
@@ -112,7 +108,7 @@ public class ValueReader {
         while (offsetA < offsetB) {
             //c.getAndIncrement();
             if (offsetA >= context.offsetB) {
-                if (upDateContext(aMax, context)) {
+                if(upDateContext(aMax, context)) {
                     break;
                 }
             }
@@ -136,7 +132,7 @@ public class ValueReader {
             //                    }
             //                }
             //            }
-            if (context.offsetA == offsetA && valueTags.getMaxValue(context.tagIndex) <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
+            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
                 //c1.getAndIncrement();
                 total += valueTags.getAdd(context.tagIndex);
                 count += context.offsetB - context.offsetA;
