@@ -73,7 +73,7 @@ public class Writer {
         msgNum++;
     }
 
-    public Message poll() {
+    public Message get() {
         if (!inited) {
             synchronized (this) {
                 if (!inited) {
@@ -96,35 +96,35 @@ public class Writer {
             offsetB += buffer.limit() / Constants.MESSAGE_SIZE;
         }
         offsetA++;
-        message = new Message(0,0,new byte[34]);
+        //message = new Message(0,0,new byte[34]);
         message.setT(buffer.getLong());
         message.setA(buffer.getLong());
         buffer.get(message.getBody());
         return message;
     }
 
-    public Message get() {
-        if (time == -1) {
-            temp = poll();
-            time = temp.getT();
-        }
-        if (!queue.isEmpty()) {
-            return queue.poll();
-        } else {
-            if (temp == null) {
-                return null;
-            }
-            time = temp.getT();
-            while (temp.getT() == time) {
-                queue.add(temp);
-                temp = poll();
-                if (temp == null) {
-                    break;
-                }
-            }
-            queue.sort((o1, o2) -> (int) (o1.getA() - o2.getA()));
-
-        }
-        return queue.poll();
-    }
+//    public Message get() {
+//        if (time == -1) {
+//            temp = poll();
+//            time = temp.getT();
+//        }
+//        if (!queue.isEmpty()) {
+//            return queue.poll();
+//        } else {
+//            if (temp == null) {
+//                return null;
+//            }
+//            time = temp.getT();
+//            while (temp.getT() == time) {
+//                queue.add(temp);
+//                temp = poll();
+//                if (temp == null) {
+//                    break;
+//                }
+//            }
+//            queue.sort((o1, o2) -> (int) (o1.getA() - o2.getA()));
+//
+//        }
+//        return queue.poll();
+//    }
 }
