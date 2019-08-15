@@ -42,7 +42,7 @@ public class ValueTags {
         Arrays.fill(offsets, index, offsets.length, msgNum);
         int min = Integer.MAX_VALUE;
         for (int i = index - 1; i >= 0; i--) {
-            min = Math.min(tags[i] - 16, min);
+            min = Math.min(tags[i], min);
             minValues[i] = min;
         }
     }
