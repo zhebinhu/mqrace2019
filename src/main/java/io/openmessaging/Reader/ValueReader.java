@@ -47,6 +47,9 @@ public class ValueReader {
             if (add > max) {
                 max = add;
             }
+            if (value < tag) {
+                System.out.println("value-tag=" + (value - tag));
+            }
             if (add != 0) {
                 valueTags.add(add);
                 add = 0;
@@ -96,10 +99,9 @@ public class ValueReader {
             context.tagIndex = valueTags.offsetIndex(offsetA);
             context.tag = valueTags.getTag(context.tagIndex);
         }
-        while (context.tag + 127 < aMin && offsetA < offsetB) {
+        while (context.tag + 127 < aMin) {
             context.tagIndex++;
             context.tag = valueTags.getTag(context.tagIndex);
-            offsetA = valueTags.getOffset(context.tagIndex);
         }
         context.offsetA = valueTags.getOffset(context.tagIndex);
         context.offsetB = valueTags.getOffset(context.tagIndex + 1);
