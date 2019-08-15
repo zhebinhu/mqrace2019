@@ -41,10 +41,6 @@ public class ValueReader {
 
     AtomicInteger c5 = new AtomicInteger();
 
-    AtomicInteger c6 = new AtomicInteger();
-
-    AtomicInteger c7 = new AtomicInteger();
-
     public void put(Message message) {
         int value = (int) message.getA();
         if (tag == -1 || value > tag + 127 || value < tag) {
@@ -95,14 +91,12 @@ public class ValueReader {
     long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
         long total = 0;
         int count = 0;
-
         //long start = System.nanoTime();
         if (offsetA < context.offsetA || offsetA >= context.offsetB) {
             context.tagIndex = valueTags.offsetIndex(offsetA);
             context.tag = valueTags.getTag(context.tagIndex);
         }
         while (context.tag + 127 < aMin && offsetA < offsetB) {
-            c5.getAndIncrement();
             context.tagIndex++;
             context.tag = valueTags.getTag(context.tagIndex);
             offsetA = valueTags.getOffset(context.tagIndex);
@@ -112,7 +106,7 @@ public class ValueReader {
 
         //long mid = System.nanoTime();
         while (offsetA < offsetB) {
-            c.getAndIncrement();
+            //c.getAndIncrement();
             if (offsetA >= context.offsetB) {
                 if (upDateContext(aMax, context)) {
                     break;
@@ -120,7 +114,7 @@ public class ValueReader {
             }
             if (context.offsetA == offsetA) {
                 c1.getAndIncrement();
-                if (context.tag + 127 <= aMax) {
+                if (context.tag + 255 <= aMax) {
                     c2.getAndIncrement();
                     if (context.tag >= aMin) {
                         c3.getAndIncrement();
@@ -130,8 +124,16 @@ public class ValueReader {
                             total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
                             count += num;
                             offsetA = context.offsetB;
-                            if (upDateContext(aMax, context)) {
-                                break;
+                            context.tagIndex++;
+                            if (valueTags.getMin(context.tagIndex) > aMax) {
+                                return count == 0 ? 0 : total / count;
+                            }
+                            context.tag = valueTags.getTag(context.tagIndex);
+                            context.offsetA = valueTags.getOffset(context.tagIndex);
+                            if (context.tagIndex == valueTags.size() - 1) {
+                                context.offsetB = msgNum;
+                            } else {
+                                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
                             }
                             continue;
                         }
@@ -162,20 +164,17 @@ public class ValueReader {
             //                continue;
             //            }
             int value = context.tag + cache[offsetA];
-            if (value >= aMin) {
-                c6.getAndIncrement();
-                if (value <= aMax) {
-                    c7.getAndIncrement();
-                    total += value;
-                    count++;
-                }
+            if (value <= aMax && value >= aMin) {
+                c5.getAndIncrement();
+                total += value;
+                count++;
             }
             offsetA++;
         }
         //        long end = System.nanoTime();
         //        System.out.println("three:" + three.addAndGet(mid - start) + " four:" + four.addAndGet(end - mid));
         //System.out.println("c:" + c.intValue());
-        System.out.println("count:" + count + " c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue() + " c6:" + c6.intValue() + " c7:" + c7.intValue() + " aMin:" + aMin + " aMax:" + aMax);
+        System.out.println("count:" + count + " c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue() + " aMin:" + aMin + " aMax:" + aMax);
         return count == 0 ? 0 : total / count;
     }
 
