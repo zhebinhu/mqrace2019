@@ -92,7 +92,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
             result = reader.get(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get());
             //long endtime = System.currentTimeMillis();
             //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
-            //System.out.println("memory:" + memoryLoad());
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }

@@ -35,11 +35,6 @@ public class ValueTags {
     public void add(int tag, int offset) {
         tags[index] = tag;
         offsets[index] = offset;
-        if (index > 2) {
-            if (offsets[index] - offsets[index - 1] < 10) {
-                System.out.println("index:" + index + " count:" + (offsets[index] - offsets[index - 1]));
-            }
-        }
         index++;
     }
 
