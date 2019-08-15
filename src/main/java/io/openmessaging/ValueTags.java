@@ -1,6 +1,6 @@
 package io.openmessaging;
 
-import java.util.*;
+import java.util.Arrays;
 
 /**
  * Created by huzhebin on 2019/08/09.
@@ -40,19 +40,10 @@ public class ValueTags {
 
     public void inited(int msgNum) {
         Arrays.fill(offsets, index, offsets.length, msgNum);
-        Queue<Pair<Integer, Integer>> queue = new LinkedList<>();
-        int queueCount = 0;
+        int min = Integer.MAX_VALUE;
         for (int i = index - 1; i >= 0; i--) {
-            while (queue.peek() != null && queueCount - queue.peek().snd > 500000) {
-                queueCount -= queue.poll().snd;
-            }
-            queue.add(new Pair<>(tags[i], offsets[i + 1] - offsets[i]));
-            queueCount += offsets[i + 1] - offsets[i];
-            minValues[i] = Collections.min(queue, Comparator.comparingInt(o -> o.fst)).fst;
-            System.out.println("i:" + i + " min:" + minValues[i]);
-            if (minValues[i] > minValues[i + 1]) {
-                System.out.println("kk:" + i);
-            }
+            min = Math.min(tags[i], min);
+            minValues[i] = min;
         }
     }
 
