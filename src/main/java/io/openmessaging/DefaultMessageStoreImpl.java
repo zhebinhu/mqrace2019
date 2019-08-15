@@ -129,26 +129,26 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-//            if (!avg) {
-//                synchronized (this) {
-//                    if (!avg) {
-//                        System.out.println("avg:" + System.currentTimeMillis());
-//                        avg = true;
-//                    }
-//                }
-//            }
+            if (!avg) {
+                synchronized (this) {
+                    if (!avg) {
+                        System.out.println("avg:" + System.currentTimeMillis());
+                        avg = true;
+                    }
+                }
+            }
 //            long starttime = System.currentTimeMillis();
-//            if (count.getAndIncrement() == 25000) {
-//                if (!end) {
-//                    synchronized (this) {
-//                        if (!end) {
-//                            System.out.println("end:" + System.currentTimeMillis());
-//                            end = true;
-//                            return 0L;
-//                        }
-//                    }
-//                }
-//            }
+            if (count.getAndIncrement() == 28000) {
+                if (!end) {
+                    synchronized (this) {
+                        if (!end) {
+                            System.out.println("end:" + System.currentTimeMillis());
+                            end = true;
+                            return 0L;
+                        }
+                    }
+                }
+            }
 //            long result = reader.avg(aMin, aMax, tMin, tMax);
 //            long endtime = System.currentTimeMillis();
 //            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
