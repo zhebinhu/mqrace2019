@@ -136,11 +136,6 @@ public class ValueReader {
                             continue;
                         }
                     }
-                } else if (context.tag > aMax) {
-                    if (upDateContext(aMax, context)) {
-                        break;
-                    }
-                    continue;
                 }
             }
             //            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
