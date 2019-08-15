@@ -106,7 +106,7 @@ public class ValueReader {
 
         //long mid = System.nanoTime();
         while (offsetA < offsetB) {
-            //c.getAndIncrement();
+            c.getAndIncrement();
             if (offsetA >= context.offsetB) {
                 if (upDateContext(aMax, context)) {
                     break;
@@ -114,7 +114,7 @@ public class ValueReader {
             }
             if (context.offsetA == offsetA) {
                 c1.getAndIncrement();
-                if (context.tag + 255 <= aMax) {
+                if (context.tag + 127 <= aMax) {
                     c2.getAndIncrement();
                     if (context.tag >= aMin) {
                         c3.getAndIncrement();
@@ -138,6 +138,11 @@ public class ValueReader {
                             continue;
                         }
                     }
+                } else if (context.tag > aMax) {
+                    if (upDateContext(aMax, context)) {
+                        break;
+                    }
+                    continue;
                 }
             }
             //            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
