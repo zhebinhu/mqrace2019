@@ -1,5 +1,7 @@
 package io.openmessaging;
 
+import java.util.Arrays;
+
 /**
  * Created by huzhebin on 2019/08/09.
  */
@@ -8,7 +10,7 @@ public class ValueTags {
 
     private int[] offsets;
 
-    private long[] adds;
+    private int[] adds;
 
     private int[] minValues;
 
@@ -17,16 +19,16 @@ public class ValueTags {
     public ValueTags(int cap) {
         tags = new int[cap];
         offsets = new int[cap];
-        adds = new long[cap];
+        adds = new int[cap];
         minValues = new int[cap];
         index = 0;
     }
 
-    public void add(long add) {
+    public void add(int add) {
         adds[index - 1] = add;
     }
 
-    public long getAdd(int addIndex) {
+    public int getAdd(int addIndex) {
         return adds[addIndex];
     }
 
@@ -36,15 +38,16 @@ public class ValueTags {
         index++;
     }
 
-    public void inited() {
+    public void inited(int msgNum) {
+        Arrays.fill(offsets, index, offsets.length, msgNum);
         int min = Integer.MAX_VALUE;
-        for (int i = index-1; i >= 0; i--) {
+        for (int i = index - 1; i >= 0; i--) {
             min = Math.min(tags[i], min);
             minValues[i] = min;
         }
     }
 
-    public int getMin(int offset) {
+    public final int getMin(int offset) {
         return minValues[offset];
     }
 

@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.*;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -26,12 +25,6 @@ public class Writer {
     private Message message = new Message(0, 0, new byte[34]);
 
     private boolean inited = false;
-
-//    private long time = -1;
-//
-//    private Message temp;
-//
-//    private LinkedList<Message> queue = new LinkedList<>();
 
     public void init() {
         int remain = buffer.remaining();
@@ -96,35 +89,9 @@ public class Writer {
             offsetB += buffer.limit() / Constants.MESSAGE_SIZE;
         }
         offsetA++;
-        //message = new Message(0,0,new byte[34]);
         message.setT(buffer.getLong());
         message.setA(buffer.getLong());
         buffer.get(message.getBody());
         return message;
     }
-
-//    public Message get() {
-//        if (time == -1) {
-//            temp = poll();
-//            time = temp.getT();
-//        }
-//        if (!queue.isEmpty()) {
-//            return queue.poll();
-//        } else {
-//            if (temp == null) {
-//                return null;
-//            }
-//            time = temp.getT();
-//            while (temp.getT() == time) {
-//                queue.add(temp);
-//                temp = poll();
-//                if (temp == null) {
-//                    break;
-//                }
-//            }
-//            queue.sort((o1, o2) -> (int) (o1.getA() - o2.getA()));
-//
-//        }
-//        return queue.poll();
-//    }
 }
