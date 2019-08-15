@@ -135,7 +135,23 @@ public class ValueReader {
                             }
                             continue;
                         }
+                    } else {
+                        while (context.tag + 127 < aMin) {
+                            context.tagIndex++;
+                            context.tag = valueTags.getTag(context.tagIndex);
+                            offsetA = valueTags.getOffset(context.tagIndex);
+                        }
+                        context.offsetA = valueTags.getOffset(context.tagIndex);
+                        context.offsetB = valueTags.getOffset(context.tagIndex + 1);
                     }
+                } else {
+                    while (context.tag > aMax) {
+                        context.tagIndex++;
+                        context.tag = valueTags.getTag(context.tagIndex);
+                        offsetA = valueTags.getOffset(context.tagIndex);
+                    }
+                    context.offsetA = valueTags.getOffset(context.tagIndex);
+                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
                 }
             }
             //            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
