@@ -43,7 +43,7 @@ public class ValueReader {
 
     public void put(Message message) {
         int value = (int) message.getA();
-        if (tag == -1 || value > tag + 127 || value < tag) {
+        if (tag == -1 || value > tag + 127 || value < tag - 16) {
             if (add > max) {
                 max = add;
             }
@@ -102,6 +102,7 @@ public class ValueReader {
         while (context.tag + 127 < aMin) {
             context.tagIndex++;
             context.tag = valueTags.getTag(context.tagIndex);
+            offsetA = valueTags.getOffset(context.tagIndex);
         }
         context.offsetA = valueTags.getOffset(context.tagIndex);
         context.offsetB = valueTags.getOffset(context.tagIndex + 1);
@@ -142,7 +143,7 @@ public class ValueReader {
             //                    }
             //                }
             //            }
-            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
+            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag - 16 >= aMin && context.offsetB < offsetB) {
                 //c1.getAndIncrement();
                 int num = context.offsetB - context.offsetA;
                 total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
