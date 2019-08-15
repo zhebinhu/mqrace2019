@@ -49,7 +49,6 @@ public class ValueTags {
             queue.add(new Pair<>(tags[i], offsets[i + 1] - offsets[i]));
             queueCount += offsets[i + 1] - offsets[i];
             minValues[i] = Collections.min(queue, Comparator.comparingInt(o -> o.fst)).fst;
-            System.out.println("i:" + i + " min:" + minValues[i]);
             if (minValues[i] > minValues[i + 1]) {
                 System.out.println("kk:" + i);
             }
