@@ -29,21 +29,25 @@ public class ValueReader {
     //
     //    AtomicLong four = new AtomicLong();
     //
-    //    AtomicLong c = new AtomicLong();
-    //
-    //    AtomicInteger c1 = new AtomicInteger();
-    //
-    //    AtomicInteger c2 = new AtomicInteger();
-    //
-    //    AtomicInteger c3 = new AtomicInteger();
-    //
-    //    AtomicInteger c4 = new AtomicInteger();
-    //
-    //    AtomicInteger c5 = new AtomicInteger();
+    AtomicLong c = new AtomicLong();
+
+    AtomicInteger c1 = new AtomicInteger();
+
+    AtomicInteger c2 = new AtomicInteger();
+
+    AtomicInteger c3 = new AtomicInteger();
+
+    AtomicInteger c4 = new AtomicInteger();
+
+    AtomicInteger c5 = new AtomicInteger();
+
+    AtomicInteger c6 = new AtomicInteger();
+
+    AtomicInteger c7 = new AtomicInteger();
 
     public void put(Message message) {
         int value = (int) message.getA();
-        if (tag == -1 || value > tag + 127 || value < tag) {
+        if (tag == -1 || value > tag + 127 || value < tag - 16) {
             if (add > max) {
                 max = add;
             }
@@ -91,21 +95,7 @@ public class ValueReader {
     long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
         long total = 0;
         int count = 0;
-        AtomicLong c = new AtomicLong();
 
-        AtomicInteger c1 = new AtomicInteger();
-
-        AtomicInteger c2 = new AtomicInteger();
-
-        AtomicInteger c3 = new AtomicInteger();
-
-        AtomicInteger c4 = new AtomicInteger();
-
-        AtomicInteger c5 = new AtomicInteger();
-
-        AtomicInteger c6 = new AtomicInteger();
-
-        AtomicInteger c7 = new AtomicInteger();
         //long start = System.nanoTime();
         if (offsetA < context.offsetA || offsetA >= context.offsetB) {
             context.tagIndex = valueTags.offsetIndex(offsetA);
@@ -132,7 +122,7 @@ public class ValueReader {
                 c1.getAndIncrement();
                 if (context.tag + 127 <= aMax) {
                     c2.getAndIncrement();
-                    if (context.tag >= aMin) {
+                    if (context.tag - 16 >= aMin) {
                         c3.getAndIncrement();
                         if (context.offsetB < offsetB) {
                             c4.getAndIncrement();
@@ -172,9 +162,9 @@ public class ValueReader {
             //                continue;
             //            }
             int value = context.tag + cache[offsetA];
-            if (value >= aMin) {
+            if (value <= aMax) {
                 c6.getAndIncrement();
-                if (value <= aMax) {
+                if (value >= aMin) {
                     c7.getAndIncrement();
                     total += value;
                     count++;

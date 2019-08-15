@@ -35,6 +35,11 @@ public class ValueTags {
     public void add(int tag, int offset) {
         tags[index] = tag;
         offsets[index] = offset;
+        if (index > 2) {
+            if (offsets[index] - offsets[index - 1] < 10) {
+                System.out.println("index:" + index + " count:" + (offsets[index] - offsets[index - 1]));
+            }
+        }
         index++;
     }
 
@@ -42,7 +47,7 @@ public class ValueTags {
         Arrays.fill(offsets, index, offsets.length, msgNum);
         int min = Integer.MAX_VALUE;
         for (int i = index - 1; i >= 0; i--) {
-            min = Math.min(tags[i], min);
+            min = Math.min(tags[i] - 16, min);
             minValues[i] = min;
         }
     }
