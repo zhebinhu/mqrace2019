@@ -138,8 +138,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 //                }
 //            }
 //            long starttime = System.currentTimeMillis();
-//            int c = count.getAndIncrement();
-//            if (c == 25000) {
+//            if (count.getAndIncrement() == 25000) {
 //                if (!end) {
 //                    synchronized (this) {
 //                        if (!end) {

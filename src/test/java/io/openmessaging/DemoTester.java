@@ -212,7 +212,7 @@ public class DemoTester {
                         checkError();
                     }
                     numCounter.getAndAdd(msgs.size());
-                    //break;
+                    break;
                 } catch (Throwable t) {
                     t.printStackTrace();
                     System.exit(-1);

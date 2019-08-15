@@ -11,8 +11,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by huzhebin on 2019/08/07.
  */
 public class ValueReader {
-    private long max = 0;
-
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
     private ValueTags valueTags = new ValueTags(15000000);
@@ -44,9 +42,6 @@ public class ValueReader {
     public void put(Message message) {
         int value = (int) message.getA();
         if (tag == -1 || value > tag + 127 || value < tag) {
-            if (add > max) {
-                max = add;
-            }
             if (add != 0) {
                 valueTags.add(add);
                 add = 0;
@@ -66,7 +61,7 @@ public class ValueReader {
             add = 0;
             valueTags.inited(msgNum);
         }
-        System.out.println("max:" + max + " valueTags size:" + valueTags.size());
+        System.out.println(" valueTags size:" + valueTags.size());
         init = true;
     }
 
@@ -96,14 +91,11 @@ public class ValueReader {
             context.tagIndex = valueTags.offsetIndex(offsetA);
             context.tag = valueTags.getTag(context.tagIndex);
         }
-        while (context.tag + 127 < aMin && offsetA < offsetB) {
-            context.tagIndex++;
-            context.tag = valueTags.getTag(context.tagIndex);
-            offsetA = valueTags.getOffset(context.tagIndex);
+        while (context.tag + 127 < aMin) {
+            context.tag = valueTags.getTag(context.tagIndex++);
         }
         context.offsetA = valueTags.getOffset(context.tagIndex);
         context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-
         //long mid = System.nanoTime();
         while (offsetA < offsetB) {
             //c.getAndIncrement();
