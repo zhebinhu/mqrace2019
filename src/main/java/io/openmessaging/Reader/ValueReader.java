@@ -15,7 +15,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
-    private ValueTags valueTags = new ValueTags(15000000);
+    private ValueTags valueTags = new ValueTags(18000000);
 
     private int msgNum = 0;
 
