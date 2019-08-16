@@ -11,11 +11,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by huzhebin on 2019/08/07.
  */
 public class ValueReader {
-    private long max = 0;
+    private int count = 0;
 
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
-    private ValueTags valueTags = new ValueTags(15000000);
+    private ValueTags valueTags = new ValueTags(20000000);
 
     private int msgNum = 0;
 
@@ -39,20 +39,19 @@ public class ValueReader {
 
     public void put(Message message) {
         int value = (int) message.getA();
-        if (tag == -1 || value > tag + 127 || value < tag) {
-            if (add > max) {
-                max = add;
-            }
+        if (tag == -1 || value > tag + 127 || value < tag || count > 256) {
             if (add != 0) {
                 valueTags.add(add);
                 add = 0;
             }
             tag = value;
             valueTags.add(value, msgNum);
+            count = 0;
         }
         add = add + value - tag;
         cache[msgNum] = (byte) (value - tag);
         msgNum++;
+        count++;
     }
 
     public void init() {
@@ -61,7 +60,7 @@ public class ValueReader {
             add = 0;
             valueTags.inited(msgNum);
         }
-        System.out.println("max:" + max);
+        System.out.println("valueTags size:" + valueTags.size());
         init = true;
     }
 
