@@ -39,7 +39,7 @@ public class ValueReader {
 
     public void put(Message message) {
         int value = (int) message.getA();
-        if (tag == -1 || value > tag + 127 || value < tag || count > 256) {
+        if (tag == -1 || value > tag + 127 || value < tag || count > 384) {
             if (add != 0) {
                 valueTags.add(add);
                 add = 0;
