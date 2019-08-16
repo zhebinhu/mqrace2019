@@ -31,9 +31,9 @@ public class TimeReader {
 
     private int count65536 = 0;
 
-    private long tagINT = 0;
+    private long tag15 = 0;
 
-    private long countINT = 0;
+    private long count15 = 0;
 
     public void put(Message message) {
         long t = message.getT();
@@ -48,9 +48,9 @@ public class TimeReader {
             count65536++;
             tag65536 = t;
         }
-        if (t - tagINT > Integer.MAX_VALUE) {
-            countINT++;
-            countINT = t;
+        if (t - tag15 > 15) {
+            count15++;
+            count15 = t;
         }
         //        int time = (int) t;
         //        if (tag == 0 || time > tag + 15) {
@@ -71,7 +71,7 @@ public class TimeReader {
     public void init() {
         //cache.put(msgNum / 2, halfByte.getByte());
         //cache[msgNum / 2] = halfByte.getByte();
-        System.out.println("time max:" + max + " count256:" + count256 + " count65536:" + count65536 + " countINT:" + countINT);
+        System.out.println("time max:" + max + " count256:" + count256 + " count65536:" + count65536 + " count15:" + count15);
         init = true;
     }
 
