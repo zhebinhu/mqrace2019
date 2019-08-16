@@ -15,7 +15,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
-    private ValueTags valueTags = new ValueTags(12000000);
+    private ValueTags valueTags = new ValueTags(15000000);
 
     private int msgNum = 0;
 
@@ -25,26 +25,21 @@ public class ValueReader {
 
     private int add = 0;
 
-    private int start = 0;
-
-//    AtomicLong c = new AtomicLong();
-//
-//    AtomicInteger c1 = new AtomicInteger();
-//
-//    AtomicInteger c2 = new AtomicInteger();
-//
-//    AtomicInteger c3 = new AtomicInteger();
-//
-//    AtomicInteger c4 = new AtomicInteger();
-//
-//    AtomicInteger c5 = new AtomicInteger();
+    //    AtomicLong c = new AtomicLong();
+    //
+    //    AtomicInteger c1 = new AtomicInteger();
+    //
+    //    AtomicInteger c2 = new AtomicInteger();
+    //
+    //    AtomicInteger c3 = new AtomicInteger();
+    //
+    //    AtomicInteger c4 = new AtomicInteger();
+    //
+    //    AtomicInteger c5 = new AtomicInteger();
 
     public void put(Message message) {
         int value = (int) message.getA();
         if (tag == -1 || value > tag + 127 || value < tag) {
-            if (start == 0 && value - tag == 128) {
-                start = valueTags.size();
-            }
             if (add > max) {
                 max = add;
             }
@@ -66,7 +61,7 @@ public class ValueReader {
             add = 0;
             valueTags.inited(msgNum);
         }
-        System.out.println("max:" + max + " start:" + start);
+        System.out.println("max:" + max);
         init = true;
     }
 
@@ -90,17 +85,17 @@ public class ValueReader {
 
     long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
 
-//        AtomicLong c = new AtomicLong();
-//
-//        AtomicInteger c1 = new AtomicInteger();
-//
-//        AtomicInteger c2 = new AtomicInteger();
-//
-//        AtomicInteger c3 = new AtomicInteger();
-//
-//        AtomicInteger c4 = new AtomicInteger();
-//
-//        AtomicInteger c5 = new AtomicInteger();
+        //        AtomicLong c = new AtomicLong();
+        //
+        //        AtomicInteger c1 = new AtomicInteger();
+        //
+        //        AtomicInteger c2 = new AtomicInteger();
+        //
+        //        AtomicInteger c3 = new AtomicInteger();
+        //
+        //        AtomicInteger c4 = new AtomicInteger();
+        //
+        //        AtomicInteger c5 = new AtomicInteger();
 
         long total = 0;
         int count = 0;
@@ -120,24 +115,22 @@ public class ValueReader {
         //long mid = System.nanoTime();
         while (offsetA < offsetB) {
             //c.getAndIncrement();
-            if (context.tagIndex > start) {
-                if (context.offsetA == offsetA) {
-                    //c1.getAndIncrement();
-                    if (context.tag + 127 <= aMax) {
-                        //c2.getAndIncrement();
-                        if (context.tag >= aMin) {
-                            //c3.getAndIncrement();
-                            if (context.offsetB < offsetB) {
-                                //c4.getAndIncrement();
-                                int num = context.offsetB - context.offsetA;
-                                total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
-                                count += num;
-                                if (upDateContext(aMax, context)) {
-                                    break;
-                                }
-                                offsetA = context.offsetA;
-                                continue;
+            if (context.offsetA == offsetA) {
+                //c1.getAndIncrement();
+                if (context.tag + 127 <= aMax) {
+                    //c2.getAndIncrement();
+                    if (context.tag >= aMin) {
+                        //c3.getAndIncrement();
+                        if (context.offsetB < offsetB) {
+                            //c4.getAndIncrement();
+                            int num = context.offsetB - context.offsetA;
+                            total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
+                            count += num;
+                            if (upDateContext(aMax, context)) {
+                                break;
                             }
+                            offsetA = context.offsetA;
+                            continue;
                         }
                     }
                 }
