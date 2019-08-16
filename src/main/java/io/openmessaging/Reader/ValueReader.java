@@ -130,11 +130,6 @@ public class ValueReader {
                             continue;
                         }
                     }
-                } else if (context.tag > aMax) {
-                    if (upDateContext(aMax, context)) {
-                        break;
-                    }
-                    continue;
                 }
             }
             //            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
@@ -177,9 +172,12 @@ public class ValueReader {
 
     private boolean upDateContext(long aMax, Context context) {
         context.tagIndex++;
-        if (valueTags.getMin(context.tagIndex) > aMax) {
-            context.tagIndex--;
-            return true;
+        while (valueTags.getTag(context.tagIndex) > aMax) {
+            if (valueTags.getMin(context.tagIndex) > aMax) {
+                context.tagIndex--;
+                return true;
+            }
+            context.tagIndex++;
         }
         context.tag = valueTags.getTag(context.tagIndex);
         context.offsetA = valueTags.getOffset(context.tagIndex);
