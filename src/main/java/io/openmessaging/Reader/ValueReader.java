@@ -15,7 +15,7 @@ public class ValueReader {
 
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
 
-    private ValueTags valueTags = new ValueTags(18000000);
+    private ValueTags valueTags = new ValueTags(15000000);
 
     private int msgNum = 0;
 
@@ -107,11 +107,6 @@ public class ValueReader {
         //long mid = System.nanoTime();
         while (offsetA < offsetB) {
             c.getAndIncrement();
-            if (offsetA >= context.offsetB) {
-                if (upDateContext(aMax, context)) {
-                    break;
-                }
-            }
             if (context.offsetA == offsetA) {
                 c1.getAndIncrement();
                 if (context.tag + 127 <= aMax) {
@@ -123,14 +118,27 @@ public class ValueReader {
                             int num = context.offsetB - context.offsetA;
                             total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
                             count += num;
-                            offsetA = context.offsetB;
                             if (upDateContext(aMax, context)) {
                                 break;
                             }
+                            offsetA = context.offsetA;
                             continue;
                         }
                     }
+                }else if(valueTags.getTag(context.tagIndex) > aMax){
+                    if (upDateContext(aMax, context)) {
+                        break;
+                    }
+                    offsetA = context.offsetA;
+                    continue;
                 }
+            }
+            if (offsetA == context.offsetB) {
+                if (upDateContext(aMax, context)) {
+                    break;
+                }
+                offsetA = context.offsetA;
+                continue;
             }
             //            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
             //                //c1.getAndIncrement();
@@ -156,7 +164,7 @@ public class ValueReader {
             //                continue;
             //            }
             int value = context.tag + cache[offsetA];
-            if (value <= aMax && value >= aMin) {
+            if (value >= aMin && value <= aMax) {
                 c5.getAndIncrement();
                 total += value;
                 count++;
@@ -172,20 +180,9 @@ public class ValueReader {
 
     private boolean upDateContext(long aMax, Context context) {
         context.tagIndex++;
-//        while (valueTags.getTag(context.tagIndex) > aMax) {
-//            if (valueTags.getMin(context.tagIndex) > aMax) {
-//                context.tagIndex--;
-//                return true;
-//            }
-//            context.tagIndex++;
-//        }
-        if (valueTags.getMin(context.tagIndex) > aMax) {
-            context.tagIndex--;
-            return true;
-        }
         context.tag = valueTags.getTag(context.tagIndex);
         context.offsetA = valueTags.getOffset(context.tagIndex);
         context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-        return false;
+        return valueTags.getMin(context.tagIndex) > aMax;
     }
 }
