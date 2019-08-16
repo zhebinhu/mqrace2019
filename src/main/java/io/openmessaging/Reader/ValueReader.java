@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by huzhebin on 2019/08/07.
  */
 public class ValueReader {
+    private long max = 0;
     private int count = 0;
 
     private byte[] cache = new byte[Integer.MAX_VALUE - 2];
@@ -37,30 +38,57 @@ public class ValueReader {
     //
     //    AtomicInteger c5 = new AtomicInteger();
 
+    private long tag256 = 0;
+
+    private int count256 = 0;
+
+    private long tag65536 = 0;
+
+    private int count65536 = 0;
+
+    private long tagINT = 0;
+
+    private long countINT = 0;
+
     public void put(Message message) {
         int value = (int) message.getA();
-        if (tag == -1 || value > tag + 127 || value < tag || count > 384) {
-            if (add != 0) {
-                valueTags.add(add);
-                add = 0;
-            }
-            tag = value;
-            valueTags.add(value, msgNum);
-            count = 0;
+        if (value > max) {
+            max = value;
         }
-        add = add + value - tag;
-        cache[msgNum] = (byte) (value - tag);
+        if (value - tag256 > 255) {
+            count256++;
+            tag256 = value;
+        }
+        if (value - tag65536 > 65535) {
+            count65536++;
+            tag65536 = value;
+        }
+        if (value - tagINT > Integer.MAX_VALUE) {
+            countINT++;
+            countINT = value;
+        }
+//        if (tag == -1 || value > tag + 127 || value < tag || count > 384) {
+//            if (add != 0) {
+//                valueTags.add(add);
+//                add = 0;
+//            }
+//            tag = value;
+//            valueTags.add(value, msgNum);
+//            count = 0;
+//        }
+//        add = add + value - tag;
+//        cache[msgNum] = (byte) (value - tag);
         msgNum++;
-        count++;
+        //count++;
     }
 
     public void init() {
-        if (add != 0) {
-            valueTags.add(add);
-            add = 0;
-            valueTags.inited(msgNum);
-        }
-        System.out.println("valueTags size:" + valueTags.size());
+//        if (add != 0) {
+//            valueTags.add(add);
+//            add = 0;
+//            valueTags.inited(msgNum);
+//        }
+        System.out.println("value max:" + max + " count256:" + count256 + " count65536:" + count65536 + " countINT:" + countINT);
         init = true;
     }
 

@@ -23,33 +23,55 @@ public class TimeReader {
 
     private volatile boolean init = false;
 
-    private int tag = 0;
+    private long tag256 = 0;
+
+    private int count256 = 0;
+
+    private long tag65536 = 0;
+
+    private int count65536 = 0;
+
+    private long tagINT = 0;
+
+    private long countINT = 0;
 
     public void put(Message message) {
         long t = message.getT();
         if (t > max) {
             max = t;
         }
-        int time = (int) t;
-        if (tag == 0 || time > tag + 15) {
-            tag = time;
-            timeTags.add(time, msgNum);
+        if (t - tag256 > 255) {
+            count256++;
+            tag256 = t;
         }
-        if (msgNum % 2 == 0) {
-            halfByte.setRight((byte) (time - tag));
-        } else {
-            halfByte.setLeft((byte) (time - tag));
-            cache.put(msgNum / 2, halfByte.getByte());
-            //cache[msgNum / 2] = halfByte.getByte();
-            halfByte.setByte((byte) 0);
+        if (t - tag65536 > 65535) {
+            count65536++;
+            tag65536 = t;
         }
+        if (t - tagINT > Integer.MAX_VALUE) {
+            countINT++;
+            countINT = t;
+        }
+        //        int time = (int) t;
+        //        if (tag == 0 || time > tag + 15) {
+        //            tag = time;
+        //            timeTags.add(time, msgNum);
+        //        }
+        //        if (msgNum % 2 == 0) {
+        //            halfByte.setRight((byte) (time - tag));
+        //        } else {
+        //            halfByte.setLeft((byte) (time - tag));
+        //            cache.put(msgNum / 2, halfByte.getByte());
+        //            //cache[msgNum / 2] = halfByte.getByte();
+        //            halfByte.setByte((byte) 0);
+        //        }
         msgNum++;
     }
 
     public void init() {
-        cache.put(msgNum / 2, halfByte.getByte());
+        //cache.put(msgNum / 2, halfByte.getByte());
         //cache[msgNum / 2] = halfByte.getByte();
-        System.out.println("time max:" + max + " timeTags size:" + timeTags.size());
+        System.out.println("time max:" + max + " count256:" + count256 + " count65536:" + count65536 + " countINT:" + countINT);
         init = true;
     }
 

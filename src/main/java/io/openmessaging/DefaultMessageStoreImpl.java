@@ -102,11 +102,18 @@ public class DefaultMessageStoreImpl extends MessageStore {
         System.out.println("init start:" + System.currentTimeMillis());
         reader = new Reader();
         PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
-            int t = (int) (o1.fst.getT() - o2.fst.getT());
+            long t = o1.fst.getT() - o2.fst.getT();
             if (t == 0) {
-                t = (int) (o1.fst.getA() - o2.fst.getA());
+                t = o1.fst.getA() - o2.fst.getA();
             }
-            return t;
+            if (t == 0) {
+                return 0;
+            }
+            if (t > 0) {
+                return 1;
+            }
+            return -1;
+
         });
         for (Writer writer : writers.values()) {
             Message message = writer.get();
@@ -128,32 +135,32 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-//            if (!avg) {
-//                synchronized (this) {
-//                    if (!avg) {
-//                        System.out.println("avg:" + System.currentTimeMillis());
-//                        avg = true;
-//                    }
-//                }
-//            }
-//            long starttime = System.currentTimeMillis();
-//            if (count.getAndIncrement() == 28000) {
-//                if (!end) {
-//                    synchronized (this) {
-//                        if (!end) {
-//                            System.out.println("end:" + System.currentTimeMillis());
-//                            end = true;
-//                            return 0L;
-//                        }
-//                    }
-//                }
-//            }
-//            long result = reader.avg(aMin, aMax, tMin, tMax);
-//            long endtime = System.currentTimeMillis();
-//            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
-            //System.out.println("memory:" + memoryLoad());
-            return reader.avg(aMin, aMax, tMin, tMax);
-            //return 0L;
+        //            if (!avg) {
+        //                synchronized (this) {
+        //                    if (!avg) {
+        //                        System.out.println("avg:" + System.currentTimeMillis());
+        //                        avg = true;
+        //                    }
+        //                }
+        //            }
+        //            long starttime = System.currentTimeMillis();
+        //            if (count.getAndIncrement() == 28000) {
+        //                if (!end) {
+        //                    synchronized (this) {
+        //                        if (!end) {
+        //                            System.out.println("end:" + System.currentTimeMillis());
+        //                            end = true;
+        //                            return 0L;
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //            long result = reader.avg(aMin, aMax, tMin, tMax);
+        //            long endtime = System.currentTimeMillis();
+        //            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
+        //System.out.println("memory:" + memoryLoad());
+        return reader.avg(aMin, aMax, tMin, tMax);
+        //return 0L;
 
     }
 }
