@@ -29,17 +29,7 @@ public class ValueReader {
     //
     //    AtomicLong four = new AtomicLong();
     //
-    AtomicLong c = new AtomicLong();
 
-    AtomicInteger c1 = new AtomicInteger();
-
-    AtomicInteger c2 = new AtomicInteger();
-
-    AtomicInteger c3 = new AtomicInteger();
-
-    AtomicInteger c4 = new AtomicInteger();
-
-    AtomicInteger c5 = new AtomicInteger();
 
     public void put(Message message) {
         int value = (int) message.getA();
@@ -89,6 +79,19 @@ public class ValueReader {
     }
 
     long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
+
+        AtomicLong c = new AtomicLong();
+
+        AtomicInteger c1 = new AtomicInteger();
+
+        AtomicInteger c2 = new AtomicInteger();
+
+        AtomicInteger c3 = new AtomicInteger();
+
+        AtomicInteger c4 = new AtomicInteger();
+
+        AtomicInteger c5 = new AtomicInteger();
+
         long total = 0;
         int count = 0;
         //long start = System.nanoTime();
@@ -125,12 +128,6 @@ public class ValueReader {
                             continue;
                         }
                     }
-                }else if(valueTags.getTag(context.tagIndex) > aMax){
-                    if (upDateContext(aMax, context)) {
-                        break;
-                    }
-                    offsetA = context.offsetA;
-                    continue;
                 }
             }
             if (offsetA == context.offsetB) {
