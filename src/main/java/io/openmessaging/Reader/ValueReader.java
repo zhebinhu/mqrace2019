@@ -172,12 +172,16 @@ public class ValueReader {
 
     private boolean upDateContext(long aMax, Context context) {
         context.tagIndex++;
-        while (valueTags.getTag(context.tagIndex) > aMax) {
-            if (valueTags.getMin(context.tagIndex) > aMax) {
-                context.tagIndex--;
-                return true;
-            }
-            context.tagIndex++;
+//        while (valueTags.getTag(context.tagIndex) > aMax) {
+//            if (valueTags.getMin(context.tagIndex) > aMax) {
+//                context.tagIndex--;
+//                return true;
+//            }
+//            context.tagIndex++;
+//        }
+        if (valueTags.getMin(context.tagIndex) > aMax) {
+            context.tagIndex--;
+            return true;
         }
         context.tag = valueTags.getTag(context.tagIndex);
         context.offsetA = valueTags.getOffset(context.tagIndex);
