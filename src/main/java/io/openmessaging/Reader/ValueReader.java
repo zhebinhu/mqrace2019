@@ -29,17 +29,17 @@ public class ValueReader {
     //
     //    AtomicLong four = new AtomicLong();
     //
-    //    AtomicLong c = new AtomicLong();
-    //
-    //    AtomicInteger c1 = new AtomicInteger();
-    //
-    //    AtomicInteger c2 = new AtomicInteger();
-    //
-    //    AtomicInteger c3 = new AtomicInteger();
-    //
-    //    AtomicInteger c4 = new AtomicInteger();
-    //
-    //    AtomicInteger c5 = new AtomicInteger();
+    AtomicLong c = new AtomicLong();
+
+    AtomicInteger c1 = new AtomicInteger();
+
+    AtomicInteger c2 = new AtomicInteger();
+
+    AtomicInteger c3 = new AtomicInteger();
+
+    AtomicInteger c4 = new AtomicInteger();
+
+    AtomicInteger c5 = new AtomicInteger();
 
     public void put(Message message) {
         int value = (int) message.getA();
@@ -106,34 +106,26 @@ public class ValueReader {
 
         //long mid = System.nanoTime();
         while (offsetA < offsetB) {
-            //c.getAndIncrement();
+            c.getAndIncrement();
             if (offsetA >= context.offsetB) {
                 if (upDateContext(aMax, context)) {
                     break;
                 }
             }
             if (context.offsetA == offsetA) {
-                //c1.getAndIncrement();
-                if (context.tag + 255 <= aMax) {
-                    //c2.getAndIncrement();
+                c1.getAndIncrement();
+                if (context.tag + 127 <= aMax) {
+                    c2.getAndIncrement();
                     if (context.tag >= aMin) {
-                        //c3.getAndIncrement();
+                        c3.getAndIncrement();
                         if (context.offsetB < offsetB) {
-                            //c4.getAndIncrement();
+                            c4.getAndIncrement();
                             int num = context.offsetB - context.offsetA;
                             total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
                             count += num;
                             offsetA = context.offsetB;
-                            context.tagIndex++;
-                            if (valueTags.getMin(context.tagIndex) > aMax) {
-                                return count == 0 ? 0 : total / count;
-                            }
-                            context.tag = valueTags.getTag(context.tagIndex);
-                            context.offsetA = valueTags.getOffset(context.tagIndex);
-                            if (context.tagIndex == valueTags.size() - 1) {
-                                context.offsetB = msgNum;
-                            } else {
-                                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                            if (upDateContext(aMax, context)) {
+                                break;
                             }
                             continue;
                         }
@@ -169,7 +161,8 @@ public class ValueReader {
             //                continue;
             //            }
             int value = context.tag + cache[offsetA];
-            if (value >= aMin && value <= aMax) {
+            if (value <= aMax && value >= aMin) {
+                c5.getAndIncrement();
                 total += value;
                 count++;
             }
@@ -178,7 +171,7 @@ public class ValueReader {
         //        long end = System.nanoTime();
         //        System.out.println("three:" + three.addAndGet(mid - start) + " four:" + four.addAndGet(end - mid));
         //System.out.println("c:" + c.intValue());
-        //System.out.println("count:" + count + " c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue() + " c/c4:" + (c4.intValue() == 0 ? 0 : c.longValue() / c4.intValue()) + " aMin:" + aMin + " aMax:" + aMax);
+        System.out.println("count:" + count + " c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue() + " aMin:" + aMin + " aMax:" + aMax);
         return count == 0 ? 0 : total / count;
     }
 
