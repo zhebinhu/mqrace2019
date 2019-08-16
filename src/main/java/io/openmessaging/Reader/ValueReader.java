@@ -112,45 +112,50 @@ public class ValueReader {
                     break;
                 }
             }
-            //            if (context.offsetA == offsetA) {
-            //                c1.getAndIncrement();
-            //                if (context.tag + 255 <= aMax) {
-            //                    c2.getAndIncrement();
-            //                    if (context.tag >= aMin) {
-            //                        c3.getAndIncrement();
-            //                        if (context.offsetB < offsetB) {
-            //                            c4.getAndIncrement();
-            //                            int num = context.offsetB - context.offsetA;
-            //                            total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
-            //                            count += num;
-            //                            offsetA = context.offsetB;
-            //                            context.tagIndex++;
-            //                            if (valueTags.getMin(context.tagIndex) > aMax) {
-            //                                return count == 0 ? 0 : total / count;
-            //                            }
-            //                            context.tag = valueTags.getTag(context.tagIndex);
-            //                            context.offsetA = valueTags.getOffset(context.tagIndex);
-            //                            if (context.tagIndex == valueTags.size() - 1) {
-            //                                context.offsetB = msgNum;
-            //                            } else {
-            //                                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-            //                            }
-            //                            continue;
-            //                        }
-            //                    }
-            //                }
-            //            }
-            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
+            if (context.offsetA == offsetA) {
                 //c1.getAndIncrement();
-                int num = context.offsetB - context.offsetA;
-                total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
-                count += num;
-                offsetA = context.offsetB;
-                if (upDateContext(aMax, context)) {
-                    break;
+                if (context.tag + 255 <= aMax) {
+                    //c2.getAndIncrement();
+                    if (context.tag >= aMin) {
+                        //c3.getAndIncrement();
+                        if (context.offsetB < offsetB) {
+                            //c4.getAndIncrement();
+                            int num = context.offsetB - context.offsetA;
+                            total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
+                            count += num;
+                            offsetA = context.offsetB;
+                            context.tagIndex++;
+                            if (valueTags.getMin(context.tagIndex) > aMax) {
+                                return count == 0 ? 0 : total / count;
+                            }
+                            context.tag = valueTags.getTag(context.tagIndex);
+                            context.offsetA = valueTags.getOffset(context.tagIndex);
+                            if (context.tagIndex == valueTags.size() - 1) {
+                                context.offsetB = msgNum;
+                            } else {
+                                context.offsetB = valueTags.getOffset(context.tagIndex + 1);
+                            }
+                            continue;
+                        }
+                    }
+                } else if (context.tag > aMax) {
+                    if (upDateContext(aMax, context)) {
+                        break;
+                    }
+                    continue;
                 }
-                continue;
             }
+            //            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
+            //                //c1.getAndIncrement();
+            //                int num = context.offsetB - context.offsetA;
+            //                total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
+            //                count += num;
+            //                offsetA = context.offsetB;
+            //                if (upDateContext(aMax, context)) {
+            //                    break;
+            //                }
+            //                continue;
+            //            }
             //            if (context.tag + 255 < aMin) {
             //                offsetA = context.offsetB;
             //                context.tagIndex++;
