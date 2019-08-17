@@ -50,7 +50,7 @@ public class TimeReader {
         }
         if (t - tag15 > 15) {
             count15++;
-            count15 = t;
+            tag15 = t;
         }
         //        int time = (int) t;
         //        if (tag == 0 || time > tag + 15) {
