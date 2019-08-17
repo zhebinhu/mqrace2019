@@ -26,9 +26,9 @@ public class DemoTester {
         //查询的线程数量
         int checkTsNum = 12;
         // 每次查询消息的最大跨度
-        int maxMsgCheckSize = 320000;
+        int maxMsgCheckSize = 50000;
         // 每次查询求平均的最大跨度
-        int maxValueCheckSize = 320000;
+        int maxValueCheckSize = 50000;
 
         MessageStore messageStore = null;
 
@@ -212,7 +212,6 @@ public class DemoTester {
                         checkError();
                     }
                     numCounter.getAndAdd(msgs.size());
-                    break;
                 } catch (Throwable t) {
                     t.printStackTrace();
                     System.exit(-1);

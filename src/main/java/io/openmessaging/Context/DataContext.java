@@ -1,4 +1,6 @@
-package io.openmessaging;
+package io.openmessaging.Context;
+
+import io.openmessaging.Constants;
 
 import java.nio.ByteBuffer;
 

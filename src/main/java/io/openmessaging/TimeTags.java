@@ -1,30 +1,28 @@
 package io.openmessaging;
 
-import java.nio.ByteBuffer;
-
 /**
  * Created by huzhebin on 2019/08/08.
  */
 public class TimeTags {
-    private ByteBuffer tags;
+    private long[] tags;
 
-    private ByteBuffer offsets;
+    private int[] offsets;
 
     private int index;
 
     public TimeTags(int cap) {
-        tags = ByteBuffer.allocateDirect(4 * cap);
-        offsets = ByteBuffer.allocateDirect(4 * cap);
+        tags = new long[cap];
+        offsets = new int[cap];
         index = 0;
     }
 
-    public void add(int tag, int offset) {
-        tags.putInt(index << 2, tag);
-        offsets.putInt(index << 2, offset);
+    public void add(long tag, int offset) {
+        tags[index] = tag;
+        offsets[index] = offset;
         index++;
     }
 
-    public int tagIndex(int tag) {
+    public int tagIndex(long tag) {
         int tagIndex = binarySearch(tags, tag);
         if (tagIndex < 0) {
             tagIndex = Math.max(0, -(tagIndex + 2));
@@ -40,25 +38,44 @@ public class TimeTags {
         return offsetIndex;
     }
 
-    public int getTag(int tagIndex) {
-        return tags.getInt(tagIndex << 2);
+    public long getTag(int tagIndex) {
+        return tags[tagIndex];
     }
 
     public int getOffset(int offsetIndex) {
-        return offsets.getInt(offsetIndex << 2);
+        return offsets[offsetIndex];
     }
 
     public int size() {
         return index;
     }
 
-    private int binarySearch(ByteBuffer a, int key) {
+    private int binarySearch(long[] a, long key) {
         int low = 0;
         int high = index - 1;
 
         while (low <= high) {
             int mid = (low + high) >>> 1;
-            int midVal = a.getInt(mid << 2);
+            long midVal = a[mid];
+
+            if (midVal < key) {
+                low = mid + 1;
+            } else if (midVal > key) {
+                high = mid - 1;
+            } else {
+                return mid;
+            }
+        }
+        return -(low + 1);
+    }
+
+    private int binarySearch(int[] a, int key) {
+        int low = 0;
+        int high = index - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            int midVal = a[mid];
 
             if (midVal < key) {
                 low = mid + 1;

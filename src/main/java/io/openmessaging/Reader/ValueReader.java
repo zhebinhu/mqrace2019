@@ -1,223 +1,103 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.Context;
+import io.openmessaging.Constants;
+import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
-import io.openmessaging.ValueTags;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
 /**
- * Created by huzhebin on 2019/08/07.
+ * Created by huzhebin on 2019/07/23.
  */
 public class ValueReader {
-    private long max = 0;
+    /**
+     * 编号
+     */
+    private int num;
 
-    private int count = 0;
+    /**
+     * 文件通道
+     */
+    private static FileChannel fileChannel;
 
-    private byte[] cache = new byte[Integer.MAX_VALUE - 2];
+    /**
+     * 堆外内存
+     */
+    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.VALUE_SIZE * Constants.VALUE_NUM);
 
-    private ValueTags valueTags = new ValueTags(30000000);
+    /**
+     * 消息总数
+     */
+    private int messageNum = 0;
 
-    private int msgNum = 0;
+    private volatile boolean inited = false;
 
-    private volatile boolean init = false;
 
-    private int tag = -1;
-
-    private int add = 0;
-
-    //    AtomicLong c = new AtomicLong();
-    //
-    //    AtomicInteger c1 = new AtomicInteger();
-    //
-    //    AtomicInteger c2 = new AtomicInteger();
-    //
-    //    AtomicInteger c3 = new AtomicInteger();
-    //
-    //    AtomicInteger c4 = new AtomicInteger();
-    //
-    //    AtomicInteger c5 = new AtomicInteger();
-
-    private long tag256 = 0;
-
-    private int count256 = 0;
-
-    private long tag65536 = 0;
-
-    private int count65536 = 0;
-
-    private long tagINT = 0;
-
-    private long countINT = 0;
-
-    private long min = Integer.MIN_VALUE;
+    static{
+        RandomAccessFile memoryMappedFile = null;
+        try {
+            memoryMappedFile = new RandomAccessFile(Constants.URL + "100.value", "rw");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace(System.out);
+        }
+        fileChannel = memoryMappedFile.getChannel();
+    }
 
     public void put(Message message) {
-        long value = message.getA();
-        if (value > max) {
-            max = value;
+        int remain = buffer.remaining();
+        if (remain < Constants.VALUE_SIZE) {
+            buffer.flip();
+            try {
+                fileChannel.write(buffer);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+            buffer.clear();
         }
-        if (value < min) {
-            min = value;
-        }
-        if (value - tag256 > 255 || value < tag256) {
-            count256++;
-            tag256 = value;
-        }
-        if (value - tag65536 > 65535 || value < tag65536) {
-            count65536++;
-            tag65536 = value;
-        }
-        if (value - tagINT > Integer.MAX_VALUE || value < tagINT) {
-            countINT++;
-            tagINT = value;
-        }
-        //        if (tag == -1 || value > tag + 127 || value < tag || count > 384) {
-        //            if (add != 0) {
-        //                valueTags.add(add);
-        //                add = 0;
-        //            }
-        //            tag = value;
-        //            valueTags.add(value, msgNum);
-        //            count = 0;
-        //        }
-        //        add = add + value - tag;
-        //        cache[msgNum] = (byte) (value - tag);
-        msgNum++;
-        //count++;
+        buffer.putLong(message.getA());
+        messageNum++;
     }
 
     public void init() {
-        //        if (add != 0) {
-        //            valueTags.add(add);
-        //            add = 0;
-        //            valueTags.inited(msgNum);
-        //        }
-        System.out.println("value min:" + min + " max:" + max + " count256:" + count256 + " count65536:" + count65536 + " countINT:" + countINT);
-        init = true;
+        int remain = buffer.remaining();
+        if (remain > 0) {
+            buffer.flip();
+            try {
+                fileChannel.write(buffer);
+                buffer.clear();
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+        }
     }
 
-    public int get(int offset, Context context) {
-        if (!init) {
+    public long get(int index, ValueContext valueContext) {
+        if (!inited) {
             synchronized (this) {
-                if (!init) {
+                if (!inited) {
                     init();
+                    inited = true;
                 }
             }
         }
-
-        if (offset < context.offsetA || offset >= context.offsetB) {
-            int tagIndex = valueTags.offsetIndex(offset);
-            context.tag = valueTags.getTag(tagIndex);
-            context.offsetA = valueTags.getOffset(tagIndex);
-            context.offsetB = valueTags.getOffset(tagIndex + 1);
+        if (index >= valueContext.bufferMinIndex && index < valueContext.bufferMaxIndex) {
+            valueContext.buffer.position((index - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
+        } else {
+            valueContext.buffer.clear();
+            try {
+                fileChannel.read(valueContext.buffer, ((long) index) * Constants.VALUE_SIZE);
+                valueContext.bufferMinIndex = index;
+                valueContext.bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+            valueContext.buffer.flip();
         }
-        return context.tag + cache[offset];
+        return valueContext.buffer.getLong();
     }
 
-    long avg(int offsetA, int offsetB, long aMin, long aMax, Context context) {
-
-        //        AtomicLong c = new AtomicLong();
-        //
-        //        AtomicInteger c1 = new AtomicInteger();
-        //
-        //        AtomicInteger c2 = new AtomicInteger();
-        //
-        //        AtomicInteger c3 = new AtomicInteger();
-        //
-        //        AtomicInteger c4 = new AtomicInteger();
-        //
-        //        AtomicInteger c5 = new AtomicInteger();
-
-        long total = 0;
-        int count = 0;
-        //long start = System.nanoTime();
-        if (offsetA < context.offsetA || offsetA >= context.offsetB) {
-            context.tagIndex = valueTags.offsetIndex(offsetA);
-            context.tag = valueTags.getTag(context.tagIndex);
-        }
-        while (context.tag + 127 < aMin && offsetA < offsetB) {
-            context.tagIndex++;
-            context.tag = valueTags.getTag(context.tagIndex);
-            offsetA = valueTags.getOffset(context.tagIndex);
-        }
-        context.offsetA = valueTags.getOffset(context.tagIndex);
-        context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-
-        //long mid = System.nanoTime();
-        while (offsetA < offsetB) {
-            //c.getAndIncrement();
-            if (context.offsetA == offsetA) {
-                //c1.getAndIncrement();
-                if (context.tag + 127 <= aMax) {
-                    //c2.getAndIncrement();
-                    if (context.tag >= aMin) {
-                        //c3.getAndIncrement();
-                        if (context.offsetB < offsetB) {
-                            //c4.getAndIncrement();
-                            int num = context.offsetB - context.offsetA;
-                            total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
-                            count += num;
-                            if (upDateContext(aMax, context)) {
-                                break;
-                            }
-                            offsetA = context.offsetA;
-                            continue;
-                        }
-                    }
-                }
-            }
-            if (offsetA == context.offsetB) {
-                if (upDateContext(aMax, context)) {
-                    break;
-                }
-                offsetA = context.offsetA;
-                continue;
-            }
-            //            if (context.offsetA == offsetA && context.tag + 127 <= aMax && context.tag >= aMin && context.offsetB < offsetB) {
-            //                //c1.getAndIncrement();
-            //                int num = context.offsetB - context.offsetA;
-            //                total += num * (long) context.tag + valueTags.getAdd(context.tagIndex);
-            //                count += num;
-            //                offsetA = context.offsetB;
-            //                if (upDateContext(aMax, context)) {
-            //                    break;
-            //                }
-            //                continue;
-            //            }
-            //            if (context.tag + 255 < aMin) {
-            //                offsetA = context.offsetB;
-            //                context.tagIndex++;
-            //                context.tag = valueTags.getTag(context.tagIndex);
-            //                context.offsetA = valueTags.getOffset(context.tagIndex);
-            //                if (context.tagIndex == valueTags.size() - 1) {
-            //                    context.offsetB = msgNum;
-            //                } else {
-            //                    context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-            //                }
-            //                continue;
-            //            }
-            int value = context.tag + cache[offsetA];
-            if (value >= aMin && value <= aMax) {
-                //c5.getAndIncrement();
-                total += value;
-                count++;
-            }
-            offsetA++;
-        }
-        //        long end = System.nanoTime();
-        //        System.out.println("three:" + three.addAndGet(mid - start) + " four:" + four.addAndGet(end - mid));
-        //System.out.println("c:" + c.intValue());
-        //System.out.println("count:" + count + " c:" + c.longValue() + " c1:" + c1.intValue() + " c2:" + c2.intValue() + " c3:" + c3.intValue() + " c4:" + c4.intValue() + " c5:" + c5.intValue() + " aMin:" + aMin + " aMax:" + aMax);
-        return count == 0 ? 0 : total / count;
-    }
-
-    private boolean upDateContext(long aMax, Context context) {
-        context.tagIndex++;
-        context.tag = valueTags.getTag(context.tagIndex);
-        context.offsetA = valueTags.getOffset(context.tagIndex);
-        context.offsetB = valueTags.getOffset(context.tagIndex + 1);
-        return valueTags.getMin(context.tagIndex) > aMax;
-    }
 }

@@ -13,9 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DefaultMessageStoreImpl extends MessageStore {
 
-    /**
-     * 一个线程对应一个队列
-     */
     private ConcurrentMap<Thread, Writer> writers = new ConcurrentHashMap<>();
 
     private Reader reader;

@@ -1,7 +1,8 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.Context;
-import io.openmessaging.DataContext;
+import io.openmessaging.Context.TimeContext;
+import io.openmessaging.Context.DataContext;
+import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
 import io.openmessaging.MessagePool;
 
@@ -21,9 +22,9 @@ public class Reader {
 
     private long msgNum;
 
-    private ThreadLocal<Context> timeContextThreadLocal = new ThreadLocal<>();
+    private ThreadLocal<TimeContext> timeContextThreadLocal = new ThreadLocal<>();
 
-    private ThreadLocal<Context> valueContextThreadLocal = new ThreadLocal<>();
+    private ThreadLocal<ValueContext> valueContextThreadLocal = new ThreadLocal<>();
 
     private ThreadLocal<DataContext> dataContextThreadLocal = new ThreadLocal<>();
 
@@ -47,13 +48,13 @@ public class Reader {
     public List<Message> get(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
         List<Message> result = new ArrayList<>();
         if (timeContextThreadLocal.get() == null) {
-            timeContextThreadLocal.set(new Context());
+            timeContextThreadLocal.set(new TimeContext());
         }
-        Context timeContext = timeContextThreadLocal.get();
+        TimeContext timeContext = timeContextThreadLocal.get();
         if (valueContextThreadLocal.get() == null) {
-            valueContextThreadLocal.set(new Context());
+            valueContextThreadLocal.set(new ValueContext());
         }
-        Context valueContext = valueContextThreadLocal.get();
+        ValueContext valueContext = valueContextThreadLocal.get();
         if (dataContextThreadLocal.get() == null) {
             dataContextThreadLocal.set(new DataContext());
         }
@@ -80,14 +81,31 @@ public class Reader {
     }
 
     public long avg(long aMin, long aMax, long tMin, long tMax) {
-        Context valueContext = valueContextThreadLocal.get();
-        if (valueContext == null) {
-            valueContext = new Context();
-            valueContextThreadLocal.set(valueContext);
+        long sum = 0;
+        int count = 0;
+        if (timeContextThreadLocal.get() == null) {
+            timeContextThreadLocal.set(new TimeContext());
         }
+        TimeContext timeContext = timeContextThreadLocal.get();
+        if (valueContextThreadLocal.get() == null) {
+            valueContextThreadLocal.set(new ValueContext());
+        }
+        ValueContext valueContext = valueContextThreadLocal.get();
         int offsetA = timeReader.getOffset((int) tMin);
-        int offsetB = timeReader.getOffset((int) tMax + 1);
-        return valueReader.avg(offsetA, offsetB, aMin, aMax, valueContext);
-
+        while (offsetA < msgNum) {
+            long time = timeReader.get(offsetA, timeContext);
+            if (time > tMax) {
+                break;
+            }
+            long value = valueReader.get(offsetA, valueContext);
+            if (value > aMax || value < aMin) {
+                offsetA++;
+                continue;
+            }
+            sum += value;
+            count++;
+            offsetA++;
+        }
+        return count == 0 ? 0 : sum / count;
     }
 }
