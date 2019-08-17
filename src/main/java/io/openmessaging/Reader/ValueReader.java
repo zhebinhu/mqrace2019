@@ -14,10 +14,6 @@ import java.nio.channels.FileChannel;
  * Created by huzhebin on 2019/07/23.
  */
 public class ValueReader {
-    /**
-     * 编号
-     */
-    private int num;
 
     /**
      * 文件通道

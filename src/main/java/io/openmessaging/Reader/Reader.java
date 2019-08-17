@@ -59,7 +59,7 @@ public class Reader {
             dataContextThreadLocal.set(new DataContext());
         }
         DataContext dataContext = dataContextThreadLocal.get();
-        int offsetA = timeReader.getOffset((int) tMin);
+        int offsetA = timeReader.getOffset(tMin);
         while (offsetA < msgNum) {
             long time = timeReader.get(offsetA, timeContext);
             if (time > tMax) {
@@ -83,20 +83,13 @@ public class Reader {
     public long avg(long aMin, long aMax, long tMin, long tMax) {
         long sum = 0;
         int count = 0;
-        if (timeContextThreadLocal.get() == null) {
-            timeContextThreadLocal.set(new TimeContext());
-        }
-        TimeContext timeContext = timeContextThreadLocal.get();
         if (valueContextThreadLocal.get() == null) {
             valueContextThreadLocal.set(new ValueContext());
         }
         ValueContext valueContext = valueContextThreadLocal.get();
-        int offsetA = timeReader.getOffset((int) tMin);
-        while (offsetA < msgNum) {
-            long time = timeReader.get(offsetA, timeContext);
-            if (time > tMax) {
-                break;
-            }
+        int offsetA = timeReader.getOffset(tMin);
+        int offsetB = timeReader.getOffset(tMax + 1);
+        while (offsetA < offsetB) {
             long value = valueReader.get(offsetA, valueContext);
             if (value > aMax || value < aMin) {
                 offsetA++;
