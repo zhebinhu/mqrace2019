@@ -15,6 +15,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private ConcurrentMap<Thread, Writer> writers = new ConcurrentHashMap<>();
 
+    private ConcurrentMap<Thread, BlockingQueue<Message>> queues = new ConcurrentHashMap<>();
+
+    private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(10, 10, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>());
+
     private Reader reader;
 
     private AtomicInteger num = new AtomicInteger(0);
@@ -29,24 +33,22 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean merged = false;
 
-    //private ForkJoinPool forkJoinPool1 = new ForkJoinPool(20);
-
-    //private ForkJoinPool forkJoinPool2 = new ForkJoinPool(20);
-
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
     private AtomicInteger count = new AtomicInteger(0);
 
     private volatile boolean inited = false;
 
+    private Future future;
+
     //private Set<Thread> threadSet = new HashSet<>();
 
     @Override
     public void put(Message message) {
-        if (!writers.containsKey(Thread.currentThread())) {
+        if (!queues.containsKey(Thread.currentThread())) {
             synchronized (this) {
-                if (!writers.containsKey(Thread.currentThread())) {
-                    writers.put(Thread.currentThread(), new Writer(num.getAndIncrement()));
+                if (!queues.containsKey(Thread.currentThread())) {
+                    queues.put(Thread.currentThread(), new LinkedBlockingQueue<>(100000));
                 }
             }
         }
@@ -54,12 +56,79 @@ public class DefaultMessageStoreImpl extends MessageStore {
             synchronized (this) {
                 if (!put) {
                     System.out.println("put:" + System.currentTimeMillis());
+                    future = threadPoolExecutor.submit(() -> {
+                        System.out.println("init start:" + System.currentTimeMillis());
+                        reader = new Reader();
+                        PriorityQueue<Pair<Message, Pair<BlockingQueue<Message>, Thread>>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
+                            long t = o1.fst.getT() - o2.fst.getT();
+                            if (t == 0) {
+                                t = o1.fst.getA() - o2.fst.getA();
+                            }
+                            if (t == 0) {
+                                return 0;
+                            }
+                            if (t > 0) {
+                                return 1;
+                            }
+                            return -1;
+
+                        });
+                        updateDatePriorityQueue(priorityQueue);
+                        while (!priorityQueue.isEmpty()) {
+                            Pair<Message, Pair<BlockingQueue<Message>, Thread>> pair = priorityQueue.poll();
+                            reader.put(pair.fst);
+                            Message newMessage = null;
+                            while (newMessage == null && (pair.snd.snd.isAlive() || !pair.snd.fst.isEmpty())) {
+                                try {
+                                    newMessage = pair.snd.fst.poll(1, TimeUnit.SECONDS);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace(System.out);
+                                }
+                            }
+                            if (newMessage != null) {
+                                pair.fst = newMessage;
+                                priorityQueue.add(pair);
+                            }
+                            if (priorityQueue.isEmpty()) {
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace(System.out);
+                                }
+                                updateDatePriorityQueue(priorityQueue);
+                            }
+                        }
+                        queues.clear();
+                        System.out.println("init end:" + System.currentTimeMillis());
+                    });
                     put = true;
                 }
             }
         }
+        try {
+            queues.get(Thread.currentThread()).put(message);
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+        }
+        count.getAndIncrement();
 
-        writers.get(Thread.currentThread()).put(message);
+    }
+
+    private void updateDatePriorityQueue(PriorityQueue<Pair<Message, Pair<BlockingQueue<Message>, Thread>>> priorityQueue) {
+        for (Map.Entry<Thread, BlockingQueue<Message>> entry : queues.entrySet()) {
+            Message m = null;
+            while (m == null && (entry.getKey().isAlive() || !entry.getValue().isEmpty())) {
+                try {
+                    m = entry.getValue().poll(1, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    e.printStackTrace(System.out);
+                }
+            }
+            if (m != null) {
+                Pair<Message, Pair<BlockingQueue<Message>, Thread>> pair = new Pair<>(m, new Pair<>(entry.getValue(), entry.getKey()));
+                priorityQueue.add(pair);
+            }
+        }
     }
 
     @Override
@@ -68,7 +137,11 @@ public class DefaultMessageStoreImpl extends MessageStore {
         if (!inited) {
             synchronized (this) {
                 if (!inited) {
-                    init();
+                    try {
+                        future.get();
+                    } catch (Exception e) {
+                        e.printStackTrace(System.out);
+                    }
                     inited = true;
                 }
             }
@@ -95,40 +168,40 @@ public class DefaultMessageStoreImpl extends MessageStore {
         return result;
     }
 
-    private void init() {
-        System.out.println("init start:" + System.currentTimeMillis());
-        reader = new Reader();
-        PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
-            long t = o1.fst.getT() - o2.fst.getT();
-            if (t == 0) {
-                t = o1.fst.getA() - o2.fst.getA();
-            }
-            if (t == 0) {
-                return 0;
-            }
-            if (t > 0) {
-                return 1;
-            }
-            return -1;
-
-        });
-        for (Writer writer : writers.values()) {
-            Message message = writer.get();
-            Pair<Message, Writer> pair = new Pair<>(message, writer);
-            priorityQueue.add(pair);
-        }
-        while (!priorityQueue.isEmpty()) {
-            Pair<Message, Writer> pair = priorityQueue.poll();
-            reader.put(pair.fst);
-            Message newMessage = pair.snd.get();
-            if (newMessage != null) {
-                pair.fst = newMessage;
-                priorityQueue.add(pair);
-            }
-        }
-        writers.clear();
-        System.out.println("init end:" + System.currentTimeMillis());
-    }
+    //    private void init() {
+    //        System.out.println("init start:" + System.currentTimeMillis());
+    //        reader = new Reader();
+    //        PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
+    //            long t = o1.fst.getT() - o2.fst.getT();
+    //            if (t == 0) {
+    //                t = o1.fst.getA() - o2.fst.getA();
+    //            }
+    //            if (t == 0) {
+    //                return 0;
+    //            }
+    //            if (t > 0) {
+    //                return 1;
+    //            }
+    //            return -1;
+    //
+    //        });
+    //        for (Writer writer : writers.values()) {
+    //            Message message = writer.get();
+    //            Pair<Message, Writer> pair = new Pair<>(message, writer);
+    //            priorityQueue.add(pair);
+    //        }
+    //        while (!priorityQueue.isEmpty()) {
+    //            Pair<Message, Writer> pair = priorityQueue.poll();
+    //            reader.put(pair.fst);
+    //            Message newMessage = pair.snd.get();
+    //            if (newMessage != null) {
+    //                pair.fst = newMessage;
+    //                priorityQueue.add(pair);
+    //            }
+    //        }
+    //        writers.clear();
+    //        System.out.println("init end:" + System.currentTimeMillis());
+    //    }
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {

@@ -40,6 +40,7 @@ public class Reader {
 
     public void put(Message message) {
         timeReader.put(message);
+        System.out.println(message.getT());
         valueReader.put(message);
         dataReader.put(message);
         msgNum++;
