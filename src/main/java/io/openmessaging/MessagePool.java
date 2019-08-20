@@ -14,7 +14,7 @@ public class MessagePool {
         }
     }
 
-    public Message get() {
+    public synchronized Message get() {
         index = (index + 1) % 160000;
         return messages[index];
     }

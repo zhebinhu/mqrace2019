@@ -1,5 +1,7 @@
 package io.openmessaging;
 
+import java.util.Arrays;
+
 /**
  * Created by huzhebin on 2019/08/08.
  */
@@ -10,13 +12,22 @@ public class TimeTags {
 
     private int index;
 
+    private int cap;
+
     public TimeTags(int cap) {
+        this.cap = cap;
         tags = new long[cap];
         offsets = new int[cap];
         index = 0;
     }
 
     public void add(long tag, int offset) {
+        if (index == cap) {
+            cap = cap + 1000000;
+            tags = Arrays.copyOf(tags, cap);
+            offsets = Arrays.copyOf(offsets, cap);
+            System.out.println("timetags:" + cap);
+        }
         tags[index] = tag;
         offsets[index] = offset;
         index++;

@@ -18,7 +18,7 @@ public class ValueReader {
     /**
      * 文件通道
      */
-    private static FileChannel fileChannel;
+    private FileChannel fileChannel;
 
     /**
      * 堆外内存
@@ -32,11 +32,10 @@ public class ValueReader {
 
     private volatile boolean inited = false;
 
-
-    static{
+    public ValueReader(int num) {
         RandomAccessFile memoryMappedFile = null;
         try {
-            memoryMappedFile = new RandomAccessFile(Constants.URL + "100.value", "rw");
+            memoryMappedFile = new RandomAccessFile(Constants.URL + num + ".value", "rw");
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }
@@ -93,7 +92,14 @@ public class ValueReader {
             }
             valueContext.buffer.flip();
         }
-        return valueContext.buffer.getLong();
+        long value = 0;
+        try {
+            value = valueContext.buffer.getLong();
+        }catch (Exception e){
+            System.out.println("e");
+        }
+
+        return value;
     }
 
 }
