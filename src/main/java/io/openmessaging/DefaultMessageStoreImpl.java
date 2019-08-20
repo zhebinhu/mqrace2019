@@ -57,49 +57,46 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 if (!put) {
                     System.out.println("put:" + System.currentTimeMillis());
                     future = threadPoolExecutor.submit(() -> {
-                        System.out.println("init start:" + System.currentTimeMillis());
-                        reader = new Reader();
-                        PriorityQueue<Pair<Message, Pair<BlockingQueue<Message>, Thread>>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
-                            long t = o1.fst.getT() - o2.fst.getT();
-                            if (t == 0) {
-                                t = o1.fst.getA() - o2.fst.getA();
-                            }
-                            if (t == 0) {
-                                return 0;
-                            }
-                            if (t > 0) {
-                                return 1;
-                            }
-                            return -1;
+                        try {
+                            System.out.println("init start:" + System.currentTimeMillis());
+                            reader = new Reader();
+                            PriorityQueue<Pair<Message, Pair<BlockingQueue<Message>, Thread>>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
+                                long t = o1.fst.getT() - o2.fst.getT();
+                                if (t == 0) {
+                                    t = o1.fst.getA() - o2.fst.getA();
+                                }
+                                if (t == 0) {
+                                    return 0;
+                                }
+                                if (t > 0) {
+                                    return 1;
+                                }
+                                return -1;
 
-                        });
-                        updateDatePriorityQueue(priorityQueue);
-                        while (!priorityQueue.isEmpty()) {
-                            Pair<Message, Pair<BlockingQueue<Message>, Thread>> pair = priorityQueue.poll();
-                            reader.put(pair.fst);
-                            Message newMessage = null;
-                            while (newMessage == null && (pair.snd.snd.isAlive() || !pair.snd.fst.isEmpty())) {
-                                try {
+                            });
+                            updateDatePriorityQueue(priorityQueue);
+                            while (!priorityQueue.isEmpty()) {
+                                Pair<Message, Pair<BlockingQueue<Message>, Thread>> pair = priorityQueue.poll();
+                                reader.put(pair.fst);
+                                Message newMessage = null;
+                                while (newMessage == null && (pair.snd.snd.isAlive() || !pair.snd.fst.isEmpty())) {
                                     newMessage = pair.snd.fst.poll(1, TimeUnit.SECONDS);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace(System.out);
+
                                 }
-                            }
-                            if (newMessage != null) {
-                                pair.fst = newMessage;
-                                priorityQueue.add(pair);
-                            }
-                            if (priorityQueue.isEmpty()) {
-                                try {
+                                if (newMessage != null) {
+                                    pair.fst = newMessage;
+                                    priorityQueue.add(pair);
+                                }
+                                if (priorityQueue.isEmpty()) {
                                     Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace(System.out);
+                                    updateDatePriorityQueue(priorityQueue);
                                 }
-                                updateDatePriorityQueue(priorityQueue);
                             }
+                            queues.clear();
+                            System.out.println("init end:" + System.currentTimeMillis());
+                        } catch (Exception e) {
+                            e.printStackTrace(System.out);
                         }
-                        queues.clear();
-                        System.out.println("init end:" + System.currentTimeMillis());
                     });
                     put = true;
                 }
@@ -110,19 +107,13 @@ public class DefaultMessageStoreImpl extends MessageStore {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        count.getAndIncrement();
-
     }
 
-    private void updateDatePriorityQueue(PriorityQueue<Pair<Message, Pair<BlockingQueue<Message>, Thread>>> priorityQueue) {
+    private void updateDatePriorityQueue(PriorityQueue<Pair<Message, Pair<BlockingQueue<Message>, Thread>>> priorityQueue) throws Exception {
         for (Map.Entry<Thread, BlockingQueue<Message>> entry : queues.entrySet()) {
             Message m = null;
             while (m == null && (entry.getKey().isAlive() || !entry.getValue().isEmpty())) {
-                try {
-                    m = entry.getValue().poll(1, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    e.printStackTrace(System.out);
-                }
+                m = entry.getValue().poll(1, TimeUnit.SECONDS);
             }
             if (m != null) {
                 Pair<Message, Pair<BlockingQueue<Message>, Thread>> pair = new Pair<>(m, new Pair<>(entry.getValue(), entry.getKey()));
