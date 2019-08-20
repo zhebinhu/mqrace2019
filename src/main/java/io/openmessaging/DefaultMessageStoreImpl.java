@@ -87,7 +87,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
                                     priorityQueue.add(pair);
                                 }
                                 if (priorityQueue.isEmpty()) {
-                                    System.out.println(newMessage.getT());
                                     updateDatePriorityQueue(priorityQueue);
                                 }
                             }
