@@ -48,7 +48,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         if (!queues.containsKey(Thread.currentThread())) {
             synchronized (this) {
                 if (!queues.containsKey(Thread.currentThread())) {
-                    queues.put(Thread.currentThread(), new LinkedBlockingQueue<>(100000));
+                    queues.put(Thread.currentThread(), new LinkedBlockingQueue<>(1000000));
                 }
             }
         }
@@ -79,16 +79,15 @@ public class DefaultMessageStoreImpl extends MessageStore {
                                 Pair<Message, Pair<BlockingQueue<Message>, Thread>> pair = priorityQueue.poll();
                                 reader.put(pair.fst);
                                 Message newMessage = null;
-                                while (newMessage == null && (pair.snd.snd.isAlive() || !pair.snd.fst.isEmpty())) {
+                                if (pair.snd.snd.isAlive() || !pair.snd.fst.isEmpty()) {
                                     newMessage = pair.snd.fst.poll(1, TimeUnit.SECONDS);
-
                                 }
                                 if (newMessage != null) {
                                     pair.fst = newMessage;
                                     priorityQueue.add(pair);
                                 }
                                 if (priorityQueue.isEmpty()) {
-                                    Thread.sleep(1000);
+                                    System.out.println(newMessage.getT());
                                     updateDatePriorityQueue(priorityQueue);
                                 }
                             }
@@ -112,7 +111,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     private void updateDatePriorityQueue(PriorityQueue<Pair<Message, Pair<BlockingQueue<Message>, Thread>>> priorityQueue) throws Exception {
         for (Map.Entry<Thread, BlockingQueue<Message>> entry : queues.entrySet()) {
             Message m = null;
-            while (m == null && (entry.getKey().isAlive() || !entry.getValue().isEmpty())) {
+            if (entry.getKey().isAlive() || !entry.getValue().isEmpty()) {
                 m = entry.getValue().poll(1, TimeUnit.SECONDS);
             }
             if (m != null) {
@@ -125,6 +124,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         List<Message> result = new ArrayList<>();
+        if (!get) {
+            synchronized (this) {
+                if (!get) {
+                    System.out.println("get:" + System.currentTimeMillis());
+                    get = true;
+                }
+            }
+        }
         if (!inited) {
             synchronized (this) {
                 if (!inited) {
@@ -138,14 +145,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
         try {
-            if (!get) {
-                synchronized (this) {
-                    if (!get) {
-                        System.out.println("get:" + System.currentTimeMillis());
-                        get = true;
-                    }
-                }
-            }
+
             if (messagePoolThreadLocal.get() == null) {
                 messagePoolThreadLocal.set(new MessagePool());
             }
