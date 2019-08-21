@@ -99,30 +99,16 @@ public class ValueReader {
         long sum = 0;
         int count = 0;
         long value;
-        if (offsetA >= valueContext.bufferMinIndex && offsetA < valueContext.bufferMaxIndex) {
-            valueContext.buffer.position((offsetA - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
-        } else {
-            //找到合适的buffer
-            updateContext(offsetA, offsetB, valueContext);
-            valueContext.buffer.clear();
-            try {
-                fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
-            }
-            valueContext.buffer.flip();
+        //找到合适的buffer
+        updateContext(offsetA, offsetB, valueContext);
+        valueContext.buffer.clear();
+        try {
+            fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
+        } catch (IOException e) {
+            e.printStackTrace(System.out);
         }
+        valueContext.buffer.flip();
         while (offsetA < offsetB) {
-            if (offsetA >= valueContext.bufferMaxIndex) {
-                updateContext(offsetA, offsetB, valueContext);
-                valueContext.buffer.clear();
-                try {
-                    fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
-                } catch (IOException e) {
-                    e.printStackTrace(System.out);
-                }
-                valueContext.buffer.flip();
-            }
             value = valueContext.buffer.getLong();
             if (value <= aMax && value >= aMin) {
                 sum += value;
