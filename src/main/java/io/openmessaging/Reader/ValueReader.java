@@ -98,7 +98,7 @@ public class ValueReader {
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
         long sum = 0;
         int count = 0;
-        long value = 0;
+        long value;
         if (offsetA >= valueContext.bufferMinIndex && offsetA < valueContext.bufferMaxIndex) {
             valueContext.buffer.position((offsetA - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
         } else {
@@ -123,12 +123,7 @@ public class ValueReader {
                 }
                 valueContext.buffer.flip();
             }
-            try {
-                value = valueContext.buffer.getLong();
-            } catch (Exception e) {
-                System.out.println("e");
-            }
-
+            value = valueContext.buffer.getLong();
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
