@@ -99,6 +99,7 @@ public class ValueReader {
         long sum = 0;
         int count = 0;
         int bufferCount = 0;
+        int start = offsetA;
         long value;
         if (offsetA >= valueContext.bufferMinIndex && offsetA < valueContext.bufferMaxIndex) {
             valueContext.buffer.position((offsetA - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
@@ -134,7 +135,7 @@ public class ValueReader {
             }
             offsetA++;
         }
-        System.out.println("num:" + (offsetB - offsetA) + " buffer count:" + bufferCount);
+        System.out.println("num:" + (offsetB - start) + " buffer count:" + bufferCount);
         return count == 0 ? 0 : sum / count;
     }
 }
