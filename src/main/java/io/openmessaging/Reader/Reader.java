@@ -28,6 +28,10 @@ public class Reader {
 
     private ThreadLocal<DataContext> dataContextThreadLocal = new ThreadLocal<>();
 
+    AtomicLong one = new AtomicLong();
+
+    AtomicLong two = new AtomicLong();
+
     public Reader() {
         timeReader = new TimeReader();
         valueReader = new ValueReader();
@@ -55,7 +59,7 @@ public class Reader {
             dataContextThreadLocal.set(new DataContext());
         }
         DataContext dataContext = dataContextThreadLocal.get();
-        int offsetA = timeReader.getOffset((int) tMin);
+        int offsetA = timeReader.getOffset(tMin);
         while (offsetA < msgNum) {
             long time = timeReader.get(offsetA, timeContext);
             if (time > tMax) {
@@ -79,29 +83,23 @@ public class Reader {
     public long avg(long aMin, long aMax, long tMin, long tMax) {
         long sum = 0;
         int count = 0;
-        if (timeContextThreadLocal.get() == null) {
-            timeContextThreadLocal.set(new TimeContext());
-        }
-        TimeContext timeContext = timeContextThreadLocal.get();
         if (valueContextThreadLocal.get() == null) {
             valueContextThreadLocal.set(new ValueContext());
         }
         ValueContext valueContext = valueContextThreadLocal.get();
-        int offsetA = timeReader.getOffset((int) tMin);
-        while (offsetA < msgNum) {
-            long time = timeReader.get(offsetA, timeContext);
-            if (time > tMax) {
-                break;
-            }
-            long value = valueReader.get(offsetA, valueContext);
-            if (value > aMax || value < aMin) {
-                offsetA++;
-                continue;
-            }
-            sum += value;
-            count++;
-            offsetA++;
-        }
-        return count == 0 ? 0 : sum / count;
+        int offsetA = timeReader.getOffset(tMin);
+        int offsetB = timeReader.getOffset(tMax + 1);
+        return valueReader.avg(offsetA,offsetB,aMin,aMax,valueContext);
+//        while (offsetA < offsetB) {
+//            long value = valueReader.get(offsetA, valueContext);
+//            if (value > aMax || value < aMin) {
+//                offsetA++;
+//                continue;
+//            }
+//            sum += value;
+//            count++;
+//            offsetA++;
+//        }
+//        return count == 0 ? 0 : sum / count;
     }
 }

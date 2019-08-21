@@ -14,10 +14,6 @@ import java.nio.channels.FileChannel;
  * Created by huzhebin on 2019/07/23.
  */
 public class ValueReader {
-    /**
-     * 编号
-     */
-    private int num;
 
     /**
      * 文件通道
@@ -36,8 +32,7 @@ public class ValueReader {
 
     private volatile boolean inited = false;
 
-
-    static{
+    static {
         RandomAccessFile memoryMappedFile = null;
         try {
             memoryMappedFile = new RandomAccessFile(Constants.URL + "100.value", "rw");
@@ -100,4 +95,42 @@ public class ValueReader {
         return valueContext.buffer.getLong();
     }
 
+    public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
+        long sum = 0;
+        int count = 0;
+        long value;
+        if (offsetA >= valueContext.bufferMinIndex && offsetA < valueContext.bufferMaxIndex) {
+            valueContext.buffer.position((offsetA - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
+        } else {
+            valueContext.buffer.clear();
+            try {
+                fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
+                valueContext.bufferMinIndex = offsetA;
+                valueContext.bufferMaxIndex = Math.min(offsetA + Constants.VALUE_NUM, messageNum);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+            valueContext.buffer.flip();
+        }
+        while (offsetA < offsetB) {
+            if (offsetA >= valueContext.bufferMaxIndex) {
+                valueContext.buffer.clear();
+                try {
+                    fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
+                    valueContext.bufferMinIndex = offsetA;
+                    valueContext.bufferMaxIndex = Math.min(offsetA + Constants.VALUE_NUM, messageNum);
+                } catch (IOException e) {
+                    e.printStackTrace(System.out);
+                }
+                valueContext.buffer.flip();
+            }
+            value = valueContext.buffer.getLong();
+            if (value <= aMax && value >= aMin) {
+                sum += value;
+                count++;
+            }
+            offsetA++;
+        }
+        return count == 0 ? 0 : sum / count;
+    }
 }

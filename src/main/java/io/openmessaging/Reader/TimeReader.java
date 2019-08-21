@@ -46,6 +46,7 @@ public class TimeReader {
         //cache.put(msgNum / 2, halfByte.getByte());
         cache[msgNum / 2] = halfByte.getByte();
         //System.out.println("time max:" + max + " count256:" + count256 + " count65536:" + count65536 + " count15:" + count15);
+        System.out.println("msgnum:" + msgNum);
         init = true;
     }
 
