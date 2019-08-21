@@ -1,16 +1,11 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.AvgResult;
-import io.openmessaging.Constants;
 import io.openmessaging.Context.TimeContext;
 import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
 import io.openmessaging.MessagePool;
 
-import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,7 +14,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by huzhebin on 2019/08/07.
  */
 public class Reader {
-
     private TimeReader timeReader;
 
     private ValueReader valueReader;
@@ -34,10 +28,10 @@ public class Reader {
 
     private ThreadLocal<DataContext> dataContextThreadLocal = new ThreadLocal<>();
 
-    public Reader(int num) {
-        valueReader = new ValueReader(num);
-        dataReader = new DataReader(num);
-        timeReader = new TimeReader(valueReader, dataReader);
+    public Reader() {
+        timeReader = new TimeReader();
+        valueReader = new ValueReader();
+        dataReader = new DataReader();
     }
 
     public void put(Message message) {
@@ -48,7 +42,7 @@ public class Reader {
     }
 
     public List<Message> get(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
-
+        List<Message> result = new ArrayList<>();
         if (timeContextThreadLocal.get() == null) {
             timeContextThreadLocal.set(new TimeContext());
         }
@@ -61,20 +55,44 @@ public class Reader {
             dataContextThreadLocal.set(new DataContext());
         }
         DataContext dataContext = dataContextThreadLocal.get();
-        return timeReader.getMessage(aMin, aMax, tMin, tMax, messagePool, timeContext, valueContext, dataContext);
-
+        int offsetA = timeReader.getOffset((int) tMin);
+        while (offsetA < msgNum) {
+            long time = timeReader.get(offsetA, timeContext);
+            if (time > tMax) {
+                return result;
+            }
+            long value = valueReader.get(offsetA, valueContext);
+            if (value > aMax || value < aMin) {
+                offsetA++;
+                continue;
+            }
+            Message message = messagePool.get();
+            message.setT(time);
+            message.setA(value);
+            dataReader.getData(offsetA, message, dataContext);
+            result.add(message);
+            offsetA++;
+        }
+        return result;
     }
 
-    public AvgResult avg(long aMin, long aMax, long tMin, long tMax) {
+    public long avg(long aMin, long aMax, long tMin, long tMax) {
         long sum = 0;
         int count = 0;
+        if (timeContextThreadLocal.get() == null) {
+            timeContextThreadLocal.set(new TimeContext());
+        }
+        TimeContext timeContext = timeContextThreadLocal.get();
         if (valueContextThreadLocal.get() == null) {
             valueContextThreadLocal.set(new ValueContext());
         }
         ValueContext valueContext = valueContextThreadLocal.get();
-        int offsetA = timeReader.getOffset(tMin);
-        int offsetB = timeReader.getOffset(tMax + 1);
-        while (offsetA < offsetB) {
+        int offsetA = timeReader.getOffset((int) tMin);
+        while (offsetA < msgNum) {
+            long time = timeReader.get(offsetA, timeContext);
+            if (time > tMax) {
+                break;
+            }
             long value = valueReader.get(offsetA, valueContext);
             if (value > aMax || value < aMin) {
                 offsetA++;
@@ -84,6 +102,6 @@ public class Reader {
             count++;
             offsetA++;
         }
-        return new AvgResult(sum, count);
+        return count == 0 ? 0 : sum / count;
     }
 }

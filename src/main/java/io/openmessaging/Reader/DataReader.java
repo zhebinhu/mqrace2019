@@ -22,7 +22,7 @@ public class DataReader {
     /**
      * 文件通道
      */
-    private FileChannel fileChannel;
+    private static FileChannel fileChannel;
 
     /**
      * 堆外内存
@@ -36,10 +36,11 @@ public class DataReader {
 
     private volatile boolean inited = false;
 
-    public DataReader(int num) {
+
+    static{
         RandomAccessFile memoryMappedFile = null;
         try {
-            memoryMappedFile = new RandomAccessFile(Constants.URL + num + ".data", "rw");
+            memoryMappedFile = new RandomAccessFile(Constants.URL + "100.data", "rw");
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }

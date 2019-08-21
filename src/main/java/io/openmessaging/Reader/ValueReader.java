@@ -14,11 +14,15 @@ import java.nio.channels.FileChannel;
  * Created by huzhebin on 2019/07/23.
  */
 public class ValueReader {
+    /**
+     * 编号
+     */
+    private int num;
 
     /**
      * 文件通道
      */
-    private FileChannel fileChannel;
+    private static FileChannel fileChannel;
 
     /**
      * 堆外内存
@@ -32,10 +36,11 @@ public class ValueReader {
 
     private volatile boolean inited = false;
 
-    public ValueReader(int num) {
+
+    static{
         RandomAccessFile memoryMappedFile = null;
         try {
-            memoryMappedFile = new RandomAccessFile(Constants.URL + num + ".value", "rw");
+            memoryMappedFile = new RandomAccessFile(Constants.URL + "100.value", "rw");
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }
@@ -92,14 +97,7 @@ public class ValueReader {
             }
             valueContext.buffer.flip();
         }
-        long value = 0;
-        try {
-            value = valueContext.buffer.getLong();
-        }catch (Exception e){
-            System.out.println("e");
-        }
-
-        return value;
+        return valueContext.buffer.getLong();
     }
 
 }

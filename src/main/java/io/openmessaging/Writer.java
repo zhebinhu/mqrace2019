@@ -51,9 +51,6 @@ public class Writer {
     }
 
     public void put(Message message) {
-        if (msgNum % 10000 == 7) {
-            System.out.println("num:" + num + " value:" + message.getA() + " time:" + message.getT());
-        }
         buffer.putLong(message.getT());
         buffer.putLong(message.getA());
         buffer.put(message.getBody());
