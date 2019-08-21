@@ -81,8 +81,6 @@ public class Reader {
     }
 
     public long avg(long aMin, long aMax, long tMin, long tMax) {
-        long sum = 0;
-        int count = 0;
         if (valueContextThreadLocal.get() == null) {
             valueContextThreadLocal.set(new ValueContext());
         }

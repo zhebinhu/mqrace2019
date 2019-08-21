@@ -100,7 +100,7 @@ public class ValueReader {
         int count = 0;
         int bufferCount = 0;
         int start = offsetA;
-        long value =0;
+        long value = 0;
         if (offsetA >= valueContext.bufferMinIndex && offsetA < valueContext.bufferMaxIndex) {
             valueContext.buffer.position((offsetA - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
         } else {
@@ -129,7 +129,7 @@ public class ValueReader {
             }
             try {
                 value = valueContext.buffer.getLong();
-            }catch (Exception e){
+            } catch (Exception e) {
                 System.out.println("e");
             }
 
@@ -145,7 +145,10 @@ public class ValueReader {
 
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
         int i = 0;
-        while ((1 << (i + 1)) <= (offsetB - offsetA) / Constants.VALUE_NUM) {
+        while (i < 6) {
+            if ((1 << i) >= (offsetB - offsetA) / Constants.VALUE_NUM) {
+                break;
+            }
             i = i + 1;
         }
         valueContext.buffer = valueContext.bufferList.get(i);
