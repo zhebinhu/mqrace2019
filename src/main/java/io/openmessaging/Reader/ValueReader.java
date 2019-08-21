@@ -134,15 +134,9 @@ public class ValueReader {
     }
 
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
-        int i = 0;
-        while (i < 6) {
-            if ((1 << i) >= (offsetB - offsetA) / Constants.VALUE_NUM) {
-                break;
-            }
-            i = i + 1;
-        }
+        int i = (offsetB - offsetA) / Constants.VALUE_NUM;
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.bufferMinIndex = offsetA;
-        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM << i), messageNum);
+        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
     }
 }
