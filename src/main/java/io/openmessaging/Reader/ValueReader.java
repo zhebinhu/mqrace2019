@@ -100,16 +100,16 @@ public class ValueReader {
         int count = 0;
         int bufferCount = 0;
         int start = offsetA;
-        long value;
+        long value =0;
         if (offsetA >= valueContext.bufferMinIndex && offsetA < valueContext.bufferMaxIndex) {
             valueContext.buffer.position((offsetA - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
         } else {
+            //找到合适的buffer
+            updateContext(offsetA, offsetB, valueContext);
             valueContext.buffer.clear();
             try {
                 fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
                 bufferCount++;
-                valueContext.bufferMinIndex = offsetA;
-                valueContext.bufferMaxIndex = Math.min(offsetA + Constants.VALUE_NUM, messageNum);
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
@@ -117,18 +117,22 @@ public class ValueReader {
         }
         while (offsetA < offsetB) {
             if (offsetA >= valueContext.bufferMaxIndex) {
+                updateContext(offsetA, offsetB, valueContext);
                 valueContext.buffer.clear();
                 try {
                     fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
                     bufferCount++;
-                    valueContext.bufferMinIndex = offsetA;
-                    valueContext.bufferMaxIndex = Math.min(offsetA + Constants.VALUE_NUM, messageNum);
                 } catch (IOException e) {
                     e.printStackTrace(System.out);
                 }
                 valueContext.buffer.flip();
             }
-            value = valueContext.buffer.getLong();
+            try {
+                value = valueContext.buffer.getLong();
+            }catch (Exception e){
+                System.out.println("e");
+            }
+
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
@@ -137,5 +141,15 @@ public class ValueReader {
         }
         System.out.println("num:" + (offsetB - start) + " buffer count:" + bufferCount);
         return count == 0 ? 0 : sum / count;
+    }
+
+    private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
+        int i = 0;
+        while ((1 << (i + 1)) <= (offsetB - offsetA) / Constants.VALUE_NUM) {
+            i = i + 1;
+        }
+        valueContext.buffer = valueContext.bufferList.get(i);
+        valueContext.bufferMinIndex = offsetA;
+        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM << i), messageNum);
     }
 }
