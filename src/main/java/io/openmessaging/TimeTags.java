@@ -60,7 +60,7 @@ public class TimeTags {
             int mid = (low + high) >>> 1;
             long midVal = a[mid];
 
-            if (midVal < key) {
+            if (midVal + 15 < key) {
                 low = mid + 1;
             } else if (midVal > key) {
                 high = mid - 1;

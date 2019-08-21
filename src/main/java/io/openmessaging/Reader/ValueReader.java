@@ -98,8 +98,6 @@ public class ValueReader {
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
         long sum = 0;
         int count = 0;
-        int bufferCount = 0;
-        int start = offsetA;
         long value = 0;
         if (offsetA >= valueContext.bufferMinIndex && offsetA < valueContext.bufferMaxIndex) {
             valueContext.buffer.position((offsetA - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
@@ -109,7 +107,6 @@ public class ValueReader {
             valueContext.buffer.clear();
             try {
                 fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
-                bufferCount++;
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }
@@ -121,7 +118,6 @@ public class ValueReader {
                 valueContext.buffer.clear();
                 try {
                     fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
-                    bufferCount++;
                 } catch (IOException e) {
                     e.printStackTrace(System.out);
                 }
@@ -139,7 +135,6 @@ public class ValueReader {
             }
             offsetA++;
         }
-        System.out.println("num:" + (offsetB - start) + " buffer count:" + bufferCount);
         return count == 0 ? 0 : sum / count;
     }
 
