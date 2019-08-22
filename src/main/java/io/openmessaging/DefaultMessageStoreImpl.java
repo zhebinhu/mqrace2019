@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DefaultMessageStoreImpl extends MessageStore {
 
-    private ConcurrentMap<Thread, Writer> writers = new ConcurrentHashMap<>();
+    private HashMap<Thread, Writer> writers = new HashMap<>();
 
     private Reader reader;
 
@@ -53,7 +53,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
     @Override
     public void put(Message message) {
         if (!writers.containsKey(Thread.currentThread())) {
-            writers.put(Thread.currentThread(), new Writer(Thread.currentThread()));
+            synchronized (this) {
+                writers.put(Thread.currentThread(), new Writer(Thread.currentThread()));
+            }
         }
         if (!put) {
             synchronized (this) {

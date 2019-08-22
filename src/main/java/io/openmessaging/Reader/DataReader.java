@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -22,12 +26,24 @@ public class DataReader {
     /**
      * 文件通道
      */
-    private static FileChannel fileChannel;
+    private FileChannel fileChannel;
 
     /**
      * 堆外内存
      */
-    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
+    private ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
+
+    private ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
+
+    private ByteBuffer buffer;
+
+    private Future future;
+
+    private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r);
+        thread.setDaemon(true);
+        return thread;
+    });
 
     /**
      * 消息总数
@@ -36,25 +52,33 @@ public class DataReader {
 
     private volatile boolean inited = false;
 
-
-    static{
-        RandomAccessFile memoryMappedFile = null;
+    public DataReader() {
         try {
-            memoryMappedFile = new RandomAccessFile(Constants.URL + "100.data", "rw");
+            fileChannel = new RandomAccessFile(Constants.URL + "100.data", "rw").getChannel();
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }
-        fileChannel = memoryMappedFile.getChannel();
+        buffer = buffer1;
     }
 
     public void put(Message message) {
-        int remain = buffer.remaining();
-        if (remain < Constants.DATA_SIZE) {
+        ByteBuffer tmpBuffer = buffer;
+        if (!buffer.hasRemaining()) {
             buffer.flip();
             try {
-                fileChannel.write(buffer);
-            } catch (IOException e) {
+                if (future == null) {
+                    future = executorService.submit(() -> fileChannel.write(tmpBuffer));
+                } else {
+                    future.get();
+                    future = executorService.submit(() -> fileChannel.write(tmpBuffer));
+                }
+            } catch (Exception e) {
                 e.printStackTrace(System.out);
+            }
+            if (buffer == buffer1) {
+                buffer = buffer2;
+            } else {
+                buffer = buffer1;
             }
             buffer.clear();
         }
