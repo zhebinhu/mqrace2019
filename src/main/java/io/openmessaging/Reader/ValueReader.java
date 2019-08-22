@@ -66,6 +66,9 @@ public class ValueReader {
                 if (future == null) {
                     future = executorService.submit(() -> fileChannel.write(tmpBuffer));
                 } else {
+                    if(!future.isDone()){
+                        System.out.println("value block");
+                    }
                     future.get();
                     future = executorService.submit(() -> fileChannel.write(tmpBuffer));
                 }

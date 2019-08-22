@@ -57,11 +57,12 @@ public class Writer {
     public Message get() {
         lock.lock();
         while (size == 0) {
+            System.out.println("get is empty:" + System.currentTimeMillis());
             if (!thread.isAlive()) {
                 return null;
             }
             try {
-                notEmpty.await(1,TimeUnit.SECONDS);
+                notEmpty.await(1, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
