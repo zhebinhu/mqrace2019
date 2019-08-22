@@ -40,8 +40,8 @@ public class Reader {
 
     public void put(Message message) {
         timeReader.put(message);
-        valueReader.put(message);
-        dataReader.put(message);
+//        valueReader.put(message);
+//        dataReader.put(message);
         msgNum++;
     }
 

@@ -22,7 +22,7 @@ public class Writer {
 
     private Condition notFull = lock.newCondition();
 
-    private int cap = Constants.MESSAGE_NUM * 4;
+    private int cap = Constants.MESSAGE_NUM * 16;
 
     private int size = 0;
 
