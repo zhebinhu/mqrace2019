@@ -257,8 +257,8 @@ public class DemoTester {
         @Override
         public void run() {
             Random random = new Random();
-            //while (timesCounter.getAndIncrement() < checkTimes && System.currentTimeMillis() <= maxTimeStamp) {
-            while(true){
+            while (timesCounter.getAndIncrement() < checkTimes && System.currentTimeMillis() <= maxTimeStamp) {
+
                 try {
                     int aIndex1 = random.nextInt(maxIndex - 1);
                     if (aIndex1 < 0) {

@@ -5,6 +5,11 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -12,86 +17,69 @@ import java.nio.channels.FileChannel;
 public class Writer {
     private int num;
 
-    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
+    //private ByteBuffer buffer = ByteBuffer.allocate(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
 
     private FileChannel fileChannel;
 
-    private long msgNum = 0;
+    private Lock lock = new ReentrantLock();
 
-    private long offsetA = 0;
+    private Condition notEmpty = lock.newCondition();
 
-    private long offsetB = 0;
+    private Condition notFull = lock.newCondition();
 
-    private Message message = new Message(0, 0, new byte[34]);
+    private int cap = Constants.MESSAGE_NUM * 4;
 
-    private boolean inited = false;
+    private int size = 0;
 
-    public void init() {
-        int remain = buffer.remaining();
-        if (remain > 0) {
-            buffer.flip();
-            try {
-                fileChannel.write(buffer);
-                buffer.clear();
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
-            }
-        }
-    }
+    private int pWrite = 0;
 
-    public Writer(int num) {
-        this.num = num;
-        RandomAccessFile memoryMappedFile = null;
-        try {
-            memoryMappedFile = new RandomAccessFile(Constants.URL + num + ".msg", "rw");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace(System.out);
-        }
-        fileChannel = memoryMappedFile.getChannel();
+    private int pRead = 0;
+
+    private Thread thread;
+
+    Message[] messages = new Message[cap];
+
+    public Writer(Thread thread) {
+        this.thread = thread;
     }
 
     public void put(Message message) {
-        buffer.putLong(message.getT());
-        buffer.putLong(message.getA());
-        buffer.put(message.getBody());
-        if (!buffer.hasRemaining()) {
-            buffer.flip();
+        lock.lock();
+        if (size == cap) {
             try {
-                fileChannel.write(buffer);
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
+                notFull.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            buffer.clear();
         }
-        msgNum++;
+        messages[pWrite] = message;
+        size++;
+        pWrite = (pWrite + 1) % cap;
+        notEmpty.signal();
+        lock.unlock();
     }
 
     public Message get() {
-        if (!inited) {
-            synchronized (this) {
-                if (!inited) {
-                    init();
-                    inited = true;
-                }
+        lock.lock();
+        if (size == 0) {
+            if (!thread.isAlive()) {
+                return null;
             }
-        }
-        if (offsetA == msgNum) {
-            return null;
-        }
-        if (offsetA == offsetB) {
-            buffer.clear();
             try {
-                fileChannel.read(buffer, offsetA * Constants.MESSAGE_SIZE);
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
+                if (!notEmpty.await(10, TimeUnit.SECONDS)) {
+                    System.out.println("e");
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            buffer.flip();
-            offsetB += buffer.limit() / Constants.MESSAGE_SIZE;
         }
-        offsetA++;
-        message.setT(buffer.getLong());
-        message.setA(buffer.getLong());
-        buffer.get(message.getBody());
-        return message;
+        Message result = messages[pRead];
+        pRead = (pRead + 1) % cap;
+        size--;
+        if (size == 0) {
+            notFull.signal();
+        }
+        lock.unlock();
+        return result;
     }
 }

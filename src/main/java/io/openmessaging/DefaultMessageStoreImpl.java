@@ -39,6 +39,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean inited = false;
 
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    private Future future;
+
     //private Set<Thread> threadSet = new HashSet<>();
 
     @Override
@@ -46,20 +50,27 @@ public class DefaultMessageStoreImpl extends MessageStore {
         if (!writers.containsKey(Thread.currentThread())) {
             synchronized (this) {
                 if (!writers.containsKey(Thread.currentThread())) {
-                    writers.put(Thread.currentThread(), new Writer(num.getAndIncrement()));
+                    writers.put(Thread.currentThread(), new Writer(Thread.currentThread()));
+                    System.out.println("new putThread " + System.currentTimeMillis());
                 }
             }
         }
-        if (!put) {
-            synchronized (this) {
                 if (!put) {
-                    System.out.println("put:" + System.currentTimeMillis());
-                    put = true;
+                    synchronized (this) {
+                        if (!put) {
+                            System.out.println("put:" + System.currentTimeMillis());
+//                            future = executorService.submit(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    init();
+//                                }
+//                            });
+                            put = true;
+                        }
+                    }
                 }
-            }
-        }
 
-        writers.get(Thread.currentThread()).put(message);
+        //writers.get(Thread.currentThread()).put(message);
     }
 
     @Override
@@ -68,7 +79,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         if (!inited) {
             synchronized (this) {
                 if (!inited) {
-                    init();
+                    //init();
                     inited = true;
                 }
             }
@@ -112,6 +123,11 @@ public class DefaultMessageStoreImpl extends MessageStore {
             return -1;
 
         });
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         for (Writer writer : writers.values()) {
             Message message = writer.get();
             Pair<Message, Writer> pair = new Pair<>(message, writer);

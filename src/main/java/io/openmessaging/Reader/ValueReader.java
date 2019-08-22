@@ -23,7 +23,7 @@ public class ValueReader {
     /**
      * 堆外内存
      */
-    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.VALUE_SIZE * Constants.VALUE_NUM);
+    private ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.VALUE_SIZE * Constants.VALUE_NUM*4);
 
     /**
      * 消息总数
