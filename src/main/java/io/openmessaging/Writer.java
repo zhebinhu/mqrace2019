@@ -1,11 +1,6 @@
 package io.openmessaging;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -61,14 +56,12 @@ public class Writer {
 
     public Message get() {
         lock.lock();
-        if (size == 0) {
+        while (size == 0) {
             if (!thread.isAlive()) {
                 return null;
             }
             try {
-                if (!notEmpty.await(10, TimeUnit.SECONDS)) {
-                    System.out.println("e");
-                }
+                notEmpty.await(1,TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

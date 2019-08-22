@@ -39,7 +39,12 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean inited = false;
 
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r);
+        thread.setPriority(10);
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private Future future;
 
@@ -48,47 +53,37 @@ public class DefaultMessageStoreImpl extends MessageStore {
     @Override
     public void put(Message message) {
         if (!writers.containsKey(Thread.currentThread())) {
+            writers.put(Thread.currentThread(), new Writer(Thread.currentThread()));
+        }
+        if (!put) {
             synchronized (this) {
-                if (!writers.containsKey(Thread.currentThread())) {
-                    writers.put(Thread.currentThread(), new Writer(Thread.currentThread()));
-                    System.out.println("new putThread " + System.currentTimeMillis());
+                if (!put) {
+                    System.out.println("put:" + System.currentTimeMillis());
+                    future = executorService.submit(this::init);
+                    put = true;
                 }
             }
         }
-                if (!put) {
-                    synchronized (this) {
-                        if (!put) {
-                            System.out.println("put:" + System.currentTimeMillis());
-//                            future = executorService.submit(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    init();
-//                                }
-//                            });
-                            put = true;
-                        }
-                    }
-                }
-
-        //writers.get(Thread.currentThread()).put(message);
+        writers.get(Thread.currentThread()).put(message);
     }
 
     @Override
     public List<Message> getMessage(long aMin, long aMax, long tMin, long tMax) {
         List<Message> result = new ArrayList<>();
-        if (!inited) {
-            synchronized (this) {
-                if (!inited) {
-                    //init();
-                    inited = true;
-                }
-            }
-        }
+//        if (!inited) {
+//            synchronized (this) {
+//                if (!inited) {
+//                    //init();
+//                    inited = true;
+//                }
+//            }
+//        }
         try {
             if (!get) {
                 synchronized (this) {
                     if (!get) {
                         System.out.println("get:" + System.currentTimeMillis());
+                        future.get();
                         get = true;
                     }
                 }
@@ -125,8 +120,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
         });
         try {
             Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
         }
         for (Writer writer : writers.values()) {
             Message message = writer.get();
