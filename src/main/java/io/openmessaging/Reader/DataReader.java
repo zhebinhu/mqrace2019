@@ -31,9 +31,9 @@ public class DataReader {
     /**
      * 堆外内存
      */
-    private ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
+    private ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.DATA_CAP);
 
-    private ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
+    private ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.DATA_CAP);
 
     private ByteBuffer buffer;
 

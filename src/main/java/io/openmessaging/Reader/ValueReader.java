@@ -27,9 +27,9 @@ public class ValueReader {
     /**
      * 堆外内存
      */
-    private ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.VALUE_SIZE * Constants.VALUE_NUM * 4);
+    private ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
 
-    private ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.VALUE_SIZE * Constants.VALUE_NUM * 4);
+    private ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
 
     private ByteBuffer buffer;
 

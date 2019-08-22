@@ -9,10 +9,16 @@ public class Constants {
 
     public final static int MESSAGE_NUM = 4 * 1024;
 
+    // writer缓冲区
+    public final static int WRITER_CAP = 8 * 1024 * 1024;
+    // data写入缓冲区
+    public final static int DATA_CAP = 34 * 1024 * 1024 * 8;
+    // value写入缓冲区
+    public final static int VALUE_CAP = 8 * 1024 * 1024 * 8;
     // data 的大小
     public final static int DATA_SIZE = 34;
 
-    public final static int DATA_NUM = 2 * 1024;
+    public final static int DATA_NUM = 4 * 1024;
 
     // value 的大小
     public final static int VALUE_SIZE = 8;
