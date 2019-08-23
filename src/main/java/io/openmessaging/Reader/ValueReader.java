@@ -12,7 +12,6 @@ import java.nio.channels.FileChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -24,16 +23,16 @@ public class ValueReader {
      */
     private FileChannel fileChannel;
 
+    private final static int bufNum = 4;
+
     /**
      * 堆外内存
      */
-    private ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
+    private ByteBuffer[] buffers = new ByteBuffer[bufNum];
 
-    private ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
+    private Future[] futures = new Future[bufNum];
 
-    private ByteBuffer buffer;
-
-    private Future future;
+    private int index = 0;
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
@@ -54,45 +53,44 @@ public class ValueReader {
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }
-        buffer = buffer1;
+        for (int i = 0; i < bufNum; i++) {
+            buffers[i] = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
+        }
 
     }
 
     public void put(Message message) {
-        ByteBuffer tmpBuffer = buffer;
-        if (!buffer.hasRemaining()) {
-            buffer.flip();
+        if (!buffers[index].hasRemaining()) {
+            ByteBuffer tmpBuffer = buffers[index];
+            int newIndex = (index + 1) % bufNum;
+            tmpBuffer.flip();
             try {
-                if (future == null) {
-                    future = executorService.submit(() -> fileChannel.write(tmpBuffer));
+                if (futures[index] == null) {
+                    futures[index] = executorService.submit(() -> fileChannel.write(tmpBuffer));
                 } else {
-                    if(!future.isDone()){
+                    if (!futures[newIndex].isDone()) {
                         System.out.println("value block");
+                        futures[newIndex].get();
                     }
-                    future.get();
-                    future = executorService.submit(() -> fileChannel.write(tmpBuffer));
+                    futures[index] = executorService.submit(() -> fileChannel.write(tmpBuffer));
                 }
             } catch (Exception e) {
                 e.printStackTrace(System.out);
             }
-            if (buffer == buffer1) {
-                buffer = buffer2;
-            } else {
-                buffer = buffer1;
-            }
-            buffer.clear();
+            index = newIndex;
+            buffers[index].clear();
         }
-        buffer.putLong(message.getA());
+        buffers[index].putLong(message.getA());
         messageNum++;
     }
 
     public void init() {
-        int remain = buffer.remaining();
+        int remain = buffers[index].remaining();
         if (remain > 0) {
-            buffer.flip();
+            buffers[index].flip();
             try {
-                fileChannel.write(buffer);
-                buffer.clear();
+                fileChannel.write(buffers[index]);
+                buffers[index].clear();
             } catch (IOException e) {
                 e.printStackTrace(System.out);
             }

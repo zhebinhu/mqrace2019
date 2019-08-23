@@ -2,29 +2,20 @@ package io.openmessaging;
 
 import java.nio.channels.FileChannel;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by huzhebin on 2019/08/07.
  */
 public class Writer {
-    private int num;
 
-    //private ByteBuffer buffer = ByteBuffer.allocate(Constants.MESSAGE_SIZE * Constants.MESSAGE_NUM);
+    private final static int cap = Constants.WRITER_CAP;
 
-    private FileChannel fileChannel;
-
-    private Lock lock = new ReentrantLock();
-
-    private Condition notEmpty = lock.newCondition();
-
-    private Condition notFull = lock.newCondition();
-
-    private int cap = Constants.WRITER_CAP;
-
-    private int size = 0;
+    private AtomicInteger size = new AtomicInteger(0);
 
     private int pWrite = 0;
 
@@ -39,41 +30,29 @@ public class Writer {
     }
 
     public void put(Message message) {
-        lock.lock();
-        if (size == cap) {
-            try {
-                notFull.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        while (size.intValue() == cap) {
+            //System.out.println("put full");
+            LockSupport.park();
         }
         messages[pWrite] = message;
-        size++;
+        size.getAndIncrement();
         pWrite = (pWrite + 1) % cap;
-        notEmpty.signal();
-        lock.unlock();
     }
 
     public Message get() {
-        lock.lock();
-        while (size == 0) {
-            System.out.println("get is empty:" + System.currentTimeMillis());
+        while (size.intValue() == 0) {
             if (!thread.isAlive()) {
                 return null;
             }
-            try {
-                notEmpty.await(1, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            //System.out.println("get empty");
         }
         Message result = messages[pRead];
         pRead = (pRead + 1) % cap;
-        size--;
-        if (size == 0) {
-            notFull.signal();
+        size.getAndDecrement();
+        if (size.intValue() == 0) {
+            //System.out.println("unpark");
+            LockSupport.unpark(thread);
         }
-        lock.unlock();
         return result;
     }
 }
