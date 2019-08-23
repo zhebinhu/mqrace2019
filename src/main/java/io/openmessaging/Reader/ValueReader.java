@@ -23,7 +23,7 @@ public class ValueReader {
      */
     private FileChannel fileChannel;
 
-    private final static int bufNum = 8;
+    private final static int bufNum = 16;
 
     /**
      * 堆外内存
@@ -36,6 +36,7 @@ public class ValueReader {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
+        thread.setPriority(10);
         thread.setDaemon(true);
         return thread;
     });
