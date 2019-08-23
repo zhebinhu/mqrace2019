@@ -127,14 +127,7 @@ public class ValueReader {
         int count = 0;
         long value;
         //找到合适的buffer
-        updateContext(offsetA, offsetB, valueContext);
-        valueContext.buffer.clear();
-        try {
-            valueContext.fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
-        } catch (IOException e) {
-            e.printStackTrace(System.out);
-        }
-        valueContext.buffer.flip();
+        pre(offsetA, offsetB, valueContext);
         while (offsetA < offsetB) {
             value = valueContext.buffer.getLong();
             if (value <= aMax && value >= aMin) {
@@ -151,5 +144,16 @@ public class ValueReader {
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.bufferMinIndex = offsetA;
         valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
+    }
+
+    public void pre(int offsetA, int offsetB, ValueContext valueContext) {
+        updateContext(offsetA, offsetB, valueContext);
+        valueContext.buffer.clear();
+        try {
+            valueContext.fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
+        } catch (IOException e) {
+            e.printStackTrace(System.out);
+        }
+        valueContext.buffer.flip();
     }
 }

@@ -2,6 +2,7 @@ package io.openmessaging.Reader;
 
 import io.openmessaging.Constants;
 import io.openmessaging.Context.DataContext;
+import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
 
 import java.io.FileNotFoundException;
@@ -23,7 +24,7 @@ public class DataReader {
      */
     private FileChannel fileChannel;
 
-    private final static int bufNum = 64;
+    private final static int bufNum = 128;
 
     /**
      * 堆外内存
@@ -121,6 +122,24 @@ public class DataReader {
         }
 
         dataContext.buffer.get(message.getBody());
+    }
+
+    private void updateContext(int offsetA, int offsetB, DataContext dataContext) {
+        int i = (offsetB - offsetA) / Constants.DATA_NUM;
+        dataContext.buffer = dataContext.bufferList.get(i);
+        dataContext.bufferMinIndex = offsetA;
+        dataContext.bufferMaxIndex = Math.min(offsetA + (Constants.DATA_NUM * (i + 1)), messageNum);
+    }
+
+    public void pre(int offsetA, int offsetB, DataContext dataContext) {
+        updateContext(offsetA, offsetB, dataContext);
+        dataContext.buffer.clear();
+        try {
+            dataContext.fileChannel.read(dataContext.buffer, ((long) offsetA) * Constants.DATA_SIZE);
+        } catch (IOException e) {
+            e.printStackTrace(System.out);
+        }
+        dataContext.buffer.flip();
     }
 
 }

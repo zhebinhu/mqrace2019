@@ -1,7 +1,6 @@
 package io.openmessaging;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -11,7 +10,7 @@ public class Writer {
 
     private final static int cap = Constants.WRITER_CAP;
 
-    private LongAdder size = new LongAdder();
+    private AtomicInteger size = new AtomicInteger(0);
 
     private int pWrite = 0;
 
@@ -31,7 +30,7 @@ public class Writer {
             LockSupport.park();
         }
         messages[pWrite] = message;
-        size.increment();
+        size.getAndIncrement();
         pWrite = (pWrite + 1) % cap;
     }
 
@@ -44,8 +43,7 @@ public class Writer {
         }
         Message result = messages[pRead];
         pRead = (pRead + 1) % cap;
-        size.decrement();
-        if (size.intValue() == 0) {
+        if (size.decrementAndGet() == 0) {
             //System.out.println("unpark");
             LockSupport.unpark(thread);
         }
