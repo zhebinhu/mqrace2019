@@ -12,9 +12,9 @@ public class Constants {
     // writer缓冲区
     public final static int WRITER_CAP = 16 * 1024;
     // data写入缓冲区
-    public final static int DATA_CAP = 34 * 1024 * 32;
+    public final static int DATA_CAP = 34 * 1024 * 1024;
     // value写入缓冲区
-    public final static int VALUE_CAP = 8 * 1024 * 32;
+    public final static int VALUE_CAP = 32 * 1024 * 1024;
     // data 的大小
     public final static int DATA_SIZE = 34;
 
