@@ -10,7 +10,7 @@ public class Constants {
     public final static int MESSAGE_NUM = 4 * 1024;
 
     // writer缓冲区
-    public final static int WRITER_CAP = 8 * 1024;
+    public final static int WRITER_CAP = 16 * 1024;
     // data写入缓冲区
     public final static int DATA_CAP = 34 * 1024 * 32;
     // value写入缓冲区

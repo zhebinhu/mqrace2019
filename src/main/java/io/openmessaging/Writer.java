@@ -1,12 +1,8 @@
 package io.openmessaging;
 
-import java.nio.channels.FileChannel;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -15,7 +11,7 @@ public class Writer {
 
     private final static int cap = Constants.WRITER_CAP;
 
-    private AtomicInteger size = new AtomicInteger(0);
+    private LongAdder size = new LongAdder();
 
     private int pWrite = 0;
 
@@ -35,7 +31,7 @@ public class Writer {
             LockSupport.park();
         }
         messages[pWrite] = message;
-        size.getAndIncrement();
+        size.increment();
         pWrite = (pWrite + 1) % cap;
     }
 
@@ -48,7 +44,7 @@ public class Writer {
         }
         Message result = messages[pRead];
         pRead = (pRead + 1) % cap;
-        size.getAndDecrement();
+        size.decrement();
         if (size.intValue() == 0) {
             //System.out.println("unpark");
             LockSupport.unpark(thread);
