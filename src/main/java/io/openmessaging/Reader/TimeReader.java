@@ -5,8 +5,6 @@ import io.openmessaging.HalfByte;
 import io.openmessaging.Message;
 import io.openmessaging.TimeTags;
 
-import java.nio.ByteBuffer;
-
 /**
  * Created by huzhebin on 2019/08/07.
  */

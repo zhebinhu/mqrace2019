@@ -23,7 +23,7 @@ public class ValueReader {
      */
     private FileChannel fileChannel;
 
-    private final static int bufNum = 32;
+    private final static int bufNum = 64;
 
     /**
      * 堆外内存
@@ -130,7 +130,7 @@ public class ValueReader {
         updateContext(offsetA, offsetB, valueContext);
         valueContext.buffer.clear();
         try {
-            fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
+            valueContext.fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }

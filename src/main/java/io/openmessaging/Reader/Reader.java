@@ -3,6 +3,7 @@ package io.openmessaging.Reader;
 import io.openmessaging.Context.TimeContext;
 import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.ValueContext;
+import io.openmessaging.ContextPool;
 import io.openmessaging.Message;
 import io.openmessaging.MessagePool;
 
@@ -20,6 +21,8 @@ public class Reader {
 
     private DataReader dataReader;
 
+    private ContextPool contextPool;
+
     private long msgNum;
 
     private ThreadLocal<TimeContext> timeContextThreadLocal = new ThreadLocal<>();
@@ -36,6 +39,7 @@ public class Reader {
         timeReader = new TimeReader();
         valueReader = new ValueReader();
         dataReader = new DataReader();
+        contextPool = new ContextPool();
     }
 
     public void put(Message message) {
@@ -52,7 +56,7 @@ public class Reader {
         }
         TimeContext timeContext = timeContextThreadLocal.get();
         if (valueContextThreadLocal.get() == null) {
-            valueContextThreadLocal.set(new ValueContext());
+            valueContextThreadLocal.set(contextPool.getValueContext());
         }
         ValueContext valueContext = valueContextThreadLocal.get();
         if (dataContextThreadLocal.get() == null) {
@@ -82,7 +86,7 @@ public class Reader {
 
     public long avg(long aMin, long aMax, long tMin, long tMax) {
         if (valueContextThreadLocal.get() == null) {
-            valueContextThreadLocal.set(new ValueContext());
+            valueContextThreadLocal.set(contextPool.getValueContext());
         }
         ValueContext valueContext = valueContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
