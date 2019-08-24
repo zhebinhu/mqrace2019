@@ -142,6 +142,7 @@ public class ValueReader {
 
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
         int i = (offsetB - offsetA) / Constants.VALUE_NUM;
+        System.out.println("updateValue:" + i);
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.bufferMinIndex = offsetA;
         valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
@@ -156,5 +157,6 @@ public class ValueReader {
             e.printStackTrace(System.out);
         }
         valueContext.buffer.flip();
+        System.out.println("pre:" + valueContext.buffer.limit());
     }
 }
