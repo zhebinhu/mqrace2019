@@ -1,13 +1,11 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.*;
-import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.TimeContext;
-import io.openmessaging.Context.ValueContext;
+import io.openmessaging.HalfByte;
+import io.openmessaging.Message;
+import io.openmessaging.TimeTags;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.nio.ByteBuffer;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -91,24 +89,5 @@ public class TimeReader {
         } else {
             return context.tag + HalfByte.getLeft(cache[offset / 2]);
         }
-    }
-
-    public List<Message> getMessage(int offsetA, int offsetB, long aMin, long aMax, TimeContext timeContext, ValueContext valueContext, DataContext dataContext, MessagePool messagePool) {
-        List<Message> result = new LinkedList<>();
-        int i = 0;
-        while (offsetA + i < offsetB) {
-            long time = get(offsetA + i, timeContext);
-            long value = valueContext.buffer.getLong();
-            if (value <= aMax && value >= aMin) {
-                Message message = messagePool.get();
-                message.setT(time);
-                message.setA(value);
-                dataContext.buffer.position(i * Constants.DATA_SIZE);
-                dataContext.buffer.get(message.getBody());
-                result.add(message);
-            }
-            i++;
-        }
-        return result;
     }
 }

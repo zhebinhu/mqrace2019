@@ -2,7 +2,6 @@ package io.openmessaging.Reader;
 
 import io.openmessaging.Constants;
 import io.openmessaging.Context.DataContext;
-import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
 
 import java.io.FileNotFoundException;
@@ -10,7 +9,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -34,7 +36,6 @@ public class DataReader {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
-        thread.setPriority(10);
         thread.setDaemon(true);
         return thread;
     });
@@ -83,29 +84,20 @@ public class DataReader {
     }
 
     public void init() {
-        try {
-            int remain = buffers[index].remaining();
-            if (remain > 0) {
-                buffers[index].flip();
+        int remain = buffers[index].remaining();
+        if (remain > 0) {
+            buffers[index].flip();
+            try {
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
             }
-            for (Future future : futures) {
-                if (!future.isDone()) {
-                    future.get();
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
         }
     }
 
-    private void updateContext(int offsetA, int offsetB, DataContext dataContext) {
-        int i = (offsetB - offsetA) / Constants.DATA_NUM;
-        dataContext.buffer = dataContext.bufferList.get(i);
-    }
+    public void getData(int index, Message message, DataContext dataContext) {
 
-    public void pre(int offsetA, int offsetB, DataContext dataContext) {
         if (!inited) {
             synchronized (this) {
                 if (!inited) {
@@ -114,15 +106,21 @@ public class DataReader {
                 }
             }
         }
-        updateContext(offsetA, offsetB, dataContext);
-        dataContext.fileChannel = fileChannel;
-        dataContext.buffer.clear();
-        try {
-            dataContext.fileChannel.read(dataContext.buffer, ((long) offsetA) * Constants.DATA_SIZE);
-        } catch (IOException e) {
-            e.printStackTrace(System.out);
+        if (index >= dataContext.bufferMinIndex && index < dataContext.bufferMaxIndex) {
+            dataContext.buffer.position((index - dataContext.bufferMinIndex) * Constants.DATA_SIZE);
+        } else {
+            dataContext.buffer.clear();
+            try {
+                fileChannel.read(dataContext.buffer, ((long) index) * Constants.DATA_SIZE);
+                dataContext.bufferMinIndex = index;
+                dataContext.bufferMaxIndex = Math.min(index + Constants.DATA_NUM, messageNum);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+            dataContext.buffer.flip();
         }
-        dataContext.buffer.flip();
+
+        dataContext.buffer.get(message.getBody());
     }
 
 }

@@ -36,7 +36,6 @@ public class ValueReader {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
-        thread.setPriority(10);
         thread.setDaemon(true);
         return thread;
     });
@@ -86,21 +85,41 @@ public class ValueReader {
     }
 
     public void init() {
-        try {
-            int remain = buffers[index].remaining();
-            if (remain > 0) {
-                buffers[index].flip();
+        int remain = buffers[index].remaining();
+        if (remain > 0) {
+            buffers[index].flip();
+            try {
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
             }
-            for (Future future : futures) {
-                if (!future.isDone()) {
-                    future.get();
+        }
+    }
+
+    public long get(int index, ValueContext valueContext) {
+        if (!inited) {
+            synchronized (this) {
+                if (!inited) {
+                    init();
+                    inited = true;
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
         }
+        if (index >= valueContext.bufferMinIndex && index < valueContext.bufferMaxIndex) {
+            valueContext.buffer.position((index - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
+        } else {
+            valueContext.buffer.clear();
+            try {
+                fileChannel.read(valueContext.buffer, ((long) index) * Constants.VALUE_SIZE);
+                valueContext.bufferMinIndex = index;
+                valueContext.bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+            valueContext.buffer.flip();
+        }
+        return valueContext.buffer.getLong();
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
@@ -108,7 +127,14 @@ public class ValueReader {
         int count = 0;
         long value;
         //找到合适的buffer
-        pre(offsetA, offsetB, valueContext);
+        updateContext(offsetA, offsetB, valueContext);
+        valueContext.buffer.clear();
+        try {
+            fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
+        } catch (IOException e) {
+            e.printStackTrace(System.out);
+        }
+        valueContext.buffer.flip();
         while (offsetA < offsetB) {
             value = valueContext.buffer.getLong();
             if (value <= aMax && value >= aMin) {
@@ -123,25 +149,7 @@ public class ValueReader {
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
         int i = (offsetB - offsetA) / Constants.VALUE_NUM;
         valueContext.buffer = valueContext.bufferList.get(i);
-    }
-
-    public void pre(int offsetA, int offsetB, ValueContext valueContext) {
-        if (!inited) {
-            synchronized (this) {
-                if (!inited) {
-                    init();
-                    inited = true;
-                }
-            }
-        }
-        valueContext.fileChannel = fileChannel;
-        updateContext(offsetA, offsetB, valueContext);
-        valueContext.buffer.clear();
-        try {
-            valueContext.fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
-        } catch (IOException e) {
-            e.printStackTrace(System.out);
-        }
-        valueContext.buffer.flip();
+        valueContext.bufferMinIndex = offsetA;
+        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
     }
 }
