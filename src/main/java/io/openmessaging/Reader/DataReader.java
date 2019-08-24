@@ -10,10 +10,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -24,7 +21,7 @@ public class DataReader {
      */
     private FileChannel fileChannel;
 
-    private final static int bufNum = 16;
+    private final static int bufNum = 8;
 
     /**
      * 堆外内存
@@ -96,13 +93,25 @@ public class DataReader {
                 e.printStackTrace(System.out);
             }
         }
+        for(Future future:futures){
+            if(!future.isDone()){
+                try {
+                    future.get();
+                } catch (Exception e) {
+                    e.printStackTrace(System.out);
+                }
+            }
+        }
+        try {
+            fileChannel.close();
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+        }
     }
 
     private void updateContext(int offsetA, int offsetB, DataContext dataContext) {
         int i = (offsetB - offsetA) / Constants.DATA_NUM;
         dataContext.buffer = dataContext.bufferList.get(i);
-        dataContext.bufferMinIndex = offsetA;
-        dataContext.bufferMaxIndex = Math.min(offsetA + (Constants.DATA_NUM * (i + 1)), messageNum);
     }
 
     public void pre(int offsetA, int offsetB, DataContext dataContext) {

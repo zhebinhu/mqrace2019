@@ -17,7 +17,7 @@ public class DataContext {
 
     {
         try {
-            fileChannel = new RandomAccessFile(Constants.URL + "100.data", "rw").getChannel();
+            fileChannel = new RandomAccessFile(Constants.URL + "100.data", "r").getChannel();
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }
@@ -32,8 +32,4 @@ public class DataContext {
 
     public List<ByteBuffer> bufferList = new ArrayList<>();
     public ByteBuffer buffer;
-
-    public int bufferMaxIndex = 0;
-
-    public int bufferMinIndex = 0;
 }

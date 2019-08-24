@@ -17,7 +17,7 @@ public class ValueContext {
 
     {
         try {
-            fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
+            fileChannel = new RandomAccessFile(Constants.URL + "100.value", "r").getChannel();
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }

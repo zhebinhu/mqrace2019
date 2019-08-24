@@ -96,6 +96,20 @@ public class ValueReader {
                 e.printStackTrace(System.out);
             }
         }
+        for(Future future:futures){
+            if(!future.isDone()){
+                try {
+                    future.get();
+                } catch (Exception e) {
+                    e.printStackTrace(System.out);
+                }
+            }
+        }
+        try {
+            fileChannel.close();
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+        }
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
@@ -117,7 +131,6 @@ public class ValueReader {
 
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
         int i = (offsetB - offsetA) / Constants.VALUE_NUM;
-        System.out.println("updateValue:" + i);
         valueContext.buffer = valueContext.bufferList.get(i);
     }
 
