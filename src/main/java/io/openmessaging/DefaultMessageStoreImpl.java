@@ -75,6 +75,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 synchronized (this) {
                     if (!get) {
                         System.out.println("get:" + System.currentTimeMillis());
+                        reader.init();
                         future.get();
                         get = true;
                     }

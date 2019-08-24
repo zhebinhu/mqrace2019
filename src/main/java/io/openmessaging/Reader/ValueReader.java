@@ -91,21 +91,18 @@ public class ValueReader {
             try {
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
-            } catch (IOException e) {
+                for(Future future:futures){
+                    if(!future.isDone()){
+                        future.get();
+                    }
+                }
+            } catch (Exception e) {
                 e.printStackTrace(System.out);
             }
         }
     }
 
     public long get(int index, ValueContext valueContext) {
-        if (!inited) {
-            synchronized (this) {
-                if (!inited) {
-                    init();
-                    inited = true;
-                }
-            }
-        }
         if (index >= valueContext.bufferMinIndex && index < valueContext.bufferMaxIndex) {
             valueContext.buffer.position((index - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
         } else {

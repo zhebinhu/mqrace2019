@@ -51,13 +51,6 @@ public class TimeReader {
     }
 
     public int getOffset(long time) {
-        if (!init) {
-            synchronized (this) {
-                if (!init) {
-                    init();
-                }
-            }
-        }
         int tagIndex = timeTags.tagIndex(time);
         long pTag = timeTags.getTag(tagIndex);
         int pOffset = timeTags.getOffset(tagIndex);

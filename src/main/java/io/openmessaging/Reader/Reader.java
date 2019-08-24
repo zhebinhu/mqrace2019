@@ -94,4 +94,10 @@ public class Reader {
         int offsetB = timeReader.getOffset(tMax + 1);
         return valueReader.avg(offsetA,offsetB,aMin,aMax,valueContext);
     }
+
+    public void init() {
+        valueReader.init();
+        dataReader.init();
+        timeReader.init();
+    }
 }
