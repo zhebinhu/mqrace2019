@@ -86,27 +86,18 @@ public class ValueReader {
     }
 
     public void init() {
-        int remain = buffers[index].remaining();
-        if (remain > 0) {
-            buffers[index].flip();
-            try {
+        try {
+            int remain = buffers[index].remaining();
+            if (remain > 0) {
+                buffers[index].flip();
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
             }
-        }
-        for(Future future:futures){
-            if(!future.isDone()){
-                try {
+            for (Future future : futures) {
+                if (!future.isDone()) {
                     future.get();
-                } catch (Exception e) {
-                    e.printStackTrace(System.out);
                 }
             }
-        }
-        try {
-            fileChannel.close();
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -143,6 +134,7 @@ public class ValueReader {
                 }
             }
         }
+        valueContext.fileChannel = fileChannel;
         updateContext(offsetA, offsetB, valueContext);
         valueContext.buffer.clear();
         try {
@@ -151,6 +143,5 @@ public class ValueReader {
             e.printStackTrace(System.out);
         }
         valueContext.buffer.flip();
-        System.out.println("value pre:" + valueContext.buffer.position() + " " + valueContext.buffer.limit() + " " + valueContext.buffer.capacity() + " offsetA:" + offsetA + " offsetB:" + offsetB);
     }
 }

@@ -83,27 +83,18 @@ public class DataReader {
     }
 
     public void init() {
-        int remain = buffers[index].remaining();
-        if (remain > 0) {
-            buffers[index].flip();
-            try {
+        try {
+            int remain = buffers[index].remaining();
+            if (remain > 0) {
+                buffers[index].flip();
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
             }
-        }
-        for(Future future:futures){
-            if(!future.isDone()){
-                try {
+            for (Future future : futures) {
+                if (!future.isDone()) {
                     future.get();
-                } catch (Exception e) {
-                    e.printStackTrace(System.out);
                 }
             }
-        }
-        try {
-            fileChannel.close();
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -124,6 +115,7 @@ public class DataReader {
             }
         }
         updateContext(offsetA, offsetB, dataContext);
+        dataContext.fileChannel = fileChannel;
         dataContext.buffer.clear();
         try {
             dataContext.fileChannel.read(dataContext.buffer, ((long) offsetA) * Constants.DATA_SIZE);

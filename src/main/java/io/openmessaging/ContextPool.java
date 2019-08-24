@@ -28,14 +28,12 @@ public class ContextPool {
     public synchronized ValueContext getValueContext() {
         ValueContext valueContext = valueContexts[i];
         i = (i + 1) % 12;
-        System.out.println("valueContext pool:" + i);
         return valueContext;
     }
 
     public synchronized DataContext getDataContext() {
         DataContext dataContext = dataContexts[j];
         j++;
-        System.out.println("dataContext pool:" + j);
         return dataContext;
     }
 

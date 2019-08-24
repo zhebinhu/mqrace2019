@@ -98,22 +98,13 @@ public class TimeReader {
         int i = 0;
         while (offsetA + i < offsetB) {
             long time = get(offsetA + i, timeContext);
-            long value = 0;
-            try {
-                value = valueContext.buffer.getLong();
-            } catch (Exception e) {
-                System.out.println("value error:" + valueContext.buffer.position() + " " + valueContext.buffer.limit() + " " + (offsetB - offsetA) + " " + i);
-            }
+            long value = valueContext.buffer.getLong();
             if (value <= aMax && value >= aMin) {
                 Message message = messagePool.get();
                 message.setT(time);
                 message.setA(value);
-                try {
-                    dataContext.buffer.position(i * Constants.DATA_SIZE);
-                    dataContext.buffer.get(message.getBody());
-                } catch (Exception e) {
-                    System.out.println("data error:" + i * Constants.DATA_SIZE + " " + dataContext.buffer.position() + " " + dataContext.buffer.limit() + " " + (offsetB - offsetA) + " " + i);
-                }
+                dataContext.buffer.position(i * Constants.DATA_SIZE);
+                dataContext.buffer.get(message.getBody());
                 result.add(message);
             }
             i++;

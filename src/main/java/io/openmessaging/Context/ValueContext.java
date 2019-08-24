@@ -15,14 +15,6 @@ import java.util.List;
 public class ValueContext {
     public FileChannel fileChannel;
 
-    {
-        try {
-            fileChannel = new RandomAccessFile(Constants.URL + "100.value", "r").getChannel();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace(System.out);
-        }
-    }
-
     public ValueContext() {
         for (int i = 0; i < 80; i++) {
             bufferList.add(ByteBuffer.allocateDirect(Constants.VALUE_SIZE * (Constants.VALUE_NUM * (i + 1))));
@@ -31,6 +23,5 @@ public class ValueContext {
     }
 
     public List<ByteBuffer> bufferList = new ArrayList<>();
-
     public ByteBuffer buffer;
 }
