@@ -98,31 +98,6 @@ public class ValueReader {
         }
     }
 
-    public long get(int index, ValueContext valueContext) {
-        if (!inited) {
-            synchronized (this) {
-                if (!inited) {
-                    init();
-                    inited = true;
-                }
-            }
-        }
-        if (index >= valueContext.bufferMinIndex && index < valueContext.bufferMaxIndex) {
-            valueContext.buffer.position((index - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
-        } else {
-            valueContext.buffer.clear();
-            try {
-                fileChannel.read(valueContext.buffer, ((long) index) * Constants.VALUE_SIZE);
-                valueContext.bufferMinIndex = index;
-                valueContext.bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
-            }
-            valueContext.buffer.flip();
-        }
-        return valueContext.buffer.getLong();
-    }
-
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
         long sum = 0;
         int count = 0;
@@ -144,11 +119,17 @@ public class ValueReader {
         int i = (offsetB - offsetA) / Constants.VALUE_NUM;
         System.out.println("updateValue:" + i);
         valueContext.buffer = valueContext.bufferList.get(i);
-        valueContext.bufferMinIndex = offsetA;
-        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
     }
 
     public void pre(int offsetA, int offsetB, ValueContext valueContext) {
+        if (!inited) {
+            synchronized (this) {
+                if (!inited) {
+                    init();
+                    inited = true;
+                }
+            }
+        }
         updateContext(offsetA, offsetB, valueContext);
         valueContext.buffer.clear();
         try {
@@ -157,6 +138,6 @@ public class ValueReader {
             e.printStackTrace(System.out);
         }
         valueContext.buffer.flip();
-        System.out.println("pre:" + valueContext.buffer.limit());
+        System.out.println("pre:" + valueContext.buffer.position() + " " + valueContext.buffer.limit() + " " + valueContext.buffer.capacity() + " offsetA:" + offsetA + " offsetB:" + offsetB);
     }
 }
