@@ -61,7 +61,7 @@ public class Reader {
         }
         ValueContext valueContext = valueContextThreadLocal.get();
         if (dataContextThreadLocal.get() == null) {
-            dataContextThreadLocal.set(new DataContext());
+            dataContextThreadLocal.set(contextPool.getDataContext());
         }
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
