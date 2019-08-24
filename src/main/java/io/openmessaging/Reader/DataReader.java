@@ -123,7 +123,6 @@ public class DataReader {
             e.printStackTrace(System.out);
         }
         dataContext.buffer.flip();
-        System.out.println("data pre:" + dataContext.buffer.position() + " " + dataContext.buffer.limit() + " " + dataContext.buffer.capacity() + " offsetA:" + offsetA + " offsetB:" + offsetB);
     }
 
 }

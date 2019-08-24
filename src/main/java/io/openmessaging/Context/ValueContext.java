@@ -2,8 +2,6 @@ package io.openmessaging.Context;
 
 import io.openmessaging.Constants;
 
-import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
