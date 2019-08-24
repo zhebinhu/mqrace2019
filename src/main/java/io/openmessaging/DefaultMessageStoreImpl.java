@@ -1,11 +1,14 @@
 package io.openmessaging;
 
-import com.sun.management.OperatingSystemMXBean;
 import io.openmessaging.Reader.Reader;
 
-import java.lang.management.ManagementFactory;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -29,9 +32,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean merged = false;
 
-    //private ForkJoinPool forkJoinPool1 = new ForkJoinPool(20);
-
-    //private ForkJoinPool forkJoinPool2 = new ForkJoinPool(20);
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
@@ -47,8 +47,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
     });
 
     private Future future;
-
-    //private Set<Thread> threadSet = new HashSet<>();
 
     @Override
     public void put(Message message) {
