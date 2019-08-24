@@ -98,33 +98,6 @@ public class DataReader {
         }
     }
 
-    public void getData(int index, Message message, DataContext dataContext) {
-
-        if (!inited) {
-            synchronized (this) {
-                if (!inited) {
-                    init();
-                    inited = true;
-                }
-            }
-        }
-        if (index >= dataContext.bufferMinIndex && index < dataContext.bufferMaxIndex) {
-            dataContext.buffer.position((index - dataContext.bufferMinIndex) * Constants.DATA_SIZE);
-        } else {
-            dataContext.buffer.clear();
-            try {
-                fileChannel.read(dataContext.buffer, ((long) index) * Constants.DATA_SIZE);
-                dataContext.bufferMinIndex = index;
-                dataContext.bufferMaxIndex = Math.min(index + Constants.DATA_NUM, messageNum);
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
-            }
-            dataContext.buffer.flip();
-        }
-
-        dataContext.buffer.get(message.getBody());
-    }
-
     private void updateContext(int offsetA, int offsetB, DataContext dataContext) {
         int i = (offsetB - offsetA) / Constants.DATA_NUM;
         dataContext.buffer = dataContext.bufferList.get(i);
@@ -133,6 +106,14 @@ public class DataReader {
     }
 
     public void pre(int offsetA, int offsetB, DataContext dataContext) {
+        if (!inited) {
+            synchronized (this) {
+                if (!inited) {
+                    init();
+                    inited = true;
+                }
+            }
+        }
         updateContext(offsetA, offsetB, dataContext);
         dataContext.buffer.clear();
         try {
@@ -141,6 +122,7 @@ public class DataReader {
             e.printStackTrace(System.out);
         }
         dataContext.buffer.flip();
+        System.out.println("data pre:" + dataContext.buffer.position() + " " + dataContext.buffer.limit() + " " + dataContext.buffer.capacity() + " offsetA:" + offsetA + " offsetB:" + offsetB);
     }
 
 }

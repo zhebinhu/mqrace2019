@@ -138,6 +138,6 @@ public class ValueReader {
             e.printStackTrace(System.out);
         }
         valueContext.buffer.flip();
-        System.out.println("pre:" + valueContext.buffer.position() + " " + valueContext.buffer.limit() + " " + valueContext.buffer.capacity() + " offsetA:" + offsetA + " offsetB:" + offsetB);
+        System.out.println("value pre:" + valueContext.buffer.position() + " " + valueContext.buffer.limit() + " " + valueContext.buffer.capacity() + " offsetA:" + offsetA + " offsetB:" + offsetB);
     }
 }
