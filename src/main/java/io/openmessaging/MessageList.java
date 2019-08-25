@@ -7,14 +7,16 @@ import java.util.*;
  */
 public class MessageList extends AbstractList<Message> {
     private Message[] data = new Message[80000];
+
     private int size = 0;
 
-    public MessageList(){
+    public MessageList() {
         super();
         for (int i = 0; i < 80000; i++) {
             data[i] = new Message(0, 0, new byte[34]);
         }
     }
+
     @Override
     public Message get(int index) {
         return data[index];
@@ -30,16 +32,22 @@ public class MessageList extends AbstractList<Message> {
     }
 
     @Override
-    public boolean add(Message m){
+    public boolean add(Message m) {
         data[size] = m;
         size++;
         return true;
     }
 
     @Override
-    public void clear(){
+    public void clear() {
         size = 0;
     }
 
+    @Override
+    public Message set(int index, Message m) {
+        Message result = data[index];
+        data[index] = m;
+        return result;
+    }
 
 }
