@@ -1,7 +1,5 @@
 package io.openmessaging;
 
-import java.util.Arrays;
-
 /**
  * Created by huzhebin on 2019/08/08.
  */
