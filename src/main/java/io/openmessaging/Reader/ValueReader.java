@@ -36,6 +36,7 @@ public class ValueReader {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
+        thread.setPriority(10);
         thread.setDaemon(true);
         return thread;
     });
@@ -88,6 +89,7 @@ public class ValueReader {
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
             }
+            fileChannel.close();
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -115,7 +117,7 @@ public class ValueReader {
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.buffer.clear();
         try {
-            fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
+            valueContext.fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }

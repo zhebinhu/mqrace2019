@@ -77,7 +77,7 @@ public class DataReader {
             index = newIndex;
             buffers[index].clear();
         }
-        buffers[index].put(message.getBody(),2,32);
+        buffers[index].put(message.getBody());
         messageNum++;
     }
 
@@ -88,8 +88,8 @@ public class DataReader {
             try {
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
-                for(Future future:futures){
-                    if(!future.isDone()){
+                for (Future future : futures) {
+                    if (!future.isDone()) {
                         future.get();
                     }
                 }
@@ -114,7 +114,7 @@ public class DataReader {
             dataContext.buffer.flip();
         }
 
-        dataContext.buffer.get(message.getBody(),2,32);
+        dataContext.buffer.get(message.getBody());
     }
 
 }
