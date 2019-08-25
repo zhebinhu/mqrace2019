@@ -1,13 +1,14 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.TimeContext;
+import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.ValueContext;
 import io.openmessaging.ContextPool;
 import io.openmessaging.Message;
 import io.openmessaging.MessagePool;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -60,7 +61,7 @@ public class Reader {
         }
         ValueContext valueContext = valueContextThreadLocal.get();
         if (dataContextThreadLocal.get() == null) {
-            dataContextThreadLocal.set(contextPool.getDataContext());
+            dataContextThreadLocal.set(new DataContext());
         }
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);

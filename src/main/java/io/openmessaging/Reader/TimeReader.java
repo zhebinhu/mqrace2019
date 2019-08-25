@@ -4,13 +4,18 @@ import io.openmessaging.Context.TimeContext;
 import io.openmessaging.HalfByte;
 import io.openmessaging.Message;
 import io.openmessaging.TimeTags;
+import io.openmessaging.UnsafeWrapper;
+import sun.misc.Unsafe;
+
+import java.lang.reflect.Field;
 
 /**
  * Created by huzhebin on 2019/08/07.
  */
 public class TimeReader {
 
-    private byte[] cache = new byte[Integer.MAX_VALUE / 2];
+    //private byte[] cache = new byte[Integer.MAX_VALUE / 2];
+    private long base;
 
     private TimeTags timeTags = new TimeTags(100000000);
 
@@ -21,6 +26,10 @@ public class TimeReader {
     private volatile boolean init = false;
 
     private long tag = 0;
+
+    TimeReader() {
+        base = UnsafeWrapper.unsafe.allocateMemory(Integer.MAX_VALUE / 2);
+    }
 
     public void put(Message message) {
         long t = message.getT();
@@ -34,7 +43,7 @@ public class TimeReader {
             halfByte.setRight((byte) (t - tag));
         } else {
             halfByte.setLeft((byte) (t - tag));
-            cache[msgNum / 2] = halfByte.getByte();
+            UnsafeWrapper.unsafe.putByte(base + msgNum / 2, halfByte.getByte());
             halfByte.setByte((byte) 0);
         }
         msgNum++;
@@ -42,7 +51,7 @@ public class TimeReader {
 
     public void init() {
         //cache.put(msgNum / 2, halfByte.getByte());
-        cache[msgNum / 2] = halfByte.getByte();
+        UnsafeWrapper.unsafe.putByte(base + msgNum / 2, halfByte.getByte());
         //System.out.println("time max:" + max + " count256:" + count256 + " count65536:" + count65536 + " count15:" + count15);
         System.out.println("msgnum:" + msgNum);
         init = true;
@@ -56,9 +65,9 @@ public class TimeReader {
         while (pTime < time && pOffset < msgNum) {
             pOffset++;
             if (pOffset % 2 == 0) {
-                pTime = pTag + HalfByte.getRight(cache[pOffset / 2]);
+                pTime = pTag + HalfByte.getRight(UnsafeWrapper.unsafe.getByte(base + pOffset / 2));
             } else {
-                pTime = pTag + HalfByte.getLeft(cache[pOffset / 2]);
+                pTime = pTag + HalfByte.getLeft(UnsafeWrapper.unsafe.getByte(base + pOffset / 2));
             }
         }
         return pOffset;
@@ -76,9 +85,9 @@ public class TimeReader {
             }
         }
         if (offset % 2 == 0) {
-            return context.tag + HalfByte.getRight(cache[offset / 2]);
+            return context.tag + HalfByte.getRight(UnsafeWrapper.unsafe.getByte(base+offset / 2));
         } else {
-            return context.tag + HalfByte.getLeft(cache[offset / 2]);
+            return context.tag + HalfByte.getLeft(UnsafeWrapper.unsafe.getByte(base+offset / 2));
         }
     }
 }

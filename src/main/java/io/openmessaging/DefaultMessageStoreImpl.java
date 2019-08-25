@@ -76,10 +76,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (messagePoolThreadLocal.get() == null) {
                 messagePoolThreadLocal.set(new MessagePool());
             }
-            long starttime = System.currentTimeMillis();
+//            long starttime = System.currentTimeMillis();
             result = reader.get(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get());
-            long endtime = System.currentTimeMillis();
-            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+//            long endtime = System.currentTimeMillis();
+//            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
