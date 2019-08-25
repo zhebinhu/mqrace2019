@@ -197,7 +197,9 @@ public class DemoTester {
                         }
 
                         Message msg = iter.next();
-                        if (msg.getA() != msg.getT() || msg.getA() != index1+base || ByteBuffer.wrap(msg.getBody()).getLong() != index1|| ByteBuffer.wrap(msg.getBody()).getLong(8) != index1|| ByteBuffer.wrap(msg.getBody()).getLong(16) != index1|| ByteBuffer.wrap(msg.getBody()).getLong(24) != index1) {
+
+                        if (msg.getA() != msg.getT() || msg.getA() != index1+base || ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
+
                             checkError();
                         }
 
