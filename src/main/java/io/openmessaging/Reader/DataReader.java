@@ -77,7 +77,7 @@ public class DataReader {
             index = newIndex;
             buffers[index].clear();
         }
-        buffers[index].put(message.getBody());
+        buffers[index].put(message.getBody(),1,32);
         messageNum++;
     }
 
@@ -114,7 +114,7 @@ public class DataReader {
             dataContext.buffer.flip();
         }
 
-        dataContext.buffer.get(message.getBody());
+        dataContext.buffer.get(message.getBody(),1,32);
     }
 
 }

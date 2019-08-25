@@ -1,6 +1,7 @@
 package io.openmessaging.Reader;
 
 import io.openmessaging.*;
+import io.openmessaging.Context.Context;
 import io.openmessaging.Context.TimeContext;
 import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.ValueContext;
@@ -20,70 +21,48 @@ public class Reader {
 
     private DataReader dataReader;
 
-    private ContextPool contextPool;
-
-    private long msgNum;
-
-    private ThreadLocal<TimeContext> timeContextThreadLocal = new ThreadLocal<>();
+    private ThreadLocal<Context> contextThreadLocal = new ThreadLocal<>();
 
     private ThreadLocal<ValueContext> valueContextThreadLocal = new ThreadLocal<>();
-
-    private ThreadLocal<DataContext> dataContextThreadLocal = new ThreadLocal<>();
-
-    private ThreadLocal<MessageList> messageListThreadLocal = new ThreadLocal<>();
 
     public Reader() {
         timeReader = new TimeReader();
         valueReader = new ValueReader();
         dataReader = new DataReader();
-        contextPool = new ContextPool();
     }
 
     public void put(Message message) {
         timeReader.put(message);
         valueReader.put(message);
         dataReader.put(message);
-        msgNum++;
     }
 
     public List<Message> get(long aMin, long aMax, long tMin, long tMax) {
-        if(messageListThreadLocal.get()==null){
-            messageListThreadLocal.set(new MessageList());
+        if(contextThreadLocal.get()==null){
+            contextThreadLocal.set(new Context());
         }
-        MessageList result = messageListThreadLocal.get();
-        result.clear();
-        if (timeContextThreadLocal.get() == null) {
-            timeContextThreadLocal.set(new TimeContext());
-        }
-        TimeContext timeContext = timeContextThreadLocal.get();
-        if (valueContextThreadLocal.get() == null) {
-            valueContextThreadLocal.set(contextPool.getValueContext());
-        }
-        ValueContext valueContext = valueContextThreadLocal.get();
-        if (dataContextThreadLocal.get() == null) {
-            dataContextThreadLocal.set(new DataContext());
-        }
-        DataContext dataContext = dataContextThreadLocal.get();
+        Context context = contextThreadLocal.get();
+        context.messageList.clear();
         int offsetA = timeReader.getOffset(tMin);
         int offsetB = timeReader.getOffset(tMax+1);
-        valueReader.updateContext(offsetA,offsetB,valueContext);
+        valueReader.updateContext(offsetA,offsetB,context.valueContext);
         while (offsetA < offsetB) {
-            long time = timeReader.get(offsetA, timeContext);
-            long value = valueContext.buffer.getLong();
+            long time = timeReader.get(offsetA, context.timeContext);
+            long value = context.valueContext.buffer.getLong();
             if (value <= aMax && value >= aMin) {
-                Message message = result.get();
+                Message message = context.messageList.get();
                 message.setT(time);
                 message.setA(value);
-                dataReader.getData(offsetA, message, dataContext);
+                dataReader.getData(offsetA, message, context.dataContext);
             }
             offsetA++;
         }
-        return result;
+        return context.messageList;
     }
 
     public long avg(long aMin, long aMax, long tMin, long tMax) {
         if (valueContextThreadLocal.get() == null) {
-            valueContextThreadLocal.set(contextPool.getValueContext());
+            valueContextThreadLocal.set(ContextPool.getValueContext());
         }
         ValueContext valueContext = valueContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
