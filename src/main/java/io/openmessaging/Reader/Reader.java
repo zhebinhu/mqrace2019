@@ -32,10 +32,6 @@ public class Reader {
 
     private ThreadLocal<DataContext> dataContextThreadLocal = new ThreadLocal<>();
 
-    AtomicLong one = new AtomicLong();
-
-    AtomicLong two = new AtomicLong();
-
     public Reader() {
         timeReader = new TimeReader();
         valueReader = new ValueReader();

@@ -27,13 +27,17 @@ public class TimeReader {
 
     private long tag = 0;
 
+    private long max = 0;
+
     TimeReader() {
         base = UnsafeWrapper.unsafe.allocateMemory(Integer.MAX_VALUE / 2);
     }
 
     public void put(Message message) {
         long t = message.getT();
-
+        if(t>max){
+            max=t;
+        }
         if (tag == 0 || t > tag + 15) {
             tag = t;
             timeTags.add(t, msgNum);
@@ -53,7 +57,7 @@ public class TimeReader {
         //cache.put(msgNum / 2, halfByte.getByte());
         UnsafeWrapper.unsafe.putByte(base + msgNum / 2, halfByte.getByte());
         //System.out.println("time max:" + max + " count256:" + count256 + " count65536:" + count65536 + " count15:" + count15);
-        System.out.println("msgnum:" + msgNum);
+        System.out.println("max:" + max);
         init = true;
     }
 

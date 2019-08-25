@@ -120,7 +120,10 @@ public class DemoTester {
             while ((count = counter.getAndIncrement()) < maxMsgNum && System.currentTimeMillis() <= maxTimeStamp) {
                 try {
                     ByteBuffer buffer = ByteBuffer.allocate(34);
-                    buffer.putLong(0, count);
+                    buffer.putLong(count);
+                    buffer.putLong(count);
+                    buffer.putLong(count);
+                    buffer.putLong(count);
                     // 为测试方便, 插入的是有规律的数据, 不是实际测评的情况
                     messageStore.put(new Message(count+base, count+base, buffer.array()));
                     if ((count & 0x1L) == 0) {
@@ -194,7 +197,7 @@ public class DemoTester {
                         }
 
                         Message msg = iter.next();
-                        if (msg.getA() != msg.getT() || msg.getA() != index1+base || ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
+                        if (msg.getA() != msg.getT() || msg.getA() != index1+base || ByteBuffer.wrap(msg.getBody()).getLong() != index1|| ByteBuffer.wrap(msg.getBody()).getLong(8) != index1|| ByteBuffer.wrap(msg.getBody()).getLong(16) != index1|| ByteBuffer.wrap(msg.getBody()).getLong(24) != index1) {
                             checkError();
                         }
 
