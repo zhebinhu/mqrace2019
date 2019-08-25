@@ -14,7 +14,7 @@ public class ValueContext {
         for (int i = 0; i < Constants.VALUE_BUF_NUM; i++) {
             bufferList.add(ByteBuffer.allocateDirect(Constants.VALUE_SIZE * (Constants.VALUE_NUM * (i + 1))));
         }
-        buffer = bufferList.get(0);
+        buffer = bufferList.get(7);
     }
 
     public List<ByteBuffer> bufferList = new ArrayList<>();
