@@ -47,7 +47,7 @@ public class Reader {
     }
 
     public List<Message> get(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
-        List<Message> result = new LinkedList<>();
+        List<Message> result = new ArrayList<>();
         if (timeContextThreadLocal.get() == null) {
             timeContextThreadLocal.set(new TimeContext());
         }
