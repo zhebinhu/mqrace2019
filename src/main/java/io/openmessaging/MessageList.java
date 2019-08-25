@@ -47,6 +47,11 @@ public class MessageList extends AbstractList<Message> {
     public Message set(int index, Message m) {
         Message result = data[index];
         data[index] = m;
+        if (m == null) {
+            System.out.println("set null");
+        } else {
+            System.out.println("set " + m.getT());
+        }
         return result;
     }
 
