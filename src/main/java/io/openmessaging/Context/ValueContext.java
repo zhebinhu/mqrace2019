@@ -21,7 +21,4 @@ public class ValueContext {
 
     public ByteBuffer buffer;
 
-    public int bufferMaxIndex = 0;
-
-    public int bufferMinIndex = 0;
 }
