@@ -6,7 +6,7 @@ package io.openmessaging;
 public class MessagePool {
     Message[] messages = new Message[120000];
 
-    volatile int index = 0;
+    private int index = 0;
 
     MessagePool() {
         for (int i = 0; i < 120000; i++) {
@@ -14,7 +14,7 @@ public class MessagePool {
         }
     }
 
-    public synchronized Message get() {
+    public Message get() {
         index = (index + 1) % 120000;
         return messages[index];
     }
