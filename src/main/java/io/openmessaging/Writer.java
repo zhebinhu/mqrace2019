@@ -26,6 +26,7 @@ public class Writer {
 
     public void put(Message message) {
         while (size.intValue() == cap) {
+            //System.out.println("put full");
             LockSupport.park();
         }
         messages[pWrite] = message;
@@ -38,10 +39,12 @@ public class Writer {
             if (!thread.isAlive()) {
                 return null;
             }
+            //System.out.println("get empty");
         }
         Message result = messages[pRead];
         pRead = (pRead + 1) % cap;
         if (size.decrementAndGet() == 0) {
+            //System.out.println("unpark");
             LockSupport.unpark(thread);
         }
         return result;

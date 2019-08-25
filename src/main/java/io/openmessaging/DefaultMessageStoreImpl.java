@@ -9,6 +9,7 @@ import java.util.PriorityQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 这是一个简单的基于内存的实现，以方便选手理解题意； 实际提交时，请维持包名和类名不变，把方法实现修改为自己的内容；
@@ -27,7 +28,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean end = false;
 
-    //private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
+    private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
@@ -72,11 +73,11 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-//            if (messagePoolThreadLocal.get() == null) {
-//                messagePoolThreadLocal.set(new MessagePool());
-//            }
+            if (messagePoolThreadLocal.get() == null) {
+                messagePoolThreadLocal.set(new MessagePool());
+            }
 //            long starttime = System.currentTimeMillis();
-            result = reader.get(aMin, aMax, tMin, tMax);
+            result = reader.get(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get());
 //            long endtime = System.currentTimeMillis();
 //            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {

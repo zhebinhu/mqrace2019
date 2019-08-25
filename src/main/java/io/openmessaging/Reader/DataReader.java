@@ -22,7 +22,7 @@ public class DataReader {
      */
     private FileChannel fileChannel;
 
-    private final static int bufNum = 8;
+    private final int bufNum = 16;
 
     /**
      * 堆外内存
@@ -82,20 +82,19 @@ public class DataReader {
     }
 
     public void init() {
-        int remain = buffers[index].remaining();
-        if (remain > 0) {
-            buffers[index].flip();
-            try {
+        try {
+            for (Future future : futures) {
+                if (!future.isDone()) {
+                    future.get();
+                }
+            }
+            if (buffers[index].hasRemaining()) {
+                buffers[index].flip();
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
-                for (Future future : futures) {
-                    if (!future.isDone()) {
-                        future.get();
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace(System.out);
             }
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
         }
     }
 

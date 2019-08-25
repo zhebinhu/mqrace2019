@@ -121,9 +121,6 @@ public class DemoTester {
                 try {
                     ByteBuffer buffer = ByteBuffer.allocate(34);
                     buffer.putLong(count);
-                    buffer.putLong(count);
-                    buffer.putLong(count);
-                    buffer.putLong(count);
                     // 为测试方便, 插入的是有规律的数据, 不是实际测评的情况
                     messageStore.put(new Message(count+base, count+base, buffer.array()));
                     if ((count & 0x1L) == 0) {
