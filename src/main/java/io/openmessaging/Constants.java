@@ -18,7 +18,7 @@ public class Constants {
     // data 的大小
     public final static int DATA_SIZE = 34;
 
-    public final static int DATA_NUM = 1024;
+    public final static int DATA_NUM = 2*1024;
 
     public final static int DATA_BUF_NUM = 80;
 

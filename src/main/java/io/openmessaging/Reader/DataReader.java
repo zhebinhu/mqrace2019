@@ -1,6 +1,5 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.ByteBufferPool;
 import io.openmessaging.Constants;
 import io.openmessaging.Context.DataContext;
 import io.openmessaging.Message;
@@ -13,6 +12,7 @@ import java.nio.channels.FileChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Created by huzhebin on 2019/07/23.
@@ -23,7 +23,7 @@ public class DataReader {
      */
     private FileChannel fileChannel;
 
-    private final static int bufNum = 16;
+    private final static int bufNum = 8;
 
     /**
      * 堆外内存
@@ -100,23 +100,22 @@ public class DataReader {
         }
     }
 
-    public void updateContext(int offsetA, int offsetB, DataContext dataContext) {
-        int i = (offsetB - offsetA) / Constants.DATA_NUM;
-        while (i < Constants.DATA_BUF_NUM && !ByteBufferPool.dataFlags[i].compareAndSet(0, 1)) {
-            i++;
-        }
-        if (i == Constants.DATA_BUF_NUM) {
-            dataContext.buffer = dataContext.buffer2;
+    public void getData(int index, Message message, DataContext dataContext) {
+        if (index >= dataContext.bufferMinIndex && index < dataContext.bufferMaxIndex) {
+            dataContext.buffer.position((index - dataContext.bufferMinIndex) * Constants.DATA_SIZE);
         } else {
-            dataContext.buffer = ByteBufferPool.dataBuffers[i];
+            dataContext.buffer.clear();
+            try {
+                fileChannel.read(dataContext.buffer, ((long) index) * Constants.DATA_SIZE);
+                dataContext.bufferMinIndex = index;
+                dataContext.bufferMaxIndex = Math.min(index + Constants.DATA_NUM, messageNum);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+            dataContext.buffer.flip();
         }
-        dataContext.buffer.clear();
-        try {
-            fileChannel.read(dataContext.buffer, ((long) offsetA) * Constants.DATA_SIZE);
-        } catch (IOException e) {
-            e.printStackTrace(System.out);
-        }
-        dataContext.buffer.flip();
+
+        dataContext.buffer.get(message.getBody());
     }
 
 }
