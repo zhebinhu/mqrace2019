@@ -47,7 +47,7 @@ public class Reader {
     }
 
     public List<Message> get(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
-        List<Message> result = new ArrayList<>();
+        List<Message> result = new LinkedList<>();
         if (timeContextThreadLocal.get() == null) {
             timeContextThreadLocal.set(new TimeContext());
         }
@@ -61,21 +61,18 @@ public class Reader {
         }
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
-        while (offsetA < msgNum) {
+        int offsetB = timeReader.getOffset(tMax+1);
+        valueReader.updateContext(offsetA,offsetB,valueContext);
+        while (offsetA < offsetB) {
             long time = timeReader.get(offsetA, timeContext);
-            if (time > tMax) {
-                return result;
+            long value = valueContext.buffer.getLong();
+            if (value <= aMax && value >= aMin) {
+                Message message = messagePool.get();
+                message.setT(time);
+                message.setA(value);
+                dataReader.getData(offsetA, message, dataContext);
+                result.add(message);
             }
-            long value = valueReader.get(offsetA, valueContext);
-            if (value > aMax || value < aMin) {
-                offsetA++;
-                continue;
-            }
-            Message message = messagePool.get();
-            message.setT(time);
-            message.setA(value);
-            dataReader.getData(offsetA, message, dataContext);
-            result.add(message);
             offsetA++;
         }
         return result;

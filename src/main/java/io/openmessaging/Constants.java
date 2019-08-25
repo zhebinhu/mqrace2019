@@ -4,11 +4,6 @@ package io.openmessaging;
  * Created by huzhebin on 2019/07/23.
  */
 public class Constants {
-    // T 和 A 的大小
-    public final static int MESSAGE_SIZE = 50;
-
-    public final static int MESSAGE_NUM = 4 * 1024;
-
     // writer缓冲区
     public final static int WRITER_CAP = 16 * 1024;
     // data写入缓冲区
