@@ -15,12 +15,12 @@ public class ByteBufferPool {
             valueFlags[i] = new AtomicInteger(0);
         }
     }
-    public static ByteBuffer[] dataBuffers = new ByteBuffer[Constants.DATA_BUF_NUM];
-    public static AtomicInteger[] dataFlags = new AtomicInteger[Constants.DATA_BUF_NUM];
-    static {
-        for(int i=0;i<Constants.DATA_BUF_NUM;i++){
-            dataBuffers[i] = ByteBuffer.allocateDirect(Constants.DATA_SIZE * (Constants.DATA_NUM * (i + 1)));
-            dataFlags[i] = new AtomicInteger(0);
-        }
-    }
+//    public static ByteBuffer[] dataBuffers = new ByteBuffer[Constants.DATA_BUF_NUM];
+//    public static AtomicInteger[] dataFlags = new AtomicInteger[Constants.DATA_BUF_NUM];
+//    static {
+//        for(int i=0;i<Constants.DATA_BUF_NUM;i++){
+//            dataBuffers[i] = ByteBuffer.allocateDirect(Constants.DATA_SIZE * (Constants.DATA_NUM * (i + 1)));
+//            dataFlags[i] = new AtomicInteger(0);
+//        }
+//    }
 }

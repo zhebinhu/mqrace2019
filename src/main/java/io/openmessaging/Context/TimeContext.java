@@ -9,6 +9,4 @@ public class TimeContext {
     public int offsetB = 0;
 
     public long tag = 0;
-
-    public int tagIndex = 0;
 }
