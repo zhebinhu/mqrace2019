@@ -1,5 +1,6 @@
 package io.openmessaging.Reader;
 
+import io.openmessaging.ByteBufferPool;
 import io.openmessaging.Constants;
 import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
@@ -37,6 +38,7 @@ public class ValueReader {
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
         thread.setDaemon(true);
+        thread.setPriority(10);
         return thread;
     });
 
@@ -91,8 +93,8 @@ public class ValueReader {
             try {
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
-                for(Future future:futures){
-                    if(!future.isDone()){
+                for (Future future : futures) {
+                    if (!future.isDone()) {
                         future.get();
                     }
                 }
@@ -145,8 +147,18 @@ public class ValueReader {
 
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
         int i = (offsetB - offsetA) / Constants.VALUE_NUM;
-        valueContext.buffer = valueContext.bufferList.get(i);
-        valueContext.bufferMinIndex = offsetA;
-        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
+        while (i < Constants.VALUE_BUF_NUM && !ByteBufferPool.flags[i].compareAndSet(0, 1)) {
+            i++;
+        }
+        if (i == Constants.VALUE_BUF_NUM) {
+            valueContext.buffer = valueContext.buffer2;
+            valueContext.bufferMinIndex = offsetA;
+            valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * i), messageNum);
+        } else {
+            valueContext.buffer = ByteBufferPool.byteBuffers[i];
+            valueContext.bufferMinIndex = offsetA;
+            valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
+        }
+
     }
 }

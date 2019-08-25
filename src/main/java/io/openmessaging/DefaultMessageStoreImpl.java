@@ -20,8 +20,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private Reader reader;
 
-    private AtomicInteger num = new AtomicInteger(0);
-
     private volatile boolean put = false;
 
     private volatile boolean get = false;
@@ -30,14 +28,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean end = false;
 
-    private volatile boolean merged = false;
-
-
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
-    private AtomicInteger count = new AtomicInteger(0);
-
-    private volatile boolean inited = false;
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);

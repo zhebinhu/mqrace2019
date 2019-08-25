@@ -37,6 +37,7 @@ public class DataReader {
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
         thread.setDaemon(true);
+        thread.setPriority(10);
         return thread;
     });
 
@@ -44,8 +45,6 @@ public class DataReader {
      * 消息总数
      */
     private int messageNum = 0;
-
-    private volatile boolean inited = false;
 
     public DataReader() {
         try {
