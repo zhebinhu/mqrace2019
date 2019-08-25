@@ -2,7 +2,6 @@ package io.openmessaging.Reader;
 
 import io.openmessaging.Constants;
 import io.openmessaging.Context.DataContext;
-import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
 
 import java.io.FileNotFoundException;
@@ -23,7 +22,7 @@ public class DataReader {
      */
     private FileChannel fileChannel;
 
-    private final int bufNum = 8;
+    private final static int bufNum = 8;
 
     /**
      * 堆外内存
@@ -83,32 +82,39 @@ public class DataReader {
     }
 
     public void init() {
-        try {
-            for (Future future : futures) {
-                if (!future.isDone()) {
-                    future.get();
-                }
-            }
-            if (buffers[index].hasRemaining()) {
-                buffers[index].flip();
+        int remain = buffers[index].remaining();
+        if (remain > 0) {
+            buffers[index].flip();
+            try {
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
+                for(Future future:futures){
+                    if(!future.isDone()){
+                        future.get();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace(System.out);
             }
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
         }
     }
 
-    public void updateContext(int offsetA, int offsetB, DataContext dataContext) {
-        int i = (offsetB - offsetA) / Constants.DATA_NUM;
-        dataContext.buffer = dataContext.bufferList.get(i);
-        dataContext.buffer.clear();
-        try {
-            fileChannel.read(dataContext.buffer, ((long) offsetA) * Constants.DATA_SIZE);
-        } catch (IOException e) {
-            e.printStackTrace(System.out);
+    public void getData(int index, Message message, DataContext dataContext) {
+        if (index >= dataContext.bufferMinIndex && index < dataContext.bufferMaxIndex) {
+            dataContext.buffer.position((index - dataContext.bufferMinIndex) * Constants.DATA_SIZE);
+        } else {
+            dataContext.buffer.clear();
+            try {
+                fileChannel.read(dataContext.buffer, ((long) index) * Constants.DATA_SIZE);
+                dataContext.bufferMinIndex = index;
+                dataContext.bufferMaxIndex = Math.min(index + Constants.DATA_NUM, messageNum);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+            dataContext.buffer.flip();
         }
-        dataContext.buffer.flip();
+
+        dataContext.buffer.get(message.getBody());
     }
 
 }

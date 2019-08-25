@@ -40,13 +40,6 @@ public class ValueReader {
         return thread;
     });
 
-    /**
-     * 消息总数
-     */
-    private int messageNum = 0;
-
-    private volatile boolean inited = false;
-
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
@@ -81,7 +74,6 @@ public class ValueReader {
             buffers[index].clear();
         }
         buffers[index].putLong(message.getA());
-        messageNum++;
     }
 
     public void init() {
