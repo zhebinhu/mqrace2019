@@ -147,7 +147,7 @@ public class ValueReader {
 
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
         int i = (offsetB - offsetA) / Constants.VALUE_NUM;
-        while (i < Constants.VALUE_BUF_NUM && !ByteBufferPool.valueFlags[i].compareAndSet(0, 1)) {
+        while (i < Constants.VALUE_BUF_NUM && !ByteBufferPool.flags[i].compareAndSet(0, 1)) {
             i++;
         }
         if (i == Constants.VALUE_BUF_NUM) {
@@ -155,7 +155,7 @@ public class ValueReader {
             valueContext.bufferMinIndex = offsetA;
             valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * i), messageNum);
         } else {
-            valueContext.buffer = ByteBufferPool.valueBuffers[i];
+            valueContext.buffer = ByteBufferPool.byteBuffers[i];
             valueContext.bufferMinIndex = offsetA;
             valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
         }

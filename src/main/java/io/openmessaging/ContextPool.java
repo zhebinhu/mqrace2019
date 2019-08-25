@@ -33,7 +33,7 @@ public class ContextPool {
 
     public synchronized DataContext getDataContext() {
         DataContext dataContext = dataContexts[j];
-        j++;
+        j = (j + 1) % 12;
         return dataContext;
     }
 

@@ -75,9 +75,9 @@ public class Reader {
                 continue;
             }
             Message message = messagePool.get();
-            message.setT(time+1);
-            message.setA(value+1);
-            dataReader.getData(offsetA+1, message, dataContext);
+            message.setT(time);
+            message.setA(value);
+            dataReader.getData(offsetA, message, dataContext);
             result.add(message);
             offsetA++;
         }
