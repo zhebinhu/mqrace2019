@@ -143,10 +143,10 @@ public class ValueReader {
     }
 
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
-//        int i = (offsetB - offsetA) / Constants.VALUE_NUM;
-//        valueContext.buffer = valueContext.bufferList.get(i);
-//        valueContext.bufferMinIndex = offsetA;
-//        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
-        valueContext.buffer = ByteBuffer.allocate((offsetB-offsetA)*Constants.VALUE_SIZE);
+        int i = (offsetB - offsetA) / Constants.VALUE_NUM;
+        valueContext.buffer = valueContext.bufferList.get(i);
+        valueContext.bufferMinIndex = offsetA;
+        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
+        //valueContext.buffer = ByteBuffer.allocate((offsetB-offsetA)*Constants.VALUE_SIZE);
     }
 }

@@ -18,9 +18,6 @@ public class ContextPool {
     public ContextPool() {
         for (int k = 0; k < 12; k++) {
             valueContexts[k] = new ValueContext();
-        }
-        for (int k = 0; k < 12; k++) {
-            valueContexts[k] = new ValueContext();
             dataContexts[k] = new DataContext();
         }
     }
