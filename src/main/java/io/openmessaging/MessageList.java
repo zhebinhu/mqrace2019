@@ -45,14 +45,7 @@ public class MessageList extends AbstractList<Message> {
 
     @Override
     public Message set(int index, Message m) {
-        Message result = data[index];
-        data[index] = m;
-        if (m == null) {
-            System.out.println("set " + index + " null");
-        } else {
-            System.out.println("set " + index + " " + m.getT());
-        }
-        return result;
+        return data[index];
     }
 
 }
