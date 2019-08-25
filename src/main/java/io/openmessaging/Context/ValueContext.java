@@ -2,7 +2,10 @@ package io.openmessaging.Context;
 
 import io.openmessaging.Constants;
 
+import java.io.FileNotFoundException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +22,15 @@ public class ValueContext {
 
     public List<ByteBuffer> bufferList = new ArrayList<>();
 
-    //public ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.VALUE_SIZE * Constants.VALUE_BUF_NUM * Constants.VALUE_NUM);
+    public FileChannel fileChannel;
+
+    {
+        try {
+            fileChannel = new RandomAccessFile(Constants.URL + "100.value", "r").getChannel();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 
     public ByteBuffer buffer;
 
