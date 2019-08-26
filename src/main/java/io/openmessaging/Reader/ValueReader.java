@@ -118,7 +118,7 @@ public class ValueReader {
             valueContext.buffer.flip();
         }
         long a = valueContext.buffer.getShort() & 0x000000000000ffffL;
-        int b = valueContext.buffer.getInt();
+        long b = valueContext.buffer.getInt() & 0x00000000ffffffffL;
         return a << 32 | b;
     }
 
@@ -130,7 +130,7 @@ public class ValueReader {
         updateContext(offsetA, offsetB, valueContext);
         while (offsetA < offsetB) {
             long a = valueContext.buffer.getShort() & 0x000000000000ffffL;
-            int b = valueContext.buffer.getInt();
+            long b = valueContext.buffer.getInt() & 0x00000000ffffffffL;
             value = a << 32 | b;
             if (value <= aMax && value >= aMin) {
                 sum += value;
