@@ -96,7 +96,6 @@ public class ValueReader {
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
             }
-            fileChannel.close();
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -108,7 +107,7 @@ public class ValueReader {
         } else {
             valueContext.buffer.clear();
             try {
-                valueContext.fileChannel.read(valueContext.buffer, ((long) index) * Constants.VALUE_SIZE);
+                fileChannel.read(valueContext.buffer, ((long) index) * Constants.VALUE_SIZE);
                 valueContext.bufferMinIndex = index;
                 valueContext.bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
             } catch (IOException e) {
@@ -137,19 +136,19 @@ public class ValueReader {
     }
 
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
-//        if (offsetB - offsetA < 512) {
-//            try {
-//                valueContext.buffer = valueContext.fileChannel.map(FileChannel.MapMode.READ_ONLY, ((long) offsetA) * Constants.VALUE_SIZE, (offsetB - offsetA) * Constants.VALUE_SIZE);
-//            } catch (IOException e) {
-//                e.printStackTrace(System.out);
-//            }
-//            return;
-//        }
+        if (offsetB - offsetA < 512) {
+            try {
+                valueContext.buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, ((long) offsetA) * Constants.VALUE_SIZE, (offsetB - offsetA) * Constants.VALUE_SIZE);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+            return;
+        }
         int i = (offsetB - offsetA) / Constants.VALUE_NUM;
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.buffer.clear();
         try {
-            valueContext.fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
+            fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }

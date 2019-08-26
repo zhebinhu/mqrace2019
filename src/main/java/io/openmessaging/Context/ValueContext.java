@@ -22,16 +22,6 @@ public class ValueContext {
 
     public List<ByteBuffer> bufferList = new ArrayList<>();
 
-    public FileChannel fileChannel;
-
-    {
-        try {
-            fileChannel = new RandomAccessFile(Constants.URL + "100.value", "r").getChannel();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
     public ByteBuffer buffer;
 
     public int bufferMaxIndex = 0;
