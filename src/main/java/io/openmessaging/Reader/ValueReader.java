@@ -3,7 +3,6 @@ package io.openmessaging.Reader;
 import io.openmessaging.Constants;
 import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
-import io.openmessaging.UnsafeWrapper;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -49,7 +48,6 @@ public class ValueReader {
     private volatile boolean inited = false;
 
     public ValueReader() {
-        long base = UnsafeWrapper.unsafe.allocateMemory(2 * 1024 * 1024 * 1024L);
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
         } catch (FileNotFoundException e) {
@@ -62,7 +60,6 @@ public class ValueReader {
     }
 
     public void put(Message message) {
-        long value = message.getA();
         if (!buffers[index].hasRemaining()) {
             ByteBuffer tmpBuffer = buffers[index];
             int newIndex = (index + 1) % bufNum;
@@ -71,8 +68,9 @@ public class ValueReader {
                 if (futures[index] == null) {
                     futures[index] = executorService.submit(() -> fileChannel.write(tmpBuffer));
                 } else {
-                    while (!futures[newIndex].isDone()) {
-
+                    if (!futures[newIndex].isDone()) {
+                        System.out.println("value block");
+                        futures[newIndex].get();
                     }
                     futures[index] = executorService.submit(() -> fileChannel.write(tmpBuffer));
                 }
@@ -82,8 +80,7 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        buffers[index].putShort((short) (value >>> 32));
-        buffers[index].putInt((int) value);
+        buffers[index].putLong(message.getA());
         messageNum++;
     }
 
@@ -118,9 +115,7 @@ public class ValueReader {
             }
             valueContext.buffer.flip();
         }
-        long a = valueContext.buffer.getShort() & 0x000000000000ffffL;
-        long b = valueContext.buffer.getInt() & 0x00000000ffffffffL;
-        return a << 32 | b;
+        return valueContext.buffer.getLong();
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
@@ -130,9 +125,7 @@ public class ValueReader {
         //找到合适的buffer
         updateContext(offsetA, offsetB, valueContext);
         while (offsetA < offsetB) {
-            long a = valueContext.buffer.getShort() & 0x000000000000ffffL;
-            long b = valueContext.buffer.getInt() & 0x00000000ffffffffL;
-            value = a << 32 | b;
+            value = valueContext.buffer.getLong();
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
