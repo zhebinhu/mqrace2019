@@ -47,9 +47,6 @@ public class ValueReader {
 
     private volatile boolean inited = false;
 
-    private long max = 0;
-    private long min = Long.MAX_VALUE;
-
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
@@ -63,12 +60,7 @@ public class ValueReader {
     }
 
     public void put(Message message) {
-        if(message.getA()>max){
-            max = message.getA();
-        }
-        if(message.getA()<min){
-            min = message.getA();
-        }
+        long value = message.getA();
         if (!buffers[index].hasRemaining()) {
             ByteBuffer tmpBuffer = buffers[index];
             int newIndex = (index + 1) % bufNum;
@@ -89,7 +81,8 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        buffers[index].putLong(message.getA());
+        buffers[index].putShort((short) (value >>> 32));
+        buffers[index].putInt((int) value);
         messageNum++;
     }
 
@@ -108,7 +101,6 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        System.out.println("value max:"+max+" min:"+min);
     }
 
     public long get(int index, ValueContext valueContext) {
@@ -125,7 +117,9 @@ public class ValueReader {
             }
             valueContext.buffer.flip();
         }
-        return valueContext.buffer.getLong();
+        long a = valueContext.buffer.getShort() & 0x000000000000ffffL;
+        int b = valueContext.buffer.getInt();
+        return a << 32 | b;
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
@@ -135,7 +129,9 @@ public class ValueReader {
         //找到合适的buffer
         updateContext(offsetA, offsetB, valueContext);
         while (offsetA < offsetB) {
-            value = valueContext.buffer.getLong();
+            long a = valueContext.buffer.getShort() & 0x000000000000ffffL;
+            int b = valueContext.buffer.getInt();
+            value = a << 32 | b;
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
