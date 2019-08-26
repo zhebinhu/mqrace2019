@@ -36,6 +36,7 @@ public class ValueReader {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
+        thread.setPriority(10);
         thread.setDaemon(true);
         return thread;
     });

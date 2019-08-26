@@ -7,6 +7,7 @@ import io.openmessaging.ContextPool;
 import io.openmessaging.Message;
 import io.openmessaging.MessageList;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -64,11 +65,10 @@ public class Reader {
         }
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
-        while (offsetA < msgNum) {
+        int offsetB = timeReader.getOffset(tMax+1);
+        dataReader.updateDataContext(offsetA,offsetB,dataContext);
+        while (offsetA < offsetB) {
             long time = timeReader.get(offsetA, timeContext);
-            if (time > tMax) {
-                return result;
-            }
             long value = valueReader.get(offsetA, valueContext);
             if (value > aMax || value < aMin) {
                 offsetA++;
