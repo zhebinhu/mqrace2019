@@ -65,9 +65,8 @@ public class DataReader {
                 if (futures[index] == null) {
                     futures[index] = executorService.submit(() -> fileChannel.write(tmpBuffer));
                 } else {
-                    if (!futures[newIndex].isDone()) {
-                        System.out.println("data block");
-                        futures[newIndex].get();
+                    while (!futures[newIndex].isDone()) {
+
                     }
                     futures[index] = executorService.submit(() -> fileChannel.write(tmpBuffer));
                 }
