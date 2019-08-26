@@ -142,7 +142,7 @@ public class ValueReader {
     }
 
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
-        int i = (offsetB - offsetA) / Constants.VALUE_NUM;
+        int i = (offsetB - offsetA) * 3 >>> 11;
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.buffer.clear();
         try {

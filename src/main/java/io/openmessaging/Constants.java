@@ -21,9 +21,7 @@ public class Constants {
     // value 的大小
     public final static int VALUE_SIZE = 6;
 
-    public final static int VALUE_NUM = 2*1024;
-
-    public final static int VALUE_BUF_NUM = 40;
+    public final static int VALUE_NUM = 4*1024;
 
     //public final static String URL = "/users/huzhebin/data/";
 
