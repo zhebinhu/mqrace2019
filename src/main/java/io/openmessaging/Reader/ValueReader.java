@@ -3,6 +3,7 @@ package io.openmessaging.Reader;
 import io.openmessaging.Constants;
 import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
+import io.openmessaging.UnsafeWrapper;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -48,6 +49,7 @@ public class ValueReader {
     private volatile boolean inited = false;
 
     public ValueReader() {
+        long base = UnsafeWrapper.unsafe.allocateMemory(2 * 1024 * 1024 * 1024L);
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
         } catch (FileNotFoundException e) {
