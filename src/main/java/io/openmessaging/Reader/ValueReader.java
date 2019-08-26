@@ -47,6 +47,9 @@ public class ValueReader {
 
     private volatile boolean inited = false;
 
+    private long max = 0;
+    private long min = Long.MAX_VALUE;
+
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
@@ -60,6 +63,12 @@ public class ValueReader {
     }
 
     public void put(Message message) {
+        if(message.getA()>max){
+            max = message.getA();
+        }
+        if(message.getA()<min){
+            min = message.getA();
+        }
         if (!buffers[index].hasRemaining()) {
             ByteBuffer tmpBuffer = buffers[index];
             int newIndex = (index + 1) % bufNum;
@@ -99,6 +108,7 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
+        System.out.println("value max:"+max+" min:"+min);
     }
 
     public long get(int index, ValueContext valueContext) {
@@ -136,14 +146,6 @@ public class ValueReader {
     }
 
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
-        if (offsetB - offsetA < 512) {
-            try {
-                valueContext.buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, ((long) offsetA) * Constants.VALUE_SIZE, (offsetB - offsetA) * Constants.VALUE_SIZE);
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
-            }
-            return;
-        }
         int i = (offsetB - offsetA) / Constants.VALUE_NUM;
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.buffer.clear();
