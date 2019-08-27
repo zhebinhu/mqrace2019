@@ -10,11 +10,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class DemoTester {
 
-    private static final long base = 10000000000L;
+    private static final long base = Integer.MAX_VALUE-250000000;
     public static void main(String args[]) throws Exception {
         //评测相关配置
         //发送阶段的发送数量，也即发送阶段必须要在规定时间内把这些消息发送完毕方可
-        int msgNum = 200000000;
+        int msgNum = 2000000;
         //发送阶段的最大持续时间，也即在该时间内，如果消息依然没有发送完毕，则退出评测
         int sendTime = 10 * 60 * 1000;
         //查询阶段的最大持续时间，也即在该时间内，如果消息依然没有消费完毕，则退出评测
@@ -25,7 +25,7 @@ public class DemoTester {
         //发送的线程数量
         int sendTsNum = 12;
         //查询的线程数量
-        int checkTsNum = 12;
+        int checkTsNum = 1;
         // 每次查询消息的最大跨度
         int maxMsgCheckSize = 50000;
         // 每次查询求平均的最大跨度
@@ -64,15 +64,15 @@ public class DemoTester {
         AtomicLong msgCheckTimes = new AtomicLong(0);
         AtomicLong msgCheckNum = new AtomicLong(0);
         Thread[] msgChecks = new Thread[checkTsNum];
-        for (int i = 0; i < checkTsNum; i++) {
-            msgChecks[i] = new Thread(new MessageChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxMsgCheckSize, msgCheckTimes, msgCheckNum));
-        }
-        for (int i = 0; i < checkTsNum; i++) {
-            msgChecks[i].start();
-        }
-        for (int i = 0; i < checkTsNum; i++) {
-            msgChecks[i].join();
-        }
+//        for (int i = 0; i < checkTsNum; i++) {
+//            msgChecks[i] = new Thread(new MessageChecker(messageStore, maxCheckTime, checkTimes, msgNum, maxMsgCheckSize, msgCheckTimes, msgCheckNum));
+//        }
+//        for (int i = 0; i < checkTsNum; i++) {
+//            msgChecks[i].start();
+//        }
+//        for (int i = 0; i < checkTsNum; i++) {
+//            msgChecks[i].join();
+//        }
         long msgCheckEnd = System.currentTimeMillis();
         System.out.printf("Message Check: %d ms Num:%d\n", msgCheckEnd - msgCheckStart, msgCheckNum.get());
 
@@ -94,7 +94,7 @@ public class DemoTester {
         System.out.printf("Value Check: %d ms Num: %d\n", checkEnd - checkStart, valueCheckNum.get());
 
         //评测结果
-        System.out.printf("Total Score:%d\n", (msgNum / (sendSend - sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
+        //System.out.printf("Total Score:%d\n", (msgNum / (sendSend - sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
     }
 
     static class Producer implements Runnable {
@@ -300,7 +300,7 @@ public class DemoTester {
                     }
 
                     if (res+base != val) {
-                        checkError(aIndex1, aIndex2, tIndex1, tIndex2, res, val);
+                        checkError(aIndex1+base, aIndex2+base, tIndex1+base, tIndex2+base, res, val);
                     }
 
                     numCounter.getAndAdd(count);

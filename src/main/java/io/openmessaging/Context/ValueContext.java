@@ -11,8 +11,8 @@ import java.util.List;
  */
 public class ValueContext {
     public ValueContext() {
-        for (int i = 0; i < Constants.VALUE_BUF_NUM; i++) {
-            bufferList.add(ByteBuffer.allocateDirect(Constants.VALUE_SIZE * (Constants.VALUE_NUM * (i + 1))));
+        for (int i = 0; i < (8 * 80000) / Constants.PAGE_SIZE; i++) {
+            bufferList.add(ByteBuffer.allocateDirect(Constants.PAGE_SIZE * (i + 1)));
         }
         buffer = bufferList.get(7);
     }
@@ -23,7 +23,5 @@ public class ValueContext {
 
     public ByteBuffer buffer;
 
-    public int bufferMaxIndex = 0;
-
-    public int bufferMinIndex = 0;
+    public int msgLen = 0;
 }

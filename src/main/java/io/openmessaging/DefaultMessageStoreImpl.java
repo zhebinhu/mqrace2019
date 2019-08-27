@@ -29,11 +29,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
 
-
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
         thread.setPriority(10);
-        thread.setDaemon(true);
         return thread;
     });
 
@@ -75,10 +73,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (messagePoolThreadLocal.get() == null) {
                 messagePoolThreadLocal.set(new MessagePool());
             }
-//            long starttime = System.currentTimeMillis();
+            //            long starttime = System.currentTimeMillis();
             result = reader.get(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get());
-//            long endtime = System.currentTimeMillis();
-//            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            //            long endtime = System.currentTimeMillis();
+            //            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -147,9 +145,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
         //                    }
         //                }
         //            }
-        //            long result = reader.avg(aMin, aMax, tMin, tMax);
-        //            long endtime = System.currentTimeMillis();
-        //            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
+        //                    long result = reader.avg(aMin, aMax, tMin, tMax);
+        //                    long endtime = System.currentTimeMillis();
+        //                    System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
         //System.out.println("memory:" + memoryLoad());
         return reader.avg(aMin, aMax, tMin, tMax);
         //return 0L;

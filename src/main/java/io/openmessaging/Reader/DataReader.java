@@ -35,7 +35,6 @@ public class DataReader {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
-        thread.setDaemon(true);
         thread.setPriority(10);
         return thread;
     });

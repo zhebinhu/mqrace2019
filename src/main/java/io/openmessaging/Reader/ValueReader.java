@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -25,6 +26,10 @@ public class ValueReader {
 
     private final int bufNum = 8;
 
+    private int[] valueTags = new int[8];
+
+    private int valueLen = 0;
+
     /**
      * 堆外内存
      */
@@ -36,9 +41,11 @@ public class ValueReader {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
-        thread.setDaemon(true);
+        thread.setPriority(10);
         return thread;
     });
+
+    private ByteBuffer byteBuffer = ByteBuffer.allocate(8);
 
     /**
      * 消息总数
@@ -56,11 +63,19 @@ public class ValueReader {
         for (int i = 0; i < bufNum; i++) {
             buffers[i] = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
         }
+        for (int i = 0; i < 8; i++) {
+            valueTags[i] = -1;
+        }
 
     }
 
     public void put(Message message) {
-        if (!buffers[index].hasRemaining()) {
+        long value = message.getA();
+        valueLen = Math.max(getByteSize(value), valueLen);
+        if (valueTags[valueLen - 1] == -1) {
+            valueTags[valueLen - 1] = messageNum;
+        }
+        if (buffers[index].remaining() < valueLen) {
             ByteBuffer tmpBuffer = buffers[index];
             int newIndex = (index + 1) % bufNum;
             tmpBuffer.flip();
@@ -80,7 +95,7 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        buffers[index].putLong(message.getA());
+        buffers[index].put(longToBytes(value), 8 - valueLen, valueLen);
         messageNum++;
     }
 
@@ -99,23 +114,27 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
+        System.out.println(Arrays.toString(valueTags));
     }
 
     public long get(int index, ValueContext valueContext) {
-        if (index >= valueContext.bufferMinIndex && index < valueContext.bufferMaxIndex) {
-            valueContext.buffer.position((index - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
-        } else {
-            valueContext.buffer.clear();
-            try {
-                fileChannel.read(valueContext.buffer, ((long) index) * Constants.VALUE_SIZE);
-                valueContext.bufferMinIndex = index;
-                valueContext.bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
-            } catch (IOException e) {
-                e.printStackTrace(System.out);
-            }
-            valueContext.buffer.flip();
-        }
-        return valueContext.buffer.getLong();
+        //        if (index >= valueContext.bufferMinIndex && index < valueContext.bufferMaxIndex) {
+        //            valueContext.buffer.position((index - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
+        //        } else {
+        //            valueContext.buffer.clear();
+        //            try {
+        //                fileChannel.read(valueContext.buffer, ((long) index) * Constants.VALUE_SIZE);
+        //                valueContext.bufferMinIndex = index;
+        //                valueContext.bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
+        //            } catch (IOException e) {
+        //                e.printStackTrace(System.out);
+        //            }
+        //            valueContext.buffer.flip();
+        //        }
+        byte[] bytes = new byte[8];
+        int len = getMsgLen(index);
+        valueContext.buffer.get(bytes, 8 - len, len);
+        return ByteBuffer.wrap(bytes).getLong();
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
@@ -124,8 +143,13 @@ public class ValueReader {
         long value;
         //找到合适的buffer
         updateContext(offsetA, offsetB, valueContext);
+        byte[] bytes = new byte[8];
         while (offsetA < offsetB) {
-            value = valueContext.buffer.getLong();
+            Arrays.fill(bytes, (byte) 0);
+            int len = getMsgLen(index);
+            valueContext.buffer.get(bytes, 8 - len, len);
+            //value = valueContext.buffer.getInt() & 0x00000000ffffffffL;
+            value = ByteBuffer.wrap(bytes).getLong();
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
@@ -135,17 +159,57 @@ public class ValueReader {
         return count == 0 ? 0 : sum / count;
     }
 
-    private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
-        int i = (offsetB - offsetA) / Constants.VALUE_NUM;
+    public void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
+        long realA = getRealOffset(offsetA);
+        long realB = getRealOffset(offsetB);
+        int i = (int) ((realB - realA) / Constants.PAGE_SIZE);
         valueContext.buffer = valueContext.bufferList.get(i);
-        valueContext.bufferMinIndex = offsetA;
-        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
+        //valueContext.bufferMinIndex = offsetA;
+        //valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
         valueContext.buffer.clear();
         try {
-            fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
+            fileChannel.read(valueContext.buffer, realA);
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }
         valueContext.buffer.flip();
+    }
+
+    private int getByteSize(long value) {
+        long f = 0xff00000000000000L;
+        for (int i = 8; i >= 0; i--) {
+            if ((value & f) != 0) {
+                return i;
+            }
+            f = f >>> 8;
+        }
+        return 0;
+    }
+
+    public byte[] longToBytes(long x) {
+        byteBuffer.putLong(0, x);
+        return byteBuffer.array();
+    }
+
+    public long getRealOffset(int offset) {
+        long realOffset = 0;
+        for (int i = 7; i >= 0; i--) {
+            if (valueTags[i] == -1 || valueTags[i] > offset) {
+                continue;
+            }
+            realOffset += ((long) offset - valueTags[i]) * (i + 1);
+            offset = valueTags[i];
+        }
+        return realOffset;
+    }
+
+    public int getMsgLen(int index) {
+        for (int i = 7; i >= 0; i--) {
+            if (valueTags[i] == -1 || valueTags[i] > index) {
+                continue;
+            }
+            return i + 1;
+        }
+        return 0;
     }
 }

@@ -61,6 +61,8 @@ public class Reader {
         }
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
+        int offsetB = timeReader.getOffset(tMax+1);
+        valueReader.updateContext(offsetA,offsetB,valueContext);
         while (offsetA < msgNum) {
             long time = timeReader.get(offsetA, timeContext);
             if (time > tMax) {
