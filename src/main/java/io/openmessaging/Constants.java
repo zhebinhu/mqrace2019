@@ -16,12 +16,6 @@ public class Constants {
     public final static int DATA_NUM = 4*1024;
 
     // value 的大小
-    public final static int VALUE_SIZE = 8;
-
-    public final static int VALUE_NUM = 512;
-
-    public final static int VALUE_BUF_NUM = 160;
-
     public final static int PAGE_SIZE = 4096;
 
     //public final static String URL = "/users/huzhebin/data/";

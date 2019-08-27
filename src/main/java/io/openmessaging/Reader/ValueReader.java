@@ -66,12 +66,6 @@ public class ValueReader {
         for (int i = 0; i < 8; i++) {
             valueTags[i] = -1;
         }
-        Class c = null;
-        try {
-            c = Class.forName("java.nio.Bits");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
     }
 
     public void put(Message message) {
@@ -100,6 +94,9 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
+        if(messageNum%100==7){
+            System.out.println(valueLen);
+        }
         Bits.putLong(bytes, 0, value);
         buffers[index].put(bytes, 8 - valueLen, valueLen);
         messageNum++;
@@ -120,7 +117,6 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        System.out.println(Arrays.toString(valueTags));
     }
 
     public long get(int index, ValueContext valueContext) {
@@ -145,17 +141,16 @@ public class ValueReader {
             len = getMsgLen(index);
         }
         valueContext.buffer.get(bytes, 8 - len, len);
-        return Bits.getLong(bytes,0);
+        return Bits.getLong(bytes, 0);
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
         long sum = 0;
         int count = 0;
-        long value;
         //找到合适的buffer
         updateContext(offsetA, offsetB, valueContext);
-        byte[] bytes = new byte[8];
         while (offsetA < offsetB) {
+            long value = 0;
             int len;
             if (valueContext.msgLen > 0) {
                 len = valueContext.msgLen;
@@ -163,10 +158,9 @@ public class ValueReader {
                 Arrays.fill(bytes, (byte) 0);
                 len = getMsgLen(index);
             }
-            valueContext.buffer.get(bytes, 8 - len, len);
-
-            //value = valueContext.buffer.getInt() & 0x00000000ffffffffL;
-            value = Bits.getLong(bytes,0);
+            for (int i = 0; i < len; i++) {
+                value = (value << 8) | (valueContext.buffer.get() & 0xff);
+            }
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
