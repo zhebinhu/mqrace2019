@@ -24,4 +24,8 @@ public class ValueContext {
     public ByteBuffer buffer;
 
     public int msgLen = 0;
+
+    public int Alen = 0;
+
+    public int Blen = 0;
 }

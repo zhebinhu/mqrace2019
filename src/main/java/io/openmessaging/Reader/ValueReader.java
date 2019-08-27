@@ -45,7 +45,7 @@ public class ValueReader {
         return thread;
     });
 
-    private ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+    private byte[] bytes = new byte[8];
 
     /**
      * 消息总数
@@ -66,7 +66,12 @@ public class ValueReader {
         for (int i = 0; i < 8; i++) {
             valueTags[i] = -1;
         }
-
+        Class c = null;
+        try {
+            c = Class.forName("java.nio.Bits");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public void put(Message message) {
@@ -95,7 +100,8 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        buffers[index].put(longToBytes(value), 8 - valueLen, valueLen);
+        Bits.putLong(bytes, 0, value);
+        buffers[index].put(bytes, 8 - valueLen, valueLen);
         messageNum++;
     }
 
@@ -132,9 +138,14 @@ public class ValueReader {
         //            valueContext.buffer.flip();
         //        }
         byte[] bytes = new byte[8];
-        int len = getMsgLen(index);
+        int len;
+        if (valueContext.msgLen > 0) {
+            len = valueContext.msgLen;
+        } else {
+            len = getMsgLen(index);
+        }
         valueContext.buffer.get(bytes, 8 - len, len);
-        return ByteBuffer.wrap(bytes).getLong();
+        return Bits.getLong(bytes,0);
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
@@ -145,11 +156,17 @@ public class ValueReader {
         updateContext(offsetA, offsetB, valueContext);
         byte[] bytes = new byte[8];
         while (offsetA < offsetB) {
-            Arrays.fill(bytes, (byte) 0);
-            int len = getMsgLen(index);
+            int len;
+            if (valueContext.msgLen > 0) {
+                len = valueContext.msgLen;
+            } else {
+                Arrays.fill(bytes, (byte) 0);
+                len = getMsgLen(index);
+            }
             valueContext.buffer.get(bytes, 8 - len, len);
+
             //value = valueContext.buffer.getInt() & 0x00000000ffffffffL;
-            value = ByteBuffer.wrap(bytes).getLong();
+            value = Bits.getLong(bytes,0);
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
@@ -160,12 +177,13 @@ public class ValueReader {
     }
 
     public void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
-        long realA = getRealOffset(offsetA);
-        long realB = getRealOffset(offsetB);
+        long realA = getRealOffsetA(offsetA, valueContext);
+        long realB = getRealOffsetB(offsetB, valueContext);
+        if (valueContext.Alen == valueContext.Blen) {
+            valueContext.msgLen = valueContext.Alen;
+        }
         int i = (int) ((realB - realA) / Constants.PAGE_SIZE);
         valueContext.buffer = valueContext.bufferList.get(i);
-        //valueContext.bufferMinIndex = offsetA;
-        //valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
         valueContext.buffer.clear();
         try {
             fileChannel.read(valueContext.buffer, realA);
@@ -186,17 +204,26 @@ public class ValueReader {
         return 0;
     }
 
-    public byte[] longToBytes(long x) {
-        byteBuffer.putLong(0, x);
-        return byteBuffer.array();
-    }
-
-    public long getRealOffset(int offset) {
+    public long getRealOffsetA(int offset, ValueContext valueContext) {
         long realOffset = 0;
         for (int i = 7; i >= 0; i--) {
             if (valueTags[i] == -1 || valueTags[i] > offset) {
                 continue;
             }
+            valueContext.Alen = i + 1;
+            realOffset += ((long) offset - valueTags[i]) * (i + 1);
+            offset = valueTags[i];
+        }
+        return realOffset;
+    }
+
+    public long getRealOffsetB(int offset, ValueContext valueContext) {
+        long realOffset = 0;
+        for (int i = 7; i >= 0; i--) {
+            if (valueTags[i] == -1 || valueTags[i] > offset) {
+                continue;
+            }
+            valueContext.Blen = i + 1;
             realOffset += ((long) offset - valueTags[i]) * (i + 1);
             offset = valueTags[i];
         }
