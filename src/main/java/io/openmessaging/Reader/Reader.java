@@ -1,14 +1,16 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.TimeContext;
+import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.ValueContext;
 import io.openmessaging.ContextPool;
 import io.openmessaging.Message;
-import io.openmessaging.MessageList;
+import io.openmessaging.MessagePool;
 
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -30,8 +32,6 @@ public class Reader {
 
     private ThreadLocal<DataContext> dataContextThreadLocal = new ThreadLocal<>();
 
-    private ThreadLocal<MessageList> messageListThreadLocal = new ThreadLocal<>();
-
     public Reader() {
         timeReader = new TimeReader();
         valueReader = new ValueReader();
@@ -46,12 +46,8 @@ public class Reader {
         msgNum++;
     }
 
-    public List<Message> get(long aMin, long aMax, long tMin, long tMax) {
-        if(messageListThreadLocal.get()==null){
-            messageListThreadLocal.set(new MessageList());
-        }
-        MessageList result = messageListThreadLocal.get();
-        result.clear();
+    public List<Message> get(long aMin, long aMax, long tMin, long tMax, MessagePool messagePool) {
+        List<Message> result = new ArrayList<>();
         if (timeContextThreadLocal.get() == null) {
             timeContextThreadLocal.set(new TimeContext());
         }
@@ -65,19 +61,21 @@ public class Reader {
         }
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
-        int offsetB = timeReader.getOffset(tMax+1);
-        dataReader.updateDataContext(offsetA,offsetB,dataContext);
-        while (offsetA < offsetB) {
+        while (offsetA < msgNum) {
             long time = timeReader.get(offsetA, timeContext);
+            if (time > tMax) {
+                return result;
+            }
             long value = valueReader.get(offsetA, valueContext);
             if (value > aMax || value < aMin) {
                 offsetA++;
                 continue;
             }
-            Message message = result.get();
+            Message message = messagePool.get();
             message.setT(time);
             message.setA(value);
             dataReader.getData(offsetA, message, dataContext);
+            result.add(message);
             offsetA++;
         }
         return result;

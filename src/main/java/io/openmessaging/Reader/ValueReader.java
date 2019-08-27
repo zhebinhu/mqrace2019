@@ -36,7 +36,6 @@ public class ValueReader {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
-        thread.setPriority(10);
         thread.setDaemon(true);
         return thread;
     });
@@ -139,6 +138,8 @@ public class ValueReader {
     private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
         int i = (offsetB - offsetA) / Constants.VALUE_NUM;
         valueContext.buffer = valueContext.bufferList.get(i);
+        valueContext.bufferMinIndex = offsetA;
+        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
         valueContext.buffer.clear();
         try {
             fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);

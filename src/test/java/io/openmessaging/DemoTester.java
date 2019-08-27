@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class DemoTester {
 
-    private static final long base = 0L;
+    private static final long base = 10000000000L;
     public static void main(String args[]) throws Exception {
         //评测相关配置
         //发送阶段的发送数量，也即发送阶段必须要在规定时间内把这些消息发送完毕方可

@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -100,47 +99,21 @@ public class DataReader {
     }
 
     public void getData(int index, Message message, DataContext dataContext) {
-        //        if (index >= dataContext.bufferMinIndex && index < dataContext.bufferMaxIndex) {
-        //            dataContext.buffer.position((index - dataContext.bufferMinIndex) * Constants.DATA_SIZE);
-        //        } else {
-        //            dataContext.buffer.clear();
-        //            try {
-        //                fileChannel.read(dataContext.buffer, ((long) index) * Constants.DATA_SIZE);
-        //                dataContext.bufferMinIndex = index;
-        //                dataContext.bufferMaxIndex = Math.min(index + Constants.DATA_NUM, messageNum);
-        //            } catch (IOException e) {
-        //                e.printStackTrace(System.out);
-        //            }
-        //            dataContext.buffer.flip();
-        //        }
-        int i = (index - dataContext.offsetA) / Constants.DATA_NUM;
-        if(!dataContext.readFutures[i].isDone()){
+        if (index >= dataContext.bufferMinIndex && index < dataContext.bufferMaxIndex) {
+            dataContext.buffer.position((index - dataContext.bufferMinIndex) * Constants.DATA_SIZE);
+        } else {
+            dataContext.buffer.clear();
             try {
-                dataContext.readFutures[i].get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+                fileChannel.read(dataContext.buffer, ((long) index) * Constants.DATA_SIZE);
+                dataContext.bufferMinIndex = index;
+                dataContext.bufferMaxIndex = Math.min(index + Constants.DATA_NUM, messageNum);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
             }
+            dataContext.buffer.flip();
         }
-        dataContext.bufferList.get(i).get(message.getBody());
-    }
 
-    public void updateDataContext(int offsetA, int offsetB, DataContext dataContext) {
-        int num = (offsetB - offsetA) / Constants.DATA_NUM + 1;
-        for (int i = 0; i < num; i++) {
-            final int f = i;
-            dataContext.readFutures[i] = dataContext.executorService.submit(() -> {
-                try {
-                    dataContext.bufferList.get(f).clear();
-                    fileChannel.read(dataContext.bufferList.get(f), (((long) offsetA) + f * Constants.DATA_NUM) * Constants.DATA_SIZE);
-                    dataContext.bufferList.get(f).flip();
-                } catch (IOException e) {
-                    e.printStackTrace(System.out);
-                }
-            });
-        }
-        dataContext.offsetA = offsetA;
+        dataContext.buffer.get(message.getBody());
     }
 
 }
