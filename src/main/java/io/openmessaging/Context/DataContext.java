@@ -10,9 +10,14 @@ import java.util.List;
  * Created by huzhebin on 2019/08/08.
  */
 public class DataContext {
-    public ByteBuffer buffer = ByteBuffer.allocateDirect(Constants.DATA_SIZE * Constants.DATA_NUM);
+    public DataContext() {
+        for (int i = 0; i < Constants.DATA_BUF_NUM; i++) {
+            bufferList.add(ByteBuffer.allocateDirect(Constants.DATA_SIZE * (Constants.DATA_NUM * (i + 1))));
+        }
+    }
 
-    public int bufferMaxIndex = 0;
+    public List<ByteBuffer> bufferList = new ArrayList<>();
 
-    public int bufferMinIndex = 0;
+    public ByteBuffer buffer;
+
 }
