@@ -36,7 +36,7 @@ public class ValueReader {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
-        thread.setPriority(10);
+        thread.setDaemon(true);
         return thread;
     });
 
@@ -101,22 +101,22 @@ public class ValueReader {
         }
     }
 
-//    public long get(int index, ValueContext valueContext) {
-//        if (index >= valueContext.bufferMinIndex && index < valueContext.bufferMaxIndex) {
-//            valueContext.buffer.position((index - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
-//        } else {
-//            valueContext.buffer.clear();
-//            try {
-//                fileChannel.read(valueContext.buffer, ((long) index) * Constants.VALUE_SIZE);
-//                valueContext.bufferMinIndex = index;
-//                valueContext.bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
-//            } catch (IOException e) {
-//                e.printStackTrace(System.out);
-//            }
-//            valueContext.buffer.flip();
-//        }
-//        return valueContext.buffer.getLong();
-//    }
+    public long get(int index, ValueContext valueContext) {
+        if (index >= valueContext.bufferMinIndex && index < valueContext.bufferMaxIndex) {
+            valueContext.buffer.position((index - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
+        } else {
+            valueContext.buffer.clear();
+            try {
+                fileChannel.read(valueContext.buffer, ((long) index) * Constants.VALUE_SIZE);
+                valueContext.bufferMinIndex = index;
+                valueContext.bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+            valueContext.buffer.flip();
+        }
+        return valueContext.buffer.getLong();
+    }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
         long sum = 0;
@@ -135,9 +135,11 @@ public class ValueReader {
         return count == 0 ? 0 : sum / count;
     }
 
-    public void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
+    private void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
         int i = (offsetB - offsetA) / Constants.VALUE_NUM;
         valueContext.buffer = valueContext.bufferList.get(i);
+        valueContext.bufferMinIndex = offsetA;
+        valueContext.bufferMaxIndex = Math.min(offsetA + (Constants.VALUE_NUM * (i + 1)), messageNum);
         valueContext.buffer.clear();
         try {
             fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);

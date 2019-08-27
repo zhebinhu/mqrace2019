@@ -22,4 +22,8 @@ public class ValueContext {
     //public ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.VALUE_SIZE * Constants.VALUE_BUF_NUM * Constants.VALUE_NUM);
 
     public ByteBuffer buffer;
+
+    public int bufferMaxIndex = 0;
+
+    public int bufferMinIndex = 0;
 }

@@ -1,6 +1,5 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.Constants;
 import io.openmessaging.Context.TimeContext;
 import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.ValueContext;
@@ -62,20 +61,22 @@ public class Reader {
         }
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
-        int offsetB = timeReader.getOffset(tMax + 1);
-        valueReader.updateContext(offsetA, offsetB, valueContext);
-        dataReader.updateContext(offsetA, offsetB, dataContext);
-        for (int i = 0; i < (offsetB - offsetA); i++) {
-            long time = timeReader.get(offsetA + i, timeContext);
-            long value = valueContext.buffer.getLong();
+        while (offsetA < msgNum) {
+            long time = timeReader.get(offsetA, timeContext);
+            if (time > tMax) {
+                return result;
+            }
+            long value = valueReader.get(offsetA, valueContext);
             if (value > aMax || value < aMin) {
+                offsetA++;
                 continue;
             }
             Message message = messagePool.get();
             message.setT(time);
             message.setA(value);
-            dataReader.getData(offsetA + i, message, dataContext);
+            dataReader.getData(offsetA, message, dataContext);
             result.add(message);
+            offsetA++;
         }
         return result;
     }
@@ -87,7 +88,7 @@ public class Reader {
         ValueContext valueContext = valueContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
         int offsetB = timeReader.getOffset(tMax + 1);
-        return valueReader.avg(offsetA, offsetB, aMin, aMax, valueContext);
+        return valueReader.avg(offsetA,offsetB,aMin,aMax,valueContext);
     }
 
     public void init() {

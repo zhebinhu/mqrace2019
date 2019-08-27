@@ -33,6 +33,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
         thread.setPriority(10);
+        thread.setDaemon(true);
         return thread;
     });
 
@@ -150,8 +151,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
         //            long endtime = System.currentTimeMillis();
         //            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
         //System.out.println("memory:" + memoryLoad());
-        //return reader.avg(aMin, aMax, tMin, tMax);
-        return 0L;
+        return reader.avg(aMin, aMax, tMin, tMax);
+        //return 0L;
 
     }
 }
