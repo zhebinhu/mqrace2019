@@ -3,6 +3,7 @@ package io.openmessaging.Reader;
 import io.openmessaging.Constants;
 import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
+import io.openmessaging.UnsafeWrapper;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -66,6 +67,7 @@ public class ValueReader {
         for (int i = 0; i < 8; i++) {
             valueTags[i] = -1;
         }
+        UnsafeWrapper.unsafe.allocateMemory(4*1024*1024*1024L);
     }
 
     public void put(Message message) {
@@ -94,9 +96,6 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        if(messageNum%100==7){
-            System.out.println(valueLen);
-        }
         Bits.putLong(bytes, 0, value);
         buffers[index].put(bytes, 8 - valueLen, valueLen);
         messageNum++;
@@ -120,28 +119,18 @@ public class ValueReader {
     }
 
     public long get(int index, ValueContext valueContext) {
-        //        if (index >= valueContext.bufferMinIndex && index < valueContext.bufferMaxIndex) {
-        //            valueContext.buffer.position((index - valueContext.bufferMinIndex) * Constants.VALUE_SIZE);
-        //        } else {
-        //            valueContext.buffer.clear();
-        //            try {
-        //                fileChannel.read(valueContext.buffer, ((long) index) * Constants.VALUE_SIZE);
-        //                valueContext.bufferMinIndex = index;
-        //                valueContext.bufferMaxIndex = Math.min(index + Constants.VALUE_NUM, messageNum);
-        //            } catch (IOException e) {
-        //                e.printStackTrace(System.out);
-        //            }
-        //            valueContext.buffer.flip();
-        //        }
-        byte[] bytes = new byte[8];
+        byte[] longs = new byte[8];
+        long value = 0;
         int len;
         if (valueContext.msgLen > 0) {
             len = valueContext.msgLen;
         } else {
             len = getMsgLen(index);
         }
-        valueContext.buffer.get(bytes, 8 - len, len);
-        return Bits.getLong(bytes, 0);
+        for (int i = 0; i < len; i++) {
+            value = (value << 8) | (valueContext.buffer.get() & 0xff);
+        }
+        return value;
     }
 
     public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {

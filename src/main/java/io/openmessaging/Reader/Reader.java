@@ -63,11 +63,8 @@ public class Reader {
         int offsetA = timeReader.getOffset(tMin);
         int offsetB = timeReader.getOffset(tMax+1);
         valueReader.updateContext(offsetA,offsetB,valueContext);
-        while (offsetA < msgNum) {
+        while (offsetA < offsetB) {
             long time = timeReader.get(offsetA, timeContext);
-            if (time > tMax) {
-                return result;
-            }
             long value = valueReader.get(offsetA, valueContext);
             if (value > aMax || value < aMin) {
                 offsetA++;
