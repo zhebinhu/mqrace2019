@@ -72,8 +72,8 @@ public class ValueReader {
             valueTags[i] = -1;
         }
         cache = new byte[Integer.MAX_VALUE - 2];
-        base = UnsafeWrapper.unsafe.allocateMemory(2100000000L);
-        UnsafeWrapper.unsafe.setMemory(base, 2100000000L, (byte) 0);
+        base = UnsafeWrapper.unsafe.allocateMemory(Integer.MAX_VALUE - 2);
+        UnsafeWrapper.unsafe.setMemory(base, Integer.MAX_VALUE - 2, (byte) 0);
     }
 
     public void put(Message message) {
