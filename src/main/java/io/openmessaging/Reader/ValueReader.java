@@ -130,7 +130,6 @@ public class ValueReader {
     }
 
     public long get(int index, ValueContext valueContext) {
-        byte[] longs = new byte[8];
         long value = 0;
         int len;
         if (valueContext.msgLen > 0) {
@@ -157,7 +156,6 @@ public class ValueReader {
             if (valueContext.msgLen > 0) {
                 len = valueContext.msgLen;
             } else {
-                Arrays.fill(bytes, (byte) 0);
                 len = getMsgLen(offsetA);
             }
             for (int i = 0; i < len; i++) {
@@ -207,11 +205,15 @@ public class ValueReader {
 
     public long getRealOffsetA(int offset, ValueContext valueContext) {
         long realOffset = 0;
+        int flag = 0;
         for (int i = 7; i >= 0; i--) {
             if (valueTags[i] == -1 || valueTags[i] > offset) {
                 continue;
             }
-            valueContext.Alen = i + 1;
+            if(flag==0) {
+                valueContext.Alen = i + 1;
+                flag = 1;
+            }
             realOffset += ((long) offset - valueTags[i]) * (i + 1);
             offset = valueTags[i];
         }
@@ -220,9 +222,14 @@ public class ValueReader {
 
     public long getRealOffsetB(int offset, ValueContext valueContext) {
         long realOffset = 0;
+        int flag = 0;
         for (int i = 7; i >= 0; i--) {
             if (valueTags[i] == -1 || valueTags[i] > offset) {
                 continue;
+            }
+            if(flag==0) {
+                valueContext.Blen = i + 1;
+                flag = 1;
             }
             valueContext.Blen = i + 1;
             realOffset += ((long) offset - valueTags[i]) * (i + 1);

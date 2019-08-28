@@ -14,7 +14,6 @@ public class ValueContext {
         for (int i = 0; i < (8 * 80000) / Constants.PAGE_SIZE; i++) {
             bufferList.add(ByteBuffer.allocateDirect(Constants.PAGE_SIZE * (i + 1)));
         }
-        buffer = bufferList.get(7);
     }
 
     public List<ByteBuffer> bufferList = new ArrayList<>();

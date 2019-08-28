@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class DemoTester {
 
-    private static final long base = Integer.MAX_VALUE-250000000;
+    private static final long base = 1000000000000L;
     public static void main(String args[]) throws Exception {
         //评测相关配置
         //发送阶段的发送数量，也即发送阶段必须要在规定时间内把这些消息发送完毕方可
@@ -25,7 +25,7 @@ public class DemoTester {
         //发送的线程数量
         int sendTsNum = 12;
         //查询的线程数量
-        int checkTsNum = 12;
+        int checkTsNum = 1;
         // 每次查询消息的最大跨度
         int maxMsgCheckSize = 50000;
         // 每次查询求平均的最大跨度
@@ -117,6 +117,9 @@ public class DemoTester {
         @Override
         public void run() {
             long count;
+//            ByteBuffer buffer = ByteBuffer.allocate(34);
+//            buffer.putLong(123456L);
+//            messageStore.put(new Message(123456L, 123456L, buffer.array()));
             while ((count = counter.getAndIncrement()) < maxMsgNum && System.currentTimeMillis() <= maxTimeStamp) {
                 try {
                     ByteBuffer buffer = ByteBuffer.allocate(34);
