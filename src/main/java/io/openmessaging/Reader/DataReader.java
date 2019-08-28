@@ -83,7 +83,7 @@ public class DataReader {
     public void init() {
         try {
             for (Future future : futures) {
-                if (!future.isDone()) {
+                if (future != null && !future.isDone()) {
                     future.get();
                 }
             }

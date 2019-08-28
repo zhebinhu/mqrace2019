@@ -55,6 +55,8 @@ public class ValueReader {
 
     private volatile boolean inited = false;
 
+    private long base;
+
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
@@ -67,11 +69,13 @@ public class ValueReader {
         for (int i = 0; i < 8; i++) {
             valueTags[i] = -1;
         }
-        UnsafeWrapper.unsafe.allocateMemory(4*1024*1024*1024L);
+        base = UnsafeWrapper.unsafe.allocateMemory(4 * 1024 * 1024 * 1024L);
     }
 
     public void put(Message message) {
         long value = message.getA();
+        UnsafeWrapper.unsafe.putShort(base + 16 * messageNum, (short) value);
+        value = value >>> 16;
         valueLen = Math.max(getByteSize(value), valueLen);
         if (valueTags[valueLen - 1] == -1) {
             valueTags[valueLen - 1] = messageNum;
@@ -104,7 +108,7 @@ public class ValueReader {
     public void init() {
         try {
             for (Future future : futures) {
-                if (!future.isDone()) {
+                if (future != null && !future.isDone()) {
                     future.get();
                 }
             }
@@ -116,6 +120,7 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
+        System.out.println(Arrays.toString(valueTags));
     }
 
     public long get(int index, ValueContext valueContext) {
@@ -130,6 +135,7 @@ public class ValueReader {
         for (int i = 0; i < len; i++) {
             value = (value << 8) | (valueContext.buffer.get() & 0xff);
         }
+        value = value << 16 | (UnsafeWrapper.unsafe.getShort(base + index * 16) & 0xffff);
         return value;
     }
 
@@ -145,11 +151,12 @@ public class ValueReader {
                 len = valueContext.msgLen;
             } else {
                 Arrays.fill(bytes, (byte) 0);
-                len = getMsgLen(index);
+                len = getMsgLen(offsetA);
             }
             for (int i = 0; i < len; i++) {
                 value = (value << 8) | (valueContext.buffer.get() & 0xff);
             }
+            value = value << 16 | (UnsafeWrapper.unsafe.getShort(base + offsetA * 16) & 0xffff);
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
@@ -166,6 +173,9 @@ public class ValueReader {
             valueContext.msgLen = valueContext.Alen;
         }
         int i = (int) ((realB - realA) / Constants.PAGE_SIZE);
+        if (i < 0) {
+            System.out.println("e");
+        }
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.buffer.clear();
         try {
