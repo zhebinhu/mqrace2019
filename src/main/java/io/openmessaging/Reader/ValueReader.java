@@ -27,10 +27,6 @@ public class ValueReader {
 
     private final int bufNum = 4;
 
-    private int[] valueTags = new int[8];
-
-    private int valueLen = 0;
-
     /**
      * 堆外内存
      */
@@ -46,14 +42,10 @@ public class ValueReader {
         return thread;
     });
 
-    private byte[] bytes = new byte[8];
-
     /**
      * 消息总数
      */
     private int messageNum = 0;
-
-    private volatile boolean inited = false;
 
     private byte[] cache;
 
@@ -68,9 +60,6 @@ public class ValueReader {
         for (int i = 0; i < bufNum; i++) {
             buffers[i] = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
         }
-        for (int i = 0; i < 8; i++) {
-            valueTags[i] = -1;
-        }
         cache = new byte[Integer.MAX_VALUE - 2];
         base = UnsafeWrapper.unsafe.allocateMemory(Integer.MAX_VALUE - 2);
         UnsafeWrapper.unsafe.setMemory(base, Integer.MAX_VALUE - 2, (byte) 0);
@@ -82,11 +71,7 @@ public class ValueReader {
         value = value >>> 8;
         UnsafeWrapper.unsafe.putByte(base + messageNum, (byte) value);
         value = value >>> 8;
-        valueLen = Math.max(getByteSize(value), valueLen);
-        if (valueTags[valueLen - 1] == -1) {
-            valueTags[valueLen - 1] = messageNum;
-        }
-        if (buffers[index].remaining() < valueLen) {
+        if (!buffers[index].hasRemaining()) {
             ByteBuffer tmpBuffer = buffers[index];
             int newIndex = (index + 1) % bufNum;
             tmpBuffer.flip();
@@ -106,8 +91,8 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        Bits.putLong(bytes, 0, value);
-        buffers[index].put(bytes, 8 - valueLen, valueLen);
+        buffers[index].putShort((short) (value >>> 32));
+        buffers[index].putInt((int) value);
         messageNum++;
     }
 
@@ -126,20 +111,11 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        System.out.println(Arrays.toString(valueTags));
     }
 
     public long get(int index, ValueContext valueContext) {
-        long value = 0;
-        int len;
-        if (valueContext.msgLen > 0) {
-            len = valueContext.msgLen;
-        } else {
-            len = getMsgLen(index);
-        }
-        for (int i = 0; i < len; i++) {
-            value = (value << 8) | (valueContext.buffer.get() & 0xff);
-        }
+        long value = valueContext.buffer.getShort();
+        value = value << 32 | (valueContext.buffer.getInt() & 0x00000000ffffffffL);
         value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index) & 0xff);
         value = value << 8 | (cache[index] & 0xff);
         return value;
@@ -151,16 +127,8 @@ public class ValueReader {
         //找到合适的buffer
         updateContext(offsetA, offsetB, valueContext);
         while (offsetA < offsetB) {
-            long value = 0;
-            int len;
-            if (valueContext.msgLen > 0) {
-                len = valueContext.msgLen;
-            } else {
-                len = getMsgLen(offsetA);
-            }
-            for (int i = 0; i < len; i++) {
-                value = (value << 8) | (valueContext.buffer.get() & 0xff);
-            }
+            long value = valueContext.buffer.getShort();
+            value = value << 32 | (valueContext.buffer.getInt() & 0x00000000ffffffffL);
             value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA) & 0xff);
             value = value << 8 | (cache[offsetA] & 0xff);
             if (value <= aMax && value >= aMin) {
@@ -173,78 +141,70 @@ public class ValueReader {
     }
 
     public void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
-        long realA = getRealOffsetA(offsetA, valueContext);
-        long realB = getRealOffsetB(offsetB, valueContext);
-        if (valueContext.Alen == valueContext.Blen) {
-            valueContext.msgLen = valueContext.Alen;
-        }
-        int i = (int) ((realB - realA) / Constants.PAGE_SIZE);
-        if (i < 0) {
-            System.out.println("e");
-        }
+        int i = (offsetB - offsetA) / Constants.VALUE_NUM;
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.buffer.clear();
         try {
-            fileChannel.read(valueContext.buffer, realA);
+            fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }
         valueContext.buffer.flip();
     }
 
-    private int getByteSize(long value) {
-        long f = 0xff00000000000000L;
-        for (int i = 8; i >= 0; i--) {
-            if ((value & f) != 0) {
-                return i;
-            }
-            f = f >>> 8;
-        }
-        return 0;
-    }
+    //    private int getByteSize(long value) {
+    //        long f = 0xff00000000000000L;
+    //        for (int i = 8; i >= 0; i--) {
+    //            if ((value & f) != 0) {
+    //                return i;
+    //            }
+    //            f = f >>> 8;
+    //        }
+    //        return 0;
+    //    }
 
-    public long getRealOffsetA(int offset, ValueContext valueContext) {
-        long realOffset = 0;
-        int flag = 0;
-        for (int i = 7; i >= 0; i--) {
-            if (valueTags[i] == -1 || valueTags[i] > offset) {
-                continue;
-            }
-            if(flag==0) {
-                valueContext.Alen = i + 1;
-                flag = 1;
-            }
-            realOffset += ((long) offset - valueTags[i]) * (i + 1);
-            offset = valueTags[i];
-        }
-        return realOffset;
-    }
+    //    public long getRealOffsetA(int offset, ValueContext valueContext) {
+    //        long realOffset = 0;
+    //        int flag = 0;
+    //        for (int i = 7; i >= 0; i--) {
+    //            if (valueTags[i] == -1 || valueTags[i] > offset) {
+    //                continue;
+    //            }
+    //            if(flag==0) {
+    //                valueContext.Alen = i + 1;
+    //                flag = 1;
+    //            }
+    //            realOffset += ((long) offset - valueTags[i]) * (i + 1);
+    //            offset = valueTags[i];
+    //        }
+    //        return realOffset;
+    //    }
+    //
+    //    public long getRealOffsetB(int offset, ValueContext valueContext) {
+    //        long realOffset = 0;
+    //        int flag = 0;
+    //        for (int i = 7; i >= 0; i--) {
+    //            if (valueTags[i] == -1 || valueTags[i] > offset) {
+    //                continue;
+    //            }
+    //            if(flag==0) {
+    //                valueContext.Blen = i + 1;
+    //                flag = 1;
+    //            }
+    //            valueContext.Blen = i + 1;
+    //            realOffset += ((long) offset - valueTags[i]) * (i + 1);
+    //            offset = valueTags[i];
+    //        }
+    //        return realOffset;
+    //    }
 
-    public long getRealOffsetB(int offset, ValueContext valueContext) {
-        long realOffset = 0;
-        int flag = 0;
-        for (int i = 7; i >= 0; i--) {
-            if (valueTags[i] == -1 || valueTags[i] > offset) {
-                continue;
-            }
-            if(flag==0) {
-                valueContext.Blen = i + 1;
-                flag = 1;
-            }
-            valueContext.Blen = i + 1;
-            realOffset += ((long) offset - valueTags[i]) * (i + 1);
-            offset = valueTags[i];
-        }
-        return realOffset;
-    }
-
-    public int getMsgLen(int index) {
-        for (int i = 7; i >= 0; i--) {
-            if (valueTags[i] == -1 || valueTags[i] > index) {
-                continue;
-            }
-            return i + 1;
-        }
-        return 0;
-    }
+    //    public int getMsgLen(int index) {
+    //        for (int i = 7; i >= 0; i--) {
+    //            if (valueTags[i] == -1 || valueTags[i] > index) {
+    //                continue;
+    //            }
+    //            return i + 1;
+    //        }
+    //        return 0;
+    //    }
 }
