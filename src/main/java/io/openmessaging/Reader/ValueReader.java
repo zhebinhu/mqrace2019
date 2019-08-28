@@ -55,7 +55,7 @@ public class ValueReader {
 
     private volatile boolean inited = false;
 
-    private long base;
+    private byte[] base;
 
     public ValueReader() {
         try {
@@ -69,12 +69,12 @@ public class ValueReader {
         for (int i = 0; i < 8; i++) {
             valueTags[i] = -1;
         }
-        base = UnsafeWrapper.unsafe.allocateMemory(2 * 1024 * 1024 * 1024L);
+        base = new byte[Integer.MAX_VALUE - 2];
     }
 
     public void put(Message message) {
         long value = message.getA();
-        UnsafeWrapper.unsafe.putByte(base + 8 * messageNum, (byte) value);
+        base[messageNum] = (byte)value;
         value = value >>> 8;
         valueLen = Math.max(getByteSize(value), valueLen);
         if (valueTags[valueLen - 1] == -1) {
@@ -135,7 +135,7 @@ public class ValueReader {
         for (int i = 0; i < len; i++) {
             value = (value << 8) | (valueContext.buffer.get() & 0xff);
         }
-        value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index * 8) & 0xff);
+        value = value << 8 | (base[index] & 0xff);
         return value;
     }
 
@@ -156,7 +156,7 @@ public class ValueReader {
             for (int i = 0; i < len; i++) {
                 value = (value << 8) | (valueContext.buffer.get() & 0xff);
             }
-            value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA * 8) & 0xff);
+            value = value << 8 | (base[offsetA] & 0xff);
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;

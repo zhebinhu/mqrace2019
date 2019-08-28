@@ -27,8 +27,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean end = false;
 
-    private ThreadLocal<MessagePool> messagePoolThreadLocal = new ThreadLocal<>();
-
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
         thread.setPriority(10);
@@ -70,11 +68,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-            if (messagePoolThreadLocal.get() == null) {
-                messagePoolThreadLocal.set(new MessagePool());
-            }
             //            long starttime = System.currentTimeMillis();
-            result = reader.get(aMin, aMax, tMin, tMax, messagePoolThreadLocal.get());
+            result = reader.get(aMin, aMax, tMin, tMax);
             //            long endtime = System.currentTimeMillis();
             //            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
