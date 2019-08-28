@@ -22,7 +22,7 @@ public class DataReader {
      */
     private FileChannel fileChannel;
 
-    private final int bufNum = 8;
+    private final int bufNum = 4;
 
     /**
      * 堆外内存
