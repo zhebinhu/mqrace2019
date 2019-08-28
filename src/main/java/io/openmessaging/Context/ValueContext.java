@@ -11,14 +11,13 @@ import java.util.List;
  */
 public class ValueContext {
     public ValueContext() {
-        for (int i = 0; i < Constants.VALUE_PAGE_NUM; i++) {
-            bufferList.add(ByteBuffer.allocateDirect(Constants.VALUE_SIZE * Constants.VALUE_NUM * (i + 1)));
+        for (int i = 0; i < (6 * 80000) / Constants.PAGE_SIZE; i++) {
+            bufferList.add(ByteBuffer.allocateDirect(Constants.PAGE_SIZE * (i + 1)));
         }
     }
 
     public List<ByteBuffer> bufferList = new ArrayList<>();
 
     public ByteBuffer buffer;
-
 
 }

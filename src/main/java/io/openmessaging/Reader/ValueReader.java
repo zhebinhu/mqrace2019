@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -25,7 +24,7 @@ public class ValueReader {
      */
     private FileChannel fileChannel;
 
-    private final int bufNum = 4;
+    private final int bufNum = 6;
 
     /**
      * 堆外内存
@@ -141,7 +140,7 @@ public class ValueReader {
     }
 
     public void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
-        int i = (offsetB - offsetA) / Constants.VALUE_NUM;
+        int i = (offsetB - offsetA) * Constants.VALUE_SIZE / Constants.PAGE_SIZE;
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.buffer.clear();
         try {
