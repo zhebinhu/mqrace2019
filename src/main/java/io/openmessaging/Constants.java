@@ -6,24 +6,27 @@ package io.openmessaging;
 public class Constants {
     // writer缓冲区
     public final static int WRITER_CAP = 16 * 1024;
+
     // data写入缓冲区
     public final static int DATA_CAP = 34 * 1024 * 1024;
+
     // value写入缓冲区
     public final static int VALUE_CAP = 36 * 1024 * 1024;
+
     // data 的大小
     public final static int DATA_SIZE = 34;
 
-    public final static int DATA_NUM = 4*1024;
+    public final static int DATA_NUM = 4 * 1024;
 
     // value 的大小
     // 2bit存储在内存中
     public final static int VALUE_SIZE = 6;
 
-    public final static int VALUE_NUM = 2*1024;
+    public final static int VALUE_NUM = 1024;
 
-    public final static int VALUE_PAGE_NUM = 40;
+    public final static int VALUE_PAGE_NUM = 80;
 
-    //public final static String URL = "/users/huzhebin/data/";
+    public final static String URL = "/users/huzhebin/data/";
 
-    public final static String URL = "/alidata1/race2019/data/";
+    //public final static String URL = "/alidata1/race2019/data/";
 }
