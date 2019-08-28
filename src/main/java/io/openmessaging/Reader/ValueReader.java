@@ -181,7 +181,7 @@ public class ValueReader {
 
     public void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
         long realA = valueTags.getRealOffset(offsetA, valueContext);
-        long realB = valueTags.getRealOffset(offsetB, valueContext);
+        long realB = valueTags.getRealOffset(offsetB);
         int i = (int) ((realB - realA) / Constants.PAGE_SIZE);
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.buffer.clear();

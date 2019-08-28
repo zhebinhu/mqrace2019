@@ -24,7 +24,7 @@ public class ValueTags {
     public void add(long real, int offset, byte tag) {
         UnsafeWrapper.unsafe.putLong(realBase + index * 8, real);
         UnsafeWrapper.unsafe.putInt(offsetsBase + index * 4, offset);
-        UnsafeWrapper.unsafe.putByte(tagsBase, tag);
+        UnsafeWrapper.unsafe.putByte(tagsBase + index, tag);
         index++;
     }
 
@@ -44,6 +44,17 @@ public class ValueTags {
         byte tag = UnsafeWrapper.unsafe.getByte(tagsBase + realIndex);
         valueContext.tag = tag;
 
+        return real + (long) tag * 2 * (offset - tagOffset);
+    }
+
+    public long getRealOffset(int offset) {
+        int realIndex = binarySearchOffset(offset);
+        if (realIndex < 0) {
+            realIndex = Math.max(0, -(realIndex + 2));
+        }
+        long real = UnsafeWrapper.unsafe.getLong(realBase + realIndex * 8);
+        int tagOffset = UnsafeWrapper.unsafe.getInt(offsetsBase + realIndex * 4);
+        byte tag = UnsafeWrapper.unsafe.getByte(tagsBase + realIndex);
         return real + (long) tag * 2 * (offset - tagOffset);
     }
 
