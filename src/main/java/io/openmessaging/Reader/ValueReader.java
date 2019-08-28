@@ -24,7 +24,7 @@ public class ValueReader {
      */
     private FileChannel fileChannel;
 
-    private final int bufNum = 8;
+    private final int bufNum = 4;
 
     /**
      * 堆外内存
@@ -66,6 +66,9 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
+        if (value % 1000 == 7) {
+            System.out.println(getByteSize(value));
+        }
         cache[messageNum] = (byte) value;
         value = value >>> 8;
         UnsafeWrapper.unsafe.putByte(base + messageNum, (byte) value);
@@ -149,5 +152,16 @@ public class ValueReader {
             e.printStackTrace(System.out);
         }
         valueContext.buffer.flip();
+    }
+
+    private int getByteSize(long value) {
+        long f = 0xff00000000000000L;
+        for (int i = 8; i >= 0; i--) {
+            if ((value & f) != 0) {
+                return i;
+            }
+            f = f >>> 8;
+        }
+        return 0;
     }
 }
