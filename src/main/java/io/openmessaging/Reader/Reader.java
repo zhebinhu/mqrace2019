@@ -61,6 +61,7 @@ public class Reader {
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
         int offsetB = timeReader.getOffset(tMax + 1);
+        System.out.println(offsetA);
 //        int offsetA = 0;
 //        int offsetB = 4;
         valueReader.updateContext(offsetA, offsetB, valueContext);

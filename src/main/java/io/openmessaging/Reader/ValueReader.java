@@ -74,9 +74,6 @@ public class ValueReader {
     }
 
     public void put(Message message) {
-        if (messageNum % 1000 == 7) {
-            System.out.println(getShortSize(lastValue));
-        }
         long value = message.getA();
         lastValue = value ^ lastValue;
         cache[messageNum] = (byte) value;
