@@ -24,7 +24,7 @@ public class ValueReader {
      */
     private FileChannel fileChannel;
 
-    private final int bufNum = 6;
+    private final int bufNum = 8;
 
     /**
      * 堆外内存
