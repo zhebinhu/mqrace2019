@@ -4,10 +4,8 @@ package io.openmessaging;
  * Created by huzhebin on 2019/08/08.
  */
 public class TimeTags {
-    //private long[] tags;
     private long tagsBase;
 
-    //private int[] offsets;
     private long offsetsBase;
 
     private int index;

@@ -23,10 +23,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean get = false;
 
-    private volatile boolean avg = false;
-
-    private volatile boolean end = false;
-
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
         thread.setPriority(10);
@@ -45,7 +41,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         if (!put) {
             synchronized (this) {
                 if (!put) {
-                    System.out.println("put:" + System.currentTimeMillis());
+                    //System.out.println("put:" + System.currentTimeMillis());
                     future = executorService.submit(this::init);
                     put = true;
                 }
@@ -61,7 +57,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (!get) {
                 synchronized (this) {
                     if (!get) {
-                        System.out.println("get:" + System.currentTimeMillis());
+                        //System.out.println("get:" + System.currentTimeMillis());
                         reader.init();
                         future.get();
                         get = true;
@@ -79,7 +75,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private void init() {
-        System.out.println("init start:" + System.currentTimeMillis());
+
         reader = new Reader();
         PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
             long t = o1.fst.getT() - o2.fst.getT();
@@ -115,19 +111,19 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
         writers.clear();
-        System.out.println("init end:" + System.currentTimeMillis());
+
     }
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-        if (!avg) {
-            synchronized (this) {
-                if (!avg) {
-                    System.out.println("avg:" + System.currentTimeMillis());
-                    avg = true;
-                }
-            }
-        }
+//        if (!avg) {
+//            synchronized (this) {
+//                if (!avg) {
+//                    System.out.println("avg:" + System.currentTimeMillis());
+//                    avg = true;
+//                }
+//            }
+//        }
         //            long starttime = System.currentTimeMillis();
         //            if (count.getAndIncrement() == 28000) {
         //                if (!end) {

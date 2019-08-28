@@ -22,9 +22,9 @@ public class Constants {
     // 2bit存储在内存中
     public final static int VALUE_SIZE = 6;
 
-    public final static int VALUE_NUM = 1024;
+    public final static int VALUE_NUM = 512;
 
-    public final static int VALUE_PAGE_NUM = 80;
+    public final static int VALUE_PAGE_NUM = 160;
 
     //public final static String URL = "/users/huzhebin/data/";
 

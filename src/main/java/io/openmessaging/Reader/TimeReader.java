@@ -4,10 +4,6 @@ import io.openmessaging.Context.TimeContext;
 import io.openmessaging.HalfByte;
 import io.openmessaging.Message;
 import io.openmessaging.TimeTags;
-import io.openmessaging.UnsafeWrapper;
-import sun.misc.Unsafe;
-
-import java.lang.reflect.Field;
 
 /**
  * Created by huzhebin on 2019/08/07.
@@ -15,7 +11,6 @@ import java.lang.reflect.Field;
 public class TimeReader {
 
     private byte[] base = new byte[Integer.MAX_VALUE / 2];
-    //private long base;
 
     private TimeTags timeTags = new TimeTags(80000000);
 
@@ -25,13 +20,8 @@ public class TimeReader {
 
     private long tag = 0;
 
-    private long max = 0;
-
     public void put(Message message) {
         long t = message.getT();
-        if(t>max){
-            max=t;
-        }
         if (tag == 0 || t > tag + 15) {
             tag = t;
             timeTags.add(t, msgNum);
@@ -42,17 +32,13 @@ public class TimeReader {
         } else {
             halfByte.setLeft((byte) (t - tag));
             base[msgNum / 2] = halfByte.getByte();
-            //UnsafeWrapper.unsafe.putByte(base[msgNum / 2], halfByte.getByte());
             halfByte.setByte((byte) 0);
         }
         msgNum++;
     }
 
     public void init() {
-        //cache.put(msgNum / 2, halfByte.getByte());
         base[msgNum / 2] = halfByte.getByte();
-        //System.out.println("time max:" + max + " count256:" + count256 + " count65536:" + count65536 + " count15:" + count15);
-        System.out.println("max:" + max);
     }
 
     public int getOffset(long time) {

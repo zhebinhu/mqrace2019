@@ -21,8 +21,6 @@ public class Reader {
 
     private ContextPool contextPool;
 
-    private long msgNum;
-
     private ThreadLocal<TimeContext> timeContextThreadLocal = new ThreadLocal<>();
 
     private ThreadLocal<ValueContext> valueContextThreadLocal = new ThreadLocal<>();
@@ -35,14 +33,12 @@ public class Reader {
         timeReader = new TimeReader();
         valueReader = new ValueReader();
         dataReader = new DataReader();
-        contextPool = new ContextPool();
     }
 
     public void put(Message message) {
         timeReader.put(message);
         valueReader.put(message);
         dataReader.put(message);
-        msgNum++;
     }
 
     public List<Message> get(long aMin, long aMax, long tMin, long tMax) {
@@ -93,6 +89,7 @@ public class Reader {
     }
 
     public void init() {
+        contextPool = new ContextPool();
         valueReader.init();
         dataReader.init();
         timeReader.init();
