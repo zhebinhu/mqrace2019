@@ -50,6 +50,10 @@ public class ValueReader {
 
     private long base;
 
+    private int count = 0;
+
+    private int len = 0;
+
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
@@ -66,8 +70,10 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-        if (value % 1000 == 7) {
-            System.out.println(getByteSize(value));
+        int size = getByteSize(value);
+        if (size != len) {
+            len = size;
+            count++;
         }
         cache[messageNum] = (byte) value;
         value = value >>> 8;
@@ -113,6 +119,7 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
+        System.out.println("count:" + count);
     }
 
     public long get(int index, ValueContext valueContext) {
