@@ -69,13 +69,13 @@ public class ValueReader {
         for (int i = 0; i < 8; i++) {
             valueTags[i] = -1;
         }
-        base = UnsafeWrapper.unsafe.allocateMemory(4 * 1024 * 1024 * 1024L);
+        base = UnsafeWrapper.unsafe.allocateMemory(2 * 1024 * 1024 * 1024L);
     }
 
     public void put(Message message) {
         long value = message.getA();
-        UnsafeWrapper.unsafe.putShort(base + 16 * messageNum, (short) value);
-        value = value >>> 16;
+        UnsafeWrapper.unsafe.putByte(base + 8 * messageNum, (byte) value);
+        value = value >>> 8;
         valueLen = Math.max(getByteSize(value), valueLen);
         if (valueTags[valueLen - 1] == -1) {
             valueTags[valueLen - 1] = messageNum;
@@ -135,7 +135,7 @@ public class ValueReader {
         for (int i = 0; i < len; i++) {
             value = (value << 8) | (valueContext.buffer.get() & 0xff);
         }
-        value = value << 16 | (UnsafeWrapper.unsafe.getShort(base + index * 16) & 0xffff);
+        value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index * 8) & 0xff);
         return value;
     }
 
@@ -156,7 +156,7 @@ public class ValueReader {
             for (int i = 0; i < len; i++) {
                 value = (value << 8) | (valueContext.buffer.get() & 0xff);
             }
-            value = value << 16 | (UnsafeWrapper.unsafe.getShort(base + offsetA * 16) & 0xffff);
+            value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA * 8) & 0xff);
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
