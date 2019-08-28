@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -57,6 +58,10 @@ public class ValueReader {
 
     private long real = 0;
 
+    private int count = 0;
+
+    private int[] tags = new int[8];
+
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
@@ -81,6 +86,8 @@ public class ValueReader {
         if (size != len) {
             len = size;
             valueTags.add(real, messageNum, size);
+            count++;
+            tags[len] = 1;
         }
         real += size * 2;
         if (buffers[index].remaining() < size * 2) {
@@ -103,8 +110,8 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        for (int i = 0; i < size; i++) {
-            short s = (short) ((value) >>> ((size - i - 1) << 4));
+        for (int i = 1; i <= size; i++) {
+            short s = (short) ((value) >>> ((size - i) << 4));
             buffers[index].putShort(s);
         }
         //        Bits.putLong(bytes, 0, value);
@@ -129,6 +136,7 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
+        System.out.println("count:" + count+" tags:"+ Arrays.toString(tags));
     }
 
     public long get(int index, ValueContext valueContext) {
