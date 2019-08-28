@@ -57,6 +57,8 @@ public class ValueReader {
 
     private long real = 0;
 
+    private long lastValue = 0;
+
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
@@ -72,7 +74,11 @@ public class ValueReader {
     }
 
     public void put(Message message) {
+        if (messageNum % 1000 == 7) {
+            System.out.println(getShortSize(lastValue));
+        }
         long value = message.getA();
+        lastValue = value ^ lastValue;
         cache[messageNum] = (byte) value;
         value = value >>> 8;
         UnsafeWrapper.unsafe.putByte(base + messageNum, (byte) value);
