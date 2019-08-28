@@ -4,6 +4,7 @@ import io.openmessaging.Constants;
 import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
 import io.openmessaging.UnsafeWrapper;
+import io.openmessaging.ValueTags;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -50,9 +51,11 @@ public class ValueReader {
 
     private long base;
 
-    private int count = 0;
+    private byte len = 0;
 
-    private int len = 0;
+    private ValueTags valueTags = new ValueTags(20000000);
+
+    private long real = 0;
 
     public ValueReader() {
         try {
@@ -70,16 +73,17 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-        int size = getByteSize(value);
-        if (size != len) {
-            len = size;
-            count++;
-        }
         cache[messageNum] = (byte) value;
         value = value >>> 8;
         UnsafeWrapper.unsafe.putByte(base + messageNum, (byte) value);
         value = value >>> 8;
-        if (!buffers[index].hasRemaining()) {
+        byte size = getShortSize(value);
+        if (size != len) {
+            len = size;
+            valueTags.add(real, messageNum, size);
+        }
+        real += size * 2;
+        if (buffers[index].remaining() < size * 2) {
             ByteBuffer tmpBuffer = buffers[index];
             int newIndex = (index + 1) % bufNum;
             tmpBuffer.flip();
@@ -99,8 +103,14 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        buffers[index].putShort((short) (value >>> 32));
-        buffers[index].putInt((int) value);
+        for (int i = 0; i < size; i++) {
+            short s = (short) ((value) >>> ((size - i - 1) << 4));
+            buffers[index].putShort(s);
+        }
+        //        Bits.putLong(bytes, 0, value);
+        //        buffers[index].put(bytes, 8 - size, size);
+        //        buffers[index].putShort((short) (value >>> 32));
+        //        buffers[index].putInt((int) value);
         messageNum++;
     }
 
@@ -119,12 +129,18 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        System.out.println("count:" + count);
     }
 
     public long get(int index, ValueContext valueContext) {
-        long value = valueContext.buffer.getShort();
-        value = value << 32 | (valueContext.buffer.getInt() & 0x00000000ffffffffL);
+        if (index == valueContext.nextOffset) {
+            valueTags.update(valueContext);
+        }
+        byte tag = valueContext.tag;
+        long value = 0;
+        for (int i = 0; i < tag; i++) {
+            value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
+        }
+        //value = value << 32 | (valueContext.buffer.getInt() & 0x00000000ffffffffL);
         value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index) & 0xff);
         value = value << 8 | (cache[index] & 0xff);
         return value;
@@ -136,8 +152,14 @@ public class ValueReader {
         //找到合适的buffer
         updateContext(offsetA, offsetB, valueContext);
         while (offsetA < offsetB) {
-            long value = valueContext.buffer.getShort();
-            value = value << 32 | (valueContext.buffer.getInt() & 0x00000000ffffffffL);
+            if (offsetA == valueContext.nextOffset) {
+                valueTags.update(valueContext);
+            }
+            byte tag = valueContext.tag;
+            long value = 0;
+            for (int i = 0; i < tag; i++) {
+                value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
+            }
             value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA) & 0xff);
             value = value << 8 | (cache[offsetA] & 0xff);
             if (value <= aMax && value >= aMin) {
@@ -150,24 +172,26 @@ public class ValueReader {
     }
 
     public void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
-        int i = (offsetB - offsetA) * Constants.VALUE_SIZE / Constants.PAGE_SIZE;
+        long realA = valueTags.getRealOffset(offsetA, valueContext);
+        long realB = valueTags.getRealOffset(offsetB, valueContext);
+        int i = (int) ((realB - realA) / Constants.PAGE_SIZE);
         valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.buffer.clear();
         try {
-            fileChannel.read(valueContext.buffer, ((long) offsetA) * Constants.VALUE_SIZE);
+            fileChannel.read(valueContext.buffer, realA);
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }
         valueContext.buffer.flip();
     }
 
-    private int getByteSize(long value) {
-        long f = 0xff00000000000000L;
-        for (int i = 8; i >= 0; i--) {
+    private byte getShortSize(long value) {
+        long f = 0xffff00000000L;
+        for (byte i = Constants.VALUE_SIZE / 2; i >= 0; i--) {
             if ((value & f) != 0) {
                 return i;
             }
-            f = f >>> 8;
+            f = f >>> 16;
         }
         return 0;
     }

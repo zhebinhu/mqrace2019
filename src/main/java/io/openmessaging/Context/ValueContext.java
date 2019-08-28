@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class ValueContext {
     public ValueContext() {
-        for (int i = 0; i < (6 * 80000) / Constants.PAGE_SIZE; i++) {
+        for (int i = 0; i < (Constants.VALUE_SIZE * 80000) / Constants.PAGE_SIZE; i++) {
             bufferList.add(ByteBuffer.allocateDirect(Constants.PAGE_SIZE * (i + 1)));
         }
     }
@@ -19,5 +19,11 @@ public class ValueContext {
     public List<ByteBuffer> bufferList = new ArrayList<>();
 
     public ByteBuffer buffer;
+
+    public byte tag;
+
+    public int nextOffset;
+
+    public int tagIndex;
 
 }
