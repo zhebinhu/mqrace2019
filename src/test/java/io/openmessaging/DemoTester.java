@@ -10,11 +10,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class DemoTester {
 
-    private static final long base = 1000000000000L;
+    private static final long base = 10000000000L;
     public static void main(String args[]) throws Exception {
         //评测相关配置
         //发送阶段的发送数量，也即发送阶段必须要在规定时间内把这些消息发送完毕方可
-        int msgNum = 20000000;
+        int msgNum = 200000000;
         //发送阶段的最大持续时间，也即在该时间内，如果消息依然没有发送完毕，则退出评测
         int sendTime = 10 * 60 * 1000;
         //查询阶段的最大持续时间，也即在该时间内，如果消息依然没有消费完毕，则退出评测
@@ -25,7 +25,7 @@ public class DemoTester {
         //发送的线程数量
         int sendTsNum = 12;
         //查询的线程数量
-        int checkTsNum = 1;
+        int checkTsNum = 12;
         // 每次查询消息的最大跨度
         int maxMsgCheckSize = 50000;
         // 每次查询求平均的最大跨度
@@ -94,7 +94,7 @@ public class DemoTester {
         System.out.printf("Value Check: %d ms Num: %d\n", checkEnd - checkStart, valueCheckNum.get());
 
         //评测结果
-        //System.out.printf("Total Score:%d\n", (msgNum / (sendSend - sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
+        System.out.printf("Total Score:%d\n", (msgNum / (sendSend - sendStart) + msgCheckNum.get() / (msgCheckEnd - msgCheckStart) + valueCheckNum.get() / (msgCheckEnd - msgCheckStart)));
     }
 
     static class Producer implements Runnable {
@@ -117,9 +117,6 @@ public class DemoTester {
         @Override
         public void run() {
             long count;
-//            ByteBuffer buffer = ByteBuffer.allocate(34);
-//            buffer.putLong(123456L);
-//            messageStore.put(new Message(123456L, 123456L, buffer.array()));
             while ((count = counter.getAndIncrement()) < maxMsgNum && System.currentTimeMillis() <= maxTimeStamp) {
                 try {
                     ByteBuffer buffer = ByteBuffer.allocate(34);
@@ -128,7 +125,7 @@ public class DemoTester {
                     messageStore.put(new Message(count+base, count+base, buffer.array()));
                     if ((count & 0x1L) == 0) {
                         //偶数count多加一条消息
-                        messageStore.put(new Message(count, count+base, buffer.array()));
+                        messageStore.put(new Message(count+base, count+base, buffer.array()));
                     }
                 } catch (Throwable t) {
                     t.printStackTrace();
@@ -206,7 +203,7 @@ public class DemoTester {
                         //偶数需要多验证一次
                         if ((index1 & 0x1) == 0 && iter.hasNext()) {
                             msg = iter.next();
-                            if (msg.getA()+base != msg.getT() || msg.getA() != index1+base || ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
+                            if (msg.getA() != msg.getT() || msg.getA() != index1+base || ByteBuffer.wrap(msg.getBody()).getLong() != index1) {
                                 checkError();
                             }
                         }
@@ -303,7 +300,7 @@ public class DemoTester {
                     }
 
                     if (res+base != val) {
-                        checkError(aIndex1+base, aIndex2+base, tIndex1+base, tIndex2+base, res, val);
+                        checkError(aIndex1, aIndex2, tIndex1, tIndex2, res, val);
                     }
 
                     numCounter.getAndAdd(count);

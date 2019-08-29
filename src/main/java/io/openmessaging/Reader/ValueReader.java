@@ -103,7 +103,7 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        for (int i = size; i >=0; i--) {
+        for (int i = size-1; i >=0; i--) {
             short s = (short) ((value) >>> (i << 4));
             buffers[index].putShort(s);
         }
