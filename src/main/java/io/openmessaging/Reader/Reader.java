@@ -62,8 +62,9 @@ public class Reader {
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
         int offsetB = timeReader.getOffset(tMax + 1);
+//        int offsetA = 0;
+//        int offsetB = 4;
         valueReader.updateContext(offsetA, offsetB, valueContext);
-        dataReader.updateContext(offsetA, offsetB, dataContext);
         while (offsetA < offsetB) {
             long time = timeReader.get(offsetA, timeContext);
             long value = valueReader.get(offsetA, valueContext);
@@ -74,8 +75,7 @@ public class Reader {
             Message message = result.get();
             message.setT(time);
             message.setA(value);
-            dataContext.buffer.position((offsetA - dataContext.bufferMinIndex) * Constants.DATA_SIZE);
-            dataContext.buffer.get(message.getBody());
+            dataReader.getData(offsetA, message, dataContext);
             offsetA++;
         }
         return result;

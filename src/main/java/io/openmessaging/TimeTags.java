@@ -6,19 +6,20 @@ package io.openmessaging;
 public class TimeTags {
     private long tagsBase;
 
-    private long offsetsBase;
+    private int[] offsets;
 
     private int index;
 
     public TimeTags(int cap) {
         tagsBase = UnsafeWrapper.unsafe.allocateMemory(cap * 8);
-        offsetsBase = UnsafeWrapper.unsafe.allocateMemory(cap * 4);
+        offsets = new int[cap];
         index = 0;
     }
 
     public void add(long tag, int offset) {
         UnsafeWrapper.unsafe.putLong(tagsBase + index * 8, tag);
-        UnsafeWrapper.unsafe.putInt(offsetsBase + index * 4, offset);
+        //UnsafeWrapper.unsafe.putInt(offsetsBase + index * 4, offset);
+        offsets[index] = offset;
         index++;
     }
 
@@ -43,7 +44,8 @@ public class TimeTags {
     }
 
     public int getOffset(int offsetIndex) {
-        return UnsafeWrapper.unsafe.getInt(offsetsBase + offsetIndex * 4);
+        return offsets[offsetIndex];
+        //return UnsafeWrapper.unsafe.getInt(offsetsBase + offsetIndex * 4);
     }
 
     public int size() {
@@ -75,8 +77,8 @@ public class TimeTags {
 
         while (low <= high) {
             int mid = (low + high) >>> 1;
-            int midVal = UnsafeWrapper.unsafe.getInt(offsetsBase + mid * 4);
-
+            //int midVal = UnsafeWrapper.unsafe.getInt(offsetsBase + mid * 4);
+            int midVal = offsets[mid];
             if (midVal < key) {
                 low = mid + 1;
             } else if (midVal > key) {
