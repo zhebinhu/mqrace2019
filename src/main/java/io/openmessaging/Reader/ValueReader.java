@@ -60,7 +60,7 @@ public class ValueReader {
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace(System.out);
         }
         for (int i = 0; i < bufNum; i++) {
@@ -175,8 +175,9 @@ public class ValueReader {
     public void updateContext(int offsetA, int offsetB, ValueContext valueContext) {
         long realA = valueTags.getRealOffset(offsetA, valueContext);
         long realB = valueTags.getRealOffset(offsetB);
-        int i = (int) ((realB - realA) / Constants.PAGE_SIZE);
-        valueContext.buffer = valueContext.bufferList.get(i);
+        valueContext.buffer = ByteBuffer.allocate((int)(realB-realA));
+        //int i = (int) ((realB - realA) / Constants.PAGE_SIZE);
+        //valueContext.buffer = valueContext.bufferList.get(i);
         valueContext.buffer.clear();
         try {
             fileChannel.read(valueContext.buffer, realA);
