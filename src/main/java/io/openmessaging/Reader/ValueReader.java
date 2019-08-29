@@ -50,7 +50,7 @@ public class ValueReader {
 
     private byte len = 0;
 
-    private ValueTags valueTags = new ValueTags(20000000);
+    private ValueTags valueTags = new ValueTags(16000000);
 
     private long real = 0;
 
@@ -72,6 +72,9 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
+        if (messageNum > 10000000 && messageNum < 12000000) {
+            System.out.println(Long.toBinaryString(value));
+        }
         if (messageNum > 500000000 && messageNum < 1500000000) {
             UnsafeWrapper.unsafe.putByte(base + messageNum - 500000000, (byte) value);
             value = value >>> 8;
