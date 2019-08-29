@@ -12,7 +12,7 @@ public class TimeReader {
 
     private byte[] base = new byte[Integer.MAX_VALUE / 2];
 
-    private TimeTags timeTags = new TimeTags(100000000);
+    private TimeTags timeTags = new TimeTags(80000000);
 
     private int msgNum = 0;
 
@@ -39,6 +39,7 @@ public class TimeReader {
 
     public void init() {
         base[msgNum / 2] = halfByte.getByte();
+        System.out.println("TimeTags size:" + timeTags.size());
     }
 
     public int getOffset(long time) {
