@@ -67,7 +67,7 @@ public class ValueReader {
         }
         cache = new byte[Integer.MAX_VALUE - 2];
         base = UnsafeWrapper.unsafe.allocateMemory(1024 * 1024 * 1024);
-        UnsafeWrapper.unsafe.setMemory(base, 1024 * 1024 * 1024, (byte) 0);
+        UnsafeWrapper.unsafe.setMemory(base, 1000000000, (byte) 0);
     }
 
     public void put(Message message) {
@@ -138,10 +138,10 @@ public class ValueReader {
         for (int i = 0; i < tag; i++) {
             value = (value << 8) | (valueContext.buffer.get() & 0xff);
         }
+        value = value << 8 | (cache[index] & 0xff);
         if (index > 500000000 && index < 1500000000) {
             value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index - 500000000) & 0xff);
         }
-        value = value << 8 | (cache[index] & 0xff);
         return value;
     }
 
