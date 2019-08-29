@@ -56,6 +56,8 @@ public class ValueReader {
 
     private long base;
 
+    private long count;
+
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
@@ -72,9 +74,7 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-        if (messageNum > 10000000 && messageNum < 12000000) {
-            System.out.println(Long.toBinaryString(value));
-        }
+        count+=getByteSize(value);
         if (messageNum > 500000000 && messageNum < 1500000000) {
             UnsafeWrapper.unsafe.putByte(base + messageNum - 500000000, (byte) value);
             value = value >>> 8;
@@ -129,7 +129,7 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        System.out.println("valueTags size:" + valueTags.size());
+        System.out.println("count:" + count);
     }
 
     public long get(int index, ValueContext valueContext) {
