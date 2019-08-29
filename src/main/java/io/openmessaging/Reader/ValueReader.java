@@ -3,7 +3,6 @@ package io.openmessaging.Reader;
 import io.openmessaging.Constants;
 import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
-import io.openmessaging.UnsafeWrapper;
 import io.openmessaging.ValueTags;
 
 import java.io.IOException;
@@ -47,8 +46,6 @@ public class ValueReader {
     private int messageNum = 0;
 
     private byte[] cache;
-
-    private long base;
 
     private byte len = 0;
 
@@ -171,17 +168,6 @@ public class ValueReader {
             e.printStackTrace(System.out);
         }
         valueContext.buffer.flip();
-    }
-
-    private byte getShortSize(long value) {
-        long f = 0xffff00000000L;
-        for (byte i = Constants.VALUE_SIZE / 2; i >= 0; i--) {
-            if ((value & f) != 0) {
-                return i;
-            }
-            f = f >>> 16;
-        }
-        return 0;
     }
 
     private byte getByteSize(long value) {

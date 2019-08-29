@@ -1,5 +1,6 @@
 package io.openmessaging.Reader;
 
+import io.openmessaging.Constants;
 import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.TimeContext;
 import io.openmessaging.Context.ValueContext;
@@ -62,6 +63,7 @@ public class Reader {
         int offsetA = timeReader.getOffset(tMin);
         int offsetB = timeReader.getOffset(tMax + 1);
         valueReader.updateContext(offsetA, offsetB, valueContext);
+        dataReader.updateContext(offsetA, offsetB, dataContext);
         while (offsetA < offsetB) {
             long time = timeReader.get(offsetA, timeContext);
             long value = valueReader.get(offsetA, valueContext);
@@ -72,7 +74,8 @@ public class Reader {
             Message message = result.get();
             message.setT(time);
             message.setA(value);
-            dataReader.getData(offsetA, message, dataContext);
+            dataContext.buffer.position((offsetA - dataContext.bufferMinIndex) * Constants.DATA_SIZE);
+            dataContext.buffer.get(message.getBody());
             offsetA++;
         }
         return result;

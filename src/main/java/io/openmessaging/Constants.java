@@ -11,12 +11,10 @@ public class Constants {
     public final static int DATA_CAP = 34 * 1024 * 1024;
 
     // value写入缓冲区
-    public final static int VALUE_CAP = 36 * 1024 * 1024;
+    public final static int VALUE_CAP = 32 * 1024 * 1024;
 
     // data 的大小
     public final static int DATA_SIZE = 34;
-
-    public final static int DATA_NUM = 4 * 1024;
 
     // value 的大小
     // 1bit存储在内存中
