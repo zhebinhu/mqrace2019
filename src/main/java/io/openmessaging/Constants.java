@@ -19,14 +19,8 @@ public class Constants {
     public final static int DATA_NUM = 4 * 1024;
 
     // value 的大小
-    // 2bit存储在内存中
-    public final static int VALUE_SIZE = 6;
-
-    public final static int VALUE_NUM = 512;
-
-    public final static int VALUE_PAGE_NUM = 160;
-
-    public final static int PAGE_SIZE = 4096;
+    // 1bit存储在内存中
+    public final static int VALUE_SIZE = 7;
 
     //public final static String URL = "/users/huzhebin/data/";
 
