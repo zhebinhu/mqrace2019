@@ -120,7 +120,7 @@ public class DataReader {
         dataContext.buffer.limit((offsetB - offsetA) * Constants.DATA_SIZE);
         dataContext.bufferMinIndex = offsetA;
         try {
-            fileChannel.read(dataContext.buffer, offsetA * Constants.DATA_SIZE);
+            fileChannel.read(dataContext.buffer, (long)offsetA * Constants.DATA_SIZE);
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }
