@@ -26,7 +26,7 @@ public class Constants {
 
     public final static int VALUE_PAGE_NUM = 160;
 
-    public final static int PAGE_SIZE = 4096;
+    public final static int PAGE_SIZE = 2048;
 
     //public final static String URL = "/users/huzhebin/data/";
 

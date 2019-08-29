@@ -57,8 +57,6 @@ public class ValueReader {
 
     private long real = 0;
 
-    private long lastValue = 0;
-
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
@@ -75,7 +73,6 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-        lastValue = value ^ lastValue;
         cache[messageNum] = (byte) value;
         value = value >>> 8;
         UnsafeWrapper.unsafe.putByte(base + messageNum, (byte) value);
@@ -106,8 +103,8 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        for (int i = 1; i <= size; i++) {
-            short s = (short) ((value) >>> ((size - i) << 4));
+        for (int i = size; i >=0; i--) {
+            short s = (short) ((value) >>> (i << 4));
             buffers[index].putShort(s);
         }
         //        Bits.putLong(bytes, 0, value);
