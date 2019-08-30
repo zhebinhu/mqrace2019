@@ -54,9 +54,9 @@ public class ValueReader {
 
     private long real = 0;
 
-    private ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1000000000);
+    //private ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1000000000);
 
-    private long[] counts = new long[8];
+    //private long[] counts = new long[8];
 
     public ValueReader() {
         try {
@@ -72,11 +72,10 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-        counts[getByteSize(value)]++;
-        if (messageNum > 500000000 && messageNum < 1500000000) {
-            byteBuffer.put((byte) value);
-            value = value >>> 8;
-        }
+//        if (messageNum > 500000000 && messageNum < 1500000000) {
+//            byteBuffer.put((byte) value);
+//            value = value >>> 8;
+//        }
         cache[messageNum] = (byte) value;
         value = value >>> 8;
         byte size = getByteSize(value);
@@ -127,7 +126,6 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        System.out.println("counts:" + Arrays.toString(counts));
     }
 
     public long get(int index, ValueContext valueContext) {
@@ -140,9 +138,9 @@ public class ValueReader {
             value = (value << 8) | (valueContext.buffer.get() & 0xff);
         }
         value = value << 8 | (cache[index] & 0xff);
-        if (index > 500000000 && index < 1500000000) {
-            value = value << 8 | (byteBuffer.get(index - 500000000) & 0xff);
-        }
+//        if (index > 500000000 && index < 1500000000) {
+//            value = value << 8 | (byteBuffer.get(index - 500000000) & 0xff);
+//        }
         return value;
     }
 
@@ -161,9 +159,9 @@ public class ValueReader {
                 value = (value << 8) | (valueContext.buffer.get() & 0xff);
             }
             value = value << 8 | (cache[offsetA] & 0xff);
-            if (offsetA > 500000000 && offsetA < 1500000000) {
-                value = value << 8 | (byteBuffer.get(offsetA - 500000000) & 0xff);
-            }
+//            if (offsetA > 500000000 && offsetA < 1500000000) {
+//                value = value << 8 | (byteBuffer.get(offsetA - 500000000) & 0xff);
+//            }
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
