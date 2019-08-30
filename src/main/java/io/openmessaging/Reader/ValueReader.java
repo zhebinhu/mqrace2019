@@ -160,8 +160,8 @@ public class ValueReader {
                 value = (value << 8) | (valueContext.buffer.get() & 0xff);
             }
             value = value << 8 | (cache[offsetA] & 0xff);
-            if (index >= 500000000 && index < 1500000000) {
-                value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index - 500000000) & 0xff);
+            if (offsetA >= 500000000 && offsetA < 1500000000) {
+                value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA - 500000000) & 0xff);
             }
             if (value <= aMax && value >= aMin) {
                 sum += value;
