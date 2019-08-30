@@ -67,9 +67,11 @@ public class Reader {
         int offsetA = timeReader.getOffset(tMin);
         int offsetB = timeReader.getOffset(tMax + 1);
         if (offsetA < minA) {
+            minA = offsetA;
             System.out.println("minA:" + minA);
         }
         if (offsetB > maxB) {
+            maxB = offsetB;
             System.out.println("maxB:" + maxB);
         }
         valueReader.updateContext(offsetA, offsetB, valueContext);
