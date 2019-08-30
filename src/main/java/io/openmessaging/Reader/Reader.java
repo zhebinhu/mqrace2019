@@ -30,10 +30,6 @@ public class Reader {
 
     private ThreadLocal<MessageList> messageListThreadLocal = new ThreadLocal<>();
 
-    private int minA = Integer.MAX_VALUE;
-
-    private int maxB;
-
     public Reader() {
         timeReader = new TimeReader();
         valueReader = new ValueReader();
@@ -66,12 +62,6 @@ public class Reader {
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
         int offsetB = timeReader.getOffset(tMax + 1);
-        if (offsetA < minA) {
-            System.out.println("minA:" + minA);
-        }
-        if (offsetB > maxB) {
-            System.out.println("maxB:" + maxB);
-        }
         valueReader.updateContext(offsetA, offsetB, valueContext);
         while (offsetA < offsetB) {
             long time = timeReader.get(offsetA, timeContext);
