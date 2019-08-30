@@ -46,7 +46,7 @@ public class ValueTags {
         byte tag = tags.get( realIndex);
         valueContext.tag = tag;
 
-        return real + (long) tag*2 * (offset - tagOffset);
+        return real + (long) tag * (offset - tagOffset);
     }
 
     public long getRealOffset(int offset) {
@@ -57,7 +57,7 @@ public class ValueTags {
         long real = reals.getLong(realIndex * 8);
         int tagOffset = offsets.getInt(realIndex * 4);
         byte tag = tags.get( realIndex);
-        return real + (long) tag*2 * (offset - tagOffset);
+        return real + (long) tag * (offset - tagOffset);
     }
 
     public void update(ValueContext valueContext) {

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -45,15 +46,17 @@ public class ValueReader {
      */
     private int messageNum = 0;
 
-    private short[] cache;
+    private byte[] cache;
 
     private byte len = 0;
 
-    private ValueTags valueTags = new ValueTags(50000);
+    private ValueTags valueTags = new ValueTags(16000000);
 
     private long real = 0;
 
-    private ByteBuffer cache2 = ByteBuffer.allocateDirect(1024 * 1024 * 1024);
+    private ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1000000000);
+
+    private long[] counts = new long[8];
 
     public ValueReader() {
         try {
@@ -64,25 +67,25 @@ public class ValueReader {
         for (int i = 0; i < bufNum; i++) {
             buffers[i] = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
         }
-        cache = new short[Integer.MAX_VALUE / 2];
+        cache = new byte[Integer.MAX_VALUE - 2];
     }
 
     public void put(Message message) {
         long value = message.getA();
-        if (messageNum > 256 * 1024 * 1024 && messageNum <= 1280 * 1024 * 1024) {
-            cache[messageNum] = (short) value;
-            value = value >>> 16;
-        } else if (messageNum > 256 * 1024 * 1024 && messageNum <= 1792 * 1024 * 1024) {
-            cache2.putShort((short) value);
-            value = value >>> 16;
+        counts[getByteSize(value)]++;
+        if (messageNum > 500000000 && messageNum < 1500000000) {
+            byteBuffer.put((byte) value);
+            value = value >>> 8;
         }
-        byte size = getShortSize(value);
+        cache[messageNum] = (byte) value;
+        value = value >>> 8;
+        byte size = getByteSize(value);
         if (size != len) {
             len = size;
             valueTags.add(real, messageNum, size);
         }
-        real += size * 2;
-        if (buffers[index].remaining() < size * 2) {
+        real += size;
+        if (buffers[index].remaining() < size) {
             ByteBuffer tmpBuffer = buffers[index];
             int newIndex = (index + 1) % bufNum;
             tmpBuffer.flip();
@@ -102,9 +105,9 @@ public class ValueReader {
             index = newIndex;
             buffers[index].clear();
         }
-        for (int i = 1; i <= size; i++) {
-            short s = (short) ((value) >>> ((size - i) << 4));
-            buffers[index].putShort(s);
+        for (int i = size - 1; i >= 0; i--) {
+            byte b = (byte) ((value) >>> (i << 3));
+            buffers[index].put(b);
         }
         messageNum++;
     }
@@ -124,7 +127,7 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        System.out.println("valueTags:" + valueTags.size());
+        System.out.println("counts:" + Arrays.toString(counts));
     }
 
     public long get(int index, ValueContext valueContext) {
@@ -134,12 +137,11 @@ public class ValueReader {
         byte tag = valueContext.tag;
         long value = 0;
         for (int i = 0; i < tag; i++) {
-            value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
+            value = (value << 8) | (valueContext.buffer.get() & 0xff);
         }
-        if (index > 256 * 1024 * 1024 && index <= 1280 * 1024 * 1024) {
-            value = value << 16 | (cache[index] & 0xffff);
-        } else if (index > 256 * 1024 * 1024 && index <= 1792 * 1024 * 1024) {
-            value = value << 16 | (cache2.getShort(index * 16) & 0xffff);
+        value = value << 8 | (cache[index] & 0xff);
+        if (index > 500000000 && index < 1500000000) {
+            value = value << 8 | (byteBuffer.get(index - 500000000) & 0xff);
         }
         return value;
     }
@@ -156,12 +158,11 @@ public class ValueReader {
             byte tag = valueContext.tag;
             long value = 0;
             for (int i = 0; i < tag; i++) {
-                value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
+                value = (value << 8) | (valueContext.buffer.get() & 0xff);
             }
-            if (offsetA > 256 * 1024 * 1024 && offsetA <= 1280 * 1024 * 1024) {
-                value = value << 16 | (cache[offsetA] & 0xffff);
-            } else if (offsetA > 256 * 1024 * 1024 && offsetA <= 1792 * 1024 * 1024) {
-                value = value << 16 | (cache2.getShort(offsetA * 16) & 0xffff);
+            value = value << 8 | (cache[offsetA] & 0xff);
+            if (offsetA > 500000000 && offsetA < 1500000000) {
+                value = value << 8 | (byteBuffer.get(offsetA - 500000000) & 0xff);
             }
             if (value <= aMax && value >= aMin) {
                 sum += value;
@@ -185,24 +186,13 @@ public class ValueReader {
         valueContext.buffer.flip();
     }
 
-    //    private byte getByteSize(long value) {
-    //        long f = 0xff000000000000L;
-    //        for (byte i = Constants.VALUE_SIZE; i >= 0; i--) {
-    //            if ((value & f) != 0) {
-    //                return i;
-    //            }
-    //            f = f >>> 8;
-    //        }
-    //        return 0;
-    //    }
-
-    private byte getShortSize(long value) {
-        long f = 0xffff000000000000L;
-        for (byte i = Constants.VALUE_SIZE / 2; i >= 0; i--) {
+    private byte getByteSize(long value) {
+        long f = 0xff000000000000L;
+        for (byte i = Constants.VALUE_SIZE; i >= 0; i--) {
             if ((value & f) != 0) {
                 return i;
             }
-            f = f >>> 16;
+            f = f >>> 8;
         }
         return 0;
     }

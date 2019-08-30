@@ -30,8 +30,6 @@ public class Reader {
 
     private ThreadLocal<MessageList> messageListThreadLocal = new ThreadLocal<>();
 
-    private int num;
-
     public Reader() {
         timeReader = new TimeReader();
         valueReader = new ValueReader();
@@ -39,10 +37,6 @@ public class Reader {
     }
 
     public void put(Message message) {
-        if(num%1000==7){
-            System.out.println(num);
-        }
-        num++;
         timeReader.put(message);
         valueReader.put(message);
         dataReader.put(message);
