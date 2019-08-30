@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -56,7 +57,7 @@ public class ValueReader {
 
     private long base;
 
-    private long count;
+    private long[] counts = new long[8];
 
     public ValueReader() {
         try {
@@ -74,7 +75,7 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-        count+=getByteSize(value);
+        counts[getByteSize(value)]++;
         if (messageNum > 500000000 && messageNum < 1500000000) {
             UnsafeWrapper.unsafe.putByte(base + messageNum - 500000000, (byte) value);
             value = value >>> 8;
@@ -129,7 +130,7 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        System.out.println("count:" + count);
+        System.out.println("counts:" + Arrays.toString(counts));
     }
 
     public long get(int index, ValueContext valueContext) {
