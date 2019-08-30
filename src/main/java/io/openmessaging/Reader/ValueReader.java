@@ -123,6 +123,7 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
+        System.out.println("valuetags size:"+valueTags.size());
     }
 
     public long get(int index, ValueContext valueContext) {
