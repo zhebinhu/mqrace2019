@@ -1,6 +1,5 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.Constants;
 import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.TimeContext;
 import io.openmessaging.Context.ValueContext;
