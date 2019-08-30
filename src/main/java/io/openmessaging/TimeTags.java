@@ -1,25 +1,23 @@
 package io.openmessaging;
 
-import java.nio.ByteBuffer;
-
 /**
  * Created by huzhebin on 2019/08/08.
  */
 public class TimeTags {
-    private ByteBuffer tags;
+    private long tagsBase;
 
     private int[] offsets;
 
     private int index;
 
     public TimeTags(int cap) {
-        tags = ByteBuffer.allocateDirect(cap * 8);
+        tagsBase = UnsafeWrapper.unsafe.allocateMemory(cap * 8);
         offsets = new int[cap];
         index = 0;
     }
 
     public void add(long tag, int offset) {
-        tags.putLong(tag);
+        UnsafeWrapper.unsafe.putLong(tagsBase + index * 8, tag);
         //UnsafeWrapper.unsafe.putInt(offsetsBase + index * 4, offset);
         offsets[index] = offset;
         index++;
@@ -42,7 +40,7 @@ public class TimeTags {
     }
 
     public long getTag(int tagIndex) {
-        return tags.getLong(tagIndex * 8);
+        return UnsafeWrapper.unsafe.getLong(tagsBase + tagIndex * 8);
     }
 
     public int getOffset(int offsetIndex) {
@@ -60,7 +58,7 @@ public class TimeTags {
 
         while (low <= high) {
             int mid = (low + high) >>> 1;
-            long midVal = tags.getLong(mid * 8);
+            long midVal = UnsafeWrapper.unsafe.getLong(tagsBase + mid * 8);
 
             if (midVal + 15 < key) {
                 low = mid + 1;
