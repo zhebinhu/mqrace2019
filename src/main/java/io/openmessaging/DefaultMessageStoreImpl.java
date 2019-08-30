@@ -75,7 +75,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private void init() {
-
+        System.out.println("init start:" + System.currentTimeMillis());
         reader = new Reader();
         PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
             long t = o1.fst.getT() - o2.fst.getT();
@@ -111,7 +111,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
         writers.clear();
-
+        System.out.println("init end:" + System.currentTimeMillis());
     }
 
     @Override
@@ -140,8 +140,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
         //                    long endtime = System.currentTimeMillis();
         //                    System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
         //System.out.println("memory:" + memoryLoad());
-        return reader.avg(aMin, aMax, tMin, tMax);
-        //return 0L;
+        //return reader.avg(aMin, aMax, tMin, tMax);
+        return 0L;
 
     }
 }
