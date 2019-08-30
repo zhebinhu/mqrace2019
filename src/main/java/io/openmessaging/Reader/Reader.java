@@ -32,11 +32,15 @@ public class Reader {
 
     public Reader() {
         timeReader = new TimeReader();
+        System.out.println("timeReader create success");
         valueReader = new ValueReader();
+        System.out.println("valueReader create success");
         dataReader = new DataReader();
+        System.out.println("dataReader create success");
     }
 
     public void put(Message message) {
+        System.exit(-1);
         timeReader.put(message);
         valueReader.put(message);
         dataReader.put(message);
