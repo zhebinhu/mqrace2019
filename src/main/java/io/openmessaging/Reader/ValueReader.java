@@ -72,7 +72,6 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-        value = value >>> 8;
         if (messageNum >= 500000000 && messageNum < 1500000000) {
             UnsafeWrapper.unsafe.putByte(base + messageNum - 500000000, (byte) value);
             value = value >>> 8;
