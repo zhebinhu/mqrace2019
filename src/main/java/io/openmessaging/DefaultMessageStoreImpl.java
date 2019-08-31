@@ -64,10 +64,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-            //long starttime = System.currentTimeMillis();
+            //            long starttime = System.currentTimeMillis();
             result = reader.get(aMin, aMax, tMin, tMax);
-            //long endtime = System.currentTimeMillis();
-            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            //            long endtime = System.currentTimeMillis();
+            //            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -75,7 +75,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private void init() {
-        System.out.println("init start:" + System.currentTimeMillis());
+
         reader = new Reader();
         PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
             long t = o1.fst.getT() - o2.fst.getT();
@@ -111,7 +111,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
         writers.clear();
-        System.out.println("init end:" + System.currentTimeMillis());
+
     }
 
     @Override

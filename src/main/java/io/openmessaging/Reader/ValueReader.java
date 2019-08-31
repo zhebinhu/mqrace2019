@@ -24,7 +24,7 @@ public class ValueReader {
      */
     private FileChannel fileChannel;
 
-    private final int bufNum = 2;
+    private final int bufNum = 4;
 
     /**
      * 堆外内存
@@ -72,7 +72,7 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-        if (messageNum >= 500000000 && messageNum < 1500000000) {
+        if (messageNum > 500000000 && messageNum < 1500000000) {
             UnsafeWrapper.unsafe.putByte(base + messageNum - 500000000, (byte) value);
             value = value >>> 8;
         }
@@ -126,7 +126,7 @@ public class ValueReader {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        System.out.println("valuetags size:" + valueTags.size());
+        System.out.println("valueTags size:" + valueTags.size());
     }
 
     public long get(int index, ValueContext valueContext) {
@@ -139,7 +139,7 @@ public class ValueReader {
             value = (value << 8) | (valueContext.buffer.get() & 0xff);
         }
         value = value << 8 | (cache[index] & 0xff);
-        if (index >= 500000000 && index < 1500000000) {
+        if (index > 500000000 && index < 1500000000) {
             value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index - 500000000) & 0xff);
         }
         return value;
@@ -160,7 +160,7 @@ public class ValueReader {
                 value = (value << 8) | (valueContext.buffer.get() & 0xff);
             }
             value = value << 8 | (cache[offsetA] & 0xff);
-            if (offsetA >= 500000000 && offsetA < 1500000000) {
+            if (offsetA > 500000000 && offsetA < 1500000000) {
                 value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA - 500000000) & 0xff);
             }
             if (value <= aMax && value >= aMin) {
