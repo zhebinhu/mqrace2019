@@ -117,7 +117,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
         long a = 1 << 47 / 4;
-        System.out.println(aMax / a - aMin / a);
+
+        System.out.println(aMax / a - aMin / a + 1);
 //        if (!avg) {
 //            synchronized (this) {
 //                if (!avg) {

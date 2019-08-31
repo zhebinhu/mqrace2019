@@ -17,16 +17,10 @@ import java.util.concurrent.Future;
  * Created by huzhebin on 2019/07/23.
  */
 public class DataReader {
-    /**
-     * 文件通道
-     */
     private FileChannel fileChannel;
 
     private final int bufNum = 6;
 
-    /**
-     * 堆外内存
-     */
     private ByteBuffer[] buffers = new ByteBuffer[bufNum];
 
     private Future[] futures = new Future[bufNum];
@@ -39,9 +33,6 @@ public class DataReader {
         return thread;
     });
 
-    /**
-     * 消息总数
-     */
     private int messageNum = 0;
 
     public DataReader() {
