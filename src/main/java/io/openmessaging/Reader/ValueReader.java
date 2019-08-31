@@ -46,7 +46,7 @@ public class ValueReader {
      */
     private int messageNum = 0;
 
-    //private byte[] cache;
+    private byte[] cache;
 
     private byte len = 0;
 
@@ -65,7 +65,7 @@ public class ValueReader {
         for (int i = 0; i < bufNum; i++) {
             buffers[i] = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
         }
-        //cache = new byte[Integer.MAX_VALUE - 2];
+        cache = new byte[Integer.MAX_VALUE - 2];
         base = UnsafeWrapper.unsafe.allocateMemory(1000000000);
         UnsafeWrapper.unsafe.setMemory(base, 1000000000, (byte) 0);
     }
@@ -76,8 +76,8 @@ public class ValueReader {
             UnsafeWrapper.unsafe.putByte(base + messageNum - 500000000, (byte) value);
             value = value >>> 8;
         }
-//        cache[messageNum] = (byte) value;
-//        value = value >>> 8;
+        cache[messageNum] = (byte) value;
+        value = value >>> 8;
         byte size = getByteSize(value);
         if (size != len) {
             len = size;
@@ -138,7 +138,7 @@ public class ValueReader {
         for (int i = 0; i < tag; i++) {
             value = (value << 8) | (valueContext.buffer.get() & 0xff);
         }
-//        value = value << 8 | (cache[index] & 0xff);
+        value = value << 8 | (cache[index] & 0xff);
         if (index >= 500000000 && index < 1500000000) {
             value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index - 500000000) & 0xff);
         }
@@ -159,7 +159,7 @@ public class ValueReader {
             for (int i = 0; i < tag; i++) {
                 value = (value << 8) | (valueContext.buffer.get() & 0xff);
             }
-//            value = value << 8 | (cache[offsetA] & 0xff);
+            value = value << 8 | (cache[offsetA] & 0xff);
             if (offsetA >= 500000000 && offsetA < 1500000000) {
                 value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA - 500000000) & 0xff);
             }
