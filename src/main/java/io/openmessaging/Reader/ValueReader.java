@@ -225,7 +225,7 @@ public class ValueReader {
             if (offsetA >= 500000000 && offsetA < 1500000000) {
                 value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA - 500000000) & 0xff);
             }
-            value = value << 8 | (mappedByteBuffer.get(index) & 0xff);
+            value = value << 8 | (mappedByteBuffer.get(offsetA) & 0xff);
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
