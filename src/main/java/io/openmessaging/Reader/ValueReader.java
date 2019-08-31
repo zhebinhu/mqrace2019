@@ -50,7 +50,7 @@ public class ValueReader {
 
     private byte len = 0;
 
-    private ValueTags valueTags = new ValueTags(16000000);
+    private ValueTags valueTags = new ValueTags(20000000);
 
     private long real = 0;
 
