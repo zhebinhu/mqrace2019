@@ -9,6 +9,7 @@ import io.openmessaging.ValueTags;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,7 +25,11 @@ public class ValueReader {
      */
     private FileChannel fileChannel;
 
+    private FileChannel fileChannel2;
+
     private final int bufNum = 2;
+
+    private final int bufNum2 = 2;
 
     /**
      * 堆外内存
@@ -33,11 +38,25 @@ public class ValueReader {
 
     private Future[] futures = new Future[bufNum];
 
+    private ByteBuffer[] buffers2 = new ByteBuffer[bufNum2];
+
+    private Future[] futures2 = new Future[bufNum2];
+
     private int index = 0;
+
+    private int index2 = 0;
+
+    private MappedByteBuffer mappedByteBuffer;
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
-        thread.setPriority(9);
+        thread.setPriority(10);
+        return thread;
+    });
+
+    private ExecutorService executorService2 = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r);
+        thread.setPriority(10);
         return thread;
     });
 
@@ -59,11 +78,15 @@ public class ValueReader {
     public ValueReader() {
         try {
             fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
+            fileChannel2 = new RandomAccessFile(Constants.URL + "101.value", "rw").getChannel();
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
         for (int i = 0; i < bufNum; i++) {
             buffers[i] = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
+        }
+        for (int i = 0; i < bufNum2; i++) {
+            buffers2[i] = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
         }
         cache = new byte[Integer.MAX_VALUE - 2];
         base = UnsafeWrapper.unsafe.allocateMemory(1000000000);
@@ -72,6 +95,29 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
+        byte value2 = (byte) value;
+        if (!buffers2[index2].hasRemaining()) {
+            ByteBuffer tmpBuffer = buffers2[index2];
+            int newIndex = (index2 + 1) % bufNum2;
+            tmpBuffer.flip();
+            try {
+                if (futures2[index2] == null) {
+                    futures2[index2] = executorService2.submit(() -> fileChannel2.write(tmpBuffer));
+                } else {
+                    if (!futures2[newIndex].isDone()) {
+                        System.out.println("value2 block");
+                        futures2[newIndex].get();
+                    }
+                    futures2[index2] = executorService2.submit(() -> fileChannel2.write(tmpBuffer));
+                }
+            } catch (Exception e) {
+                e.printStackTrace(System.out);
+            }
+            index2 = newIndex;
+            buffers2[index2].clear();
+        }
+        buffers2[index2].put(value2);
+        value = value >>> 8;
         if (messageNum >= 500000000 && messageNum < 1500000000) {
             UnsafeWrapper.unsafe.putByte(base + messageNum - 500000000, (byte) value);
             value = value >>> 8;
@@ -118,15 +164,30 @@ public class ValueReader {
                     future.get();
                 }
             }
+            for (Future future : futures2) {
+                if (future != null && !future.isDone()) {
+                    future.get();
+                }
+            }
             if (buffers[index].hasRemaining()) {
                 buffers[index].flip();
                 fileChannel.write(buffers[index]);
                 buffers[index].clear();
             }
+            if (buffers2[index2].hasRemaining()) {
+                buffers2[index2].flip();
+                fileChannel2.write(buffers2[index2]);
+                buffers2[index2].clear();
+            }
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
-        System.out.println("valuetags size:"+valueTags.size());
+        System.out.println("valuetags size:" + valueTags.size());
+        try {
+            mappedByteBuffer = fileChannel2.map(FileChannel.MapMode.READ_ONLY, 0L, (long) messageNum);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public long get(int index, ValueContext valueContext) {
@@ -142,6 +203,7 @@ public class ValueReader {
         if (index >= 500000000 && index < 1500000000) {
             value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index - 500000000) & 0xff);
         }
+        value = value << 8 | (mappedByteBuffer.get(index) & 0xff);
         return value;
     }
 
@@ -163,6 +225,7 @@ public class ValueReader {
             if (offsetA >= 500000000 && offsetA < 1500000000) {
                 value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA - 500000000) & 0xff);
             }
+            value = value << 8 | (mappedByteBuffer.get(index) & 0xff);
             if (value <= aMax && value >= aMin) {
                 sum += value;
                 count++;
