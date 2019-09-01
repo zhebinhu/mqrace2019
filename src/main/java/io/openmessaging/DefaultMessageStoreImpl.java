@@ -17,7 +17,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private HashMap<Thread, Writer> writers = new HashMap<>();
 
-    private Reader reader;
+    private Reader[] readers;
 
     private volatile boolean put = false;
 
@@ -58,14 +58,19 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 synchronized (this) {
                     if (!get) {
                         //System.out.println("get:" + System.currentTimeMillis());
-                        reader.init();
                         future.get();
+                        for (Reader reader : readers) {
+                            reader.init();
+                        }
                         get = true;
                     }
                 }
             }
             //            long starttime = System.currentTimeMillis();
-            result = reader.get(aMin, aMax, tMin, tMax);
+            for (int i = getBlock(aMin); i <= getBlock(aMax); i++) {
+                //result = reader.get(aMin, aMax, tMin, tMax);
+                result = merge(result, readers[i].get(aMin, aMax, tMin, tMax));
+            }
             //            long endtime = System.currentTimeMillis();
             //            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
@@ -76,7 +81,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private void init() {
 
-        reader = new Reader();
+        readers = new Reader[5];
+        for (int i = 0; i < 5; i++) {
+            readers[i] = new Reader(i);
+        }
         PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
             long t = o1.fst.getT() - o2.fst.getT();
             if (t == 0) {
@@ -103,7 +111,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         }
         while (!priorityQueue.isEmpty()) {
             Pair<Message, Writer> pair = priorityQueue.poll();
-            reader.put(pair.fst);
+            readers[getBlock(pair.fst.getA())].put(pair.fst);
             Message newMessage = pair.snd.get();
             if (newMessage != null) {
                 pair.fst = newMessage;
@@ -116,9 +124,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-        long a = 0xffffffffffffL / 4;
-
-        System.out.println(aMax / a - aMin / a + 1);
 //        if (!avg) {
 //            synchronized (this) {
 //                if (!avg) {
@@ -143,8 +148,40 @@ public class DefaultMessageStoreImpl extends MessageStore {
         //                    long endtime = System.currentTimeMillis();
         //                    System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
         //System.out.println("memory:" + memoryLoad());
-        return reader.avg(aMin, aMax, tMin, tMax);
+        Avg avg = new Avg();
+        for (int i = getBlock(aMin); i <= getBlock(aMax); i++) {
+            //result = reader.get(aMin, aMax, tMin, tMax);
+            Avg tmp = readers[i].avg(aMin, aMax, tMin, tMax);
+            avg.sum += tmp.sum;
+            avg.count += tmp.count;
+        }
+        return avg.count == 0 ? 0 : avg.sum / avg.count;
         //return 0L;
 
+    }
+
+    private int getBlock(long value) {
+        long a = (0xffffffffffffL + 1) / 4;
+        return value > 0xffffffffffffL ? 4 : (int) (value / a);
+    }
+
+    private List<Message> merge(List<Message> a, List<Message> b) {
+        List<Message> result = new ArrayList<>();
+        int i = 0;
+        int j = 0;
+        while (i < a.size() && j < b.size()) {
+            if (a.get(i).getT() <= b.get(j).getT()) {
+                result.add(a.get(i++));
+            } else {
+                result.add(b.get(j++));
+            }
+        }
+        while (i < a.size()) {
+            result.add(a.get(i++));
+        }
+        while (j < b.size()) {
+            result.add(b.get(j++));
+        }
+        return result;
     }
 }

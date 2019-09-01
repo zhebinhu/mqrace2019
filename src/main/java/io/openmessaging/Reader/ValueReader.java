@@ -1,10 +1,7 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.Constants;
+import io.openmessaging.*;
 import io.openmessaging.Context.ValueContext;
-import io.openmessaging.Message;
-import io.openmessaging.UnsafeWrapper;
-import io.openmessaging.ValueTags;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -40,7 +37,7 @@ public class ValueReader {
      */
     private int messageNum = 0;
 
-    private byte[] cache;
+    //private byte[] cache;
 
     private byte len = 0;
 
@@ -48,30 +45,30 @@ public class ValueReader {
 
     private long real = 0;
 
-    private long base;
+    //private long base;
 
-    public ValueReader() {
+    public ValueReader(int num) {
         try {
-            fileChannel = new RandomAccessFile(Constants.URL + "100.value", "rw").getChannel();
+            fileChannel = new RandomAccessFile(Constants.URL + num + ".value", "rw").getChannel();
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
         for (int i = 0; i < bufNum; i++) {
             buffers[i] = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
         }
-        cache = new byte[Integer.MAX_VALUE - 2];
-        base = UnsafeWrapper.unsafe.allocateMemory(1000000000);
-        UnsafeWrapper.unsafe.setMemory(base, 1000000000, (byte) 0);
+//        cache = new byte[Integer.MAX_VALUE - 2];
+//        base = UnsafeWrapper.unsafe.allocateMemory(1000000000);
+//        UnsafeWrapper.unsafe.setMemory(base, 1000000000, (byte) 0);
     }
 
     public void put(Message message) {
         long value = message.getA();
-        if (messageNum > 500000000 && messageNum < 1500000000) {
-            UnsafeWrapper.unsafe.putByte(base + messageNum - 500000000, (byte) value);
-            value = value >>> 8;
-        }
-        cache[messageNum] = (byte) value;
-        value = value >>> 8;
+//        if (messageNum > 500000000 && messageNum < 1500000000) {
+//            UnsafeWrapper.unsafe.putByte(base + messageNum - 500000000, (byte) value);
+//            value = value >>> 8;
+//        }
+//        cache[messageNum] = (byte) value;
+//        value = value >>> 8;
         byte size = getByteSize(value);
         if (size != len) {
             len = size;
@@ -132,16 +129,15 @@ public class ValueReader {
         for (int i = 0; i < tag; i++) {
             value = (value << 8) | (valueContext.buffer.get() & 0xff);
         }
-        value = value << 8 | (cache[index] & 0xff);
-        if (index > 500000000 && index < 1500000000) {
-            value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index - 500000000) & 0xff);
-        }
+//        value = value << 8 | (cache[index] & 0xff);
+//        if (index > 500000000 && index < 1500000000) {
+//            value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index - 500000000) & 0xff);
+//        }
         return value;
     }
 
-    public long avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
-        long sum = 0;
-        int count = 0;
+    public Avg avg(int offsetA, int offsetB, long aMin, long aMax, ValueContext valueContext) {
+        Avg avg = new Avg();
         //找到合适的buffer
         updateContext(offsetA, offsetB, valueContext);
         while (offsetA < offsetB) {
@@ -153,17 +149,18 @@ public class ValueReader {
             for (int i = 0; i < tag; i++) {
                 value = (value << 8) | (valueContext.buffer.get() & 0xff);
             }
-            value = value << 8 | (cache[offsetA] & 0xff);
-            if (offsetA > 500000000 && offsetA < 1500000000) {
-                value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA - 500000000) & 0xff);
-            }
+//            value = value << 8 | (cache[offsetA] & 0xff);
+//            if (offsetA > 500000000 && offsetA < 1500000000) {
+//                value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA - 500000000) & 0xff);
+//            }
             if (value <= aMax && value >= aMin) {
-                sum += value;
-                count++;
+                avg.sum += value;
+                avg.count++;
             }
             offsetA++;
         }
-        return count == 0 ? 0 : sum / count;
+        //return count == 0 ? 0 : sum / count;
+        return avg;
     }
 
     public void updateContext(int offsetA, int offsetB, ValueContext valueContext) {

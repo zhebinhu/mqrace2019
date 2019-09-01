@@ -60,7 +60,7 @@ public class TimeTags {
             int mid = (low + high) >>> 1;
             long midVal = UnsafeWrapper.unsafe.getLong(tagsBase + mid * 8);
 
-            if (midVal + 15 < key) {
+            if (midVal + 255 < key) {
                 low = mid + 1;
             } else if (midVal > key) {
                 high = mid - 1;

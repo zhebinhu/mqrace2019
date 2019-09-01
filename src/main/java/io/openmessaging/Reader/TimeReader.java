@@ -5,14 +5,17 @@ import io.openmessaging.HalfByte;
 import io.openmessaging.Message;
 import io.openmessaging.TimeTags;
 
+import java.util.Arrays;
+
 /**
  * Created by huzhebin on 2019/08/07.
  */
 public class TimeReader {
+    int cap = 100000000;
 
-    private byte[] base = new byte[Integer.MAX_VALUE / 2];
+    private byte[] base = new byte[cap];
 
-    private TimeTags timeTags = new TimeTags(70000000);
+    private TimeTags timeTags = new TimeTags(10000000);
 
     private int msgNum = 0;
 
@@ -22,23 +25,28 @@ public class TimeReader {
 
     public void put(Message message) {
         long t = message.getT();
-        if (tag == 0 || t > tag + 15) {
+        if (tag == 0 || t > tag + 255) {
             tag = t;
             timeTags.add(t, msgNum);
         }
-
-        if (msgNum % 2 == 0) {
-            halfByte.setRight((byte) (t - tag));
-        } else {
-            halfByte.setLeft((byte) (t - tag));
-            base[msgNum / 2] = halfByte.getByte();
-            halfByte.setByte((byte) 0);
+        if (msgNum >= cap) {
+            int newCap = cap + 100000000;
+            base = Arrays.copyOf(base, newCap);
         }
+        base[msgNum] = (byte) (t - tag);
+//        if (msgNum % 2 == 0) {
+//            halfByte.setRight((byte) (t - tag));
+//        } else {
+//            halfByte.setLeft((byte) (t - tag));
+//            base[msgNum / 2] = halfByte.getByte();
+//            halfByte.setByte((byte) 0);
+//        }
         msgNum++;
     }
 
     public void init() {
-        base[msgNum / 2] = halfByte.getByte();
+        //base[msgNum / 2] = halfByte.getByte();
+        timeTags.add(tag + 256, msgNum);
         System.out.println("TimeTags size:" + timeTags.size());
     }
 
@@ -46,14 +54,16 @@ public class TimeReader {
         int tagIndex = timeTags.tagIndex(time);
         long pTag = timeTags.getTag(tagIndex);
         int pOffset = timeTags.getOffset(tagIndex);
+        int pOffsetB = timeTags.getOffset(tagIndex + 1);
         long pTime = pTag;
-        while (pTime < time && pOffset < msgNum) {
+        while (pTime < time && pOffset < pOffsetB) {
             pOffset++;
-            if (pOffset % 2 == 0) {
-                pTime = pTag + HalfByte.getRight(base[pOffset / 2]);
-            } else {
-                pTime = pTag + HalfByte.getLeft(base[pOffset / 2]);
-            }
+            pTime = pTag + (base[pOffset] & 0xff);
+//            if (pOffset % 2 == 0) {
+//                pTime = pTag + HalfByte.getRight(base[pOffset / 2]);
+//            } else {
+//                pTime = pTag + HalfByte.getLeft(base[pOffset / 2]);
+//            }
         }
         return pOffset;
     }
@@ -69,10 +79,11 @@ public class TimeReader {
                 context.offsetB = timeTags.getOffset(tagIndex + 1);
             }
         }
-        if (offset % 2 == 0) {
-            return context.tag + HalfByte.getRight(base[offset / 2]);
-        } else {
-            return context.tag + HalfByte.getLeft(base[offset / 2]);
-        }
+        return context.tag + (base[offset] & 0xff);
+//        if (offset % 2 == 0) {
+//            return context.tag + HalfByte.getRight(base[offset / 2]);
+//        } else {
+//            return context.tag + HalfByte.getLeft(base[offset / 2]);
+//        }
     }
 }

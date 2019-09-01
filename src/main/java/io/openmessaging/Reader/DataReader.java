@@ -35,9 +35,9 @@ public class DataReader {
 
     private int messageNum = 0;
 
-    public DataReader() {
+    public DataReader(int num) {
         try {
-            fileChannel = new RandomAccessFile(Constants.URL + "100.data", "rw").getChannel();
+            fileChannel = new RandomAccessFile(Constants.URL + num + ".data", "rw").getChannel();
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }

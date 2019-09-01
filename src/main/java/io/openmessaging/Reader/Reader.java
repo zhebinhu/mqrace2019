@@ -1,12 +1,9 @@
 package io.openmessaging.Reader;
 
-import io.openmessaging.Constants;
+import io.openmessaging.*;
 import io.openmessaging.Context.DataContext;
 import io.openmessaging.Context.TimeContext;
 import io.openmessaging.Context.ValueContext;
-import io.openmessaging.ContextPool;
-import io.openmessaging.Message;
-import io.openmessaging.MessageList;
 
 import java.util.List;
 
@@ -30,10 +27,10 @@ public class Reader {
 
     private ThreadLocal<MessageList> messageListThreadLocal = new ThreadLocal<>();
 
-    public Reader() {
+    public Reader(int num) {
         timeReader = new TimeReader();
-        valueReader = new ValueReader();
-        dataReader = new DataReader();
+        valueReader = new ValueReader(num);
+        dataReader = new DataReader(num);
     }
 
     public void put(Message message) {
@@ -81,7 +78,7 @@ public class Reader {
         return result;
     }
 
-    public long avg(long aMin, long aMax, long tMin, long tMax) {
+    public Avg avg(long aMin, long aMax, long tMin, long tMax) {
         if (valueContextThreadLocal.get() == null) {
             valueContextThreadLocal.set(contextPool.getValueContext());
         }
