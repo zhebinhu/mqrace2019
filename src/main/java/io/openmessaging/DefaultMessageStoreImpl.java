@@ -41,7 +41,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         if (!put) {
             synchronized (this) {
                 if (!put) {
-                    //System.out.println("put:" + System.currentTimeMillis());
+                    System.out.println("put:" + System.currentTimeMillis());
                     future = executorService.submit(this::init);
                     put = true;
                 }
@@ -57,7 +57,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             if (!get) {
                 synchronized (this) {
                     if (!get) {
-                        //System.out.println("get:" + System.currentTimeMillis());
+                        System.out.println("get:" + System.currentTimeMillis());
                         future.get();
                         for (Reader reader : readers) {
                             reader.init();
@@ -162,7 +162,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private int getBlock(long value) {
         long a = (0xffffffffffffL + 1) / 4;
-        return value > 0xffffffffffffL ? 4 : (int) (value / a);
+        return value > 0xffffffffffffL ? 4 : value < 0 ? 0 : (int) (value / a);
     }
 
     private List<Message> merge(List<Message> a, List<Message> b) {
