@@ -177,7 +177,7 @@ public class ValueReader {
     }
 
     private byte getByteSize(long value) {
-        long f = 0xff000000000000L;
+        long f = 0xff00000000000000L;
         for (byte i = Constants.VALUE_SIZE; i >= 0; i--) {
             if ((value & f) != 0) {
                 return i;
