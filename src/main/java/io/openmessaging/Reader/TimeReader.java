@@ -46,7 +46,6 @@ public class TimeReader {
 
     public void init() {
         //base[msgNum / 2] = halfByte.getByte();
-        timeTags.add(tag + 256, msgNum);
         System.out.println("TimeTags size:" + timeTags.size());
     }
 
@@ -55,6 +54,9 @@ public class TimeReader {
         long pTag = timeTags.getTag(tagIndex);
         int pOffset = timeTags.getOffset(tagIndex);
         int pOffsetB = timeTags.getOffset(tagIndex + 1);
+        if (pOffsetB == -1) {
+            pOffsetB = msgNum;
+        }
         long pTime = pTag;
         while (pTime < time && pOffset < pOffsetB) {
             pOffset++;

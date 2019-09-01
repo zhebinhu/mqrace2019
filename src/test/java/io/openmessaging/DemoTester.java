@@ -14,7 +14,7 @@ public class DemoTester {
     public static void main(String args[]) throws Exception {
         //评测相关配置
         //发送阶段的发送数量，也即发送阶段必须要在规定时间内把这些消息发送完毕方可
-        int msgNum = 200000000;
+        int msgNum = 20000000;
         //发送阶段的最大持续时间，也即在该时间内，如果消息依然没有发送完毕，则退出评测
         int sendTime = 10 * 60 * 1000;
         //查询阶段的最大持续时间，也即在该时间内，如果消息依然没有消费完毕，则退出评测
@@ -25,7 +25,7 @@ public class DemoTester {
         //发送的线程数量
         int sendTsNum = 12;
         //查询的线程数量
-        int checkTsNum = 12;
+        int checkTsNum = 1;
         // 每次查询消息的最大跨度
         int maxMsgCheckSize = 50000;
         // 每次查询求平均的最大跨度
@@ -122,10 +122,10 @@ public class DemoTester {
                     ByteBuffer buffer = ByteBuffer.allocate(34);
                     buffer.putLong(count);
                     // 为测试方便, 插入的是有规律的数据, 不是实际测评的情况
-                    messageStore.put(new Message(new Random().nextLong(), count+base, buffer.array()));
+                    messageStore.put(new Message(count+base, count+base, buffer.array()));
                     if ((count & 0x1L) == 0) {
                         //偶数count多加一条消息
-                        messageStore.put(new Message(new Random().nextLong(), count+base, buffer.array()));
+                        messageStore.put(new Message(count+base, count+base, buffer.array()));
                     }
                 } catch (Throwable t) {
                     t.printStackTrace();
