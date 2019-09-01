@@ -111,7 +111,9 @@ public class DefaultMessageStoreImpl extends MessageStore {
         }
         while (!priorityQueue.isEmpty()) {
             Pair<Message, Writer> pair = priorityQueue.poll();
-            readers[getBlock(pair.fst.getA())].put(pair.fst);
+            int block =getBlock(pair.fst.getA());
+            //System.out.println(block);
+            readers[block].put(pair.fst);
             Message newMessage = pair.snd.get();
             if (newMessage != null) {
                 pair.fst = newMessage;

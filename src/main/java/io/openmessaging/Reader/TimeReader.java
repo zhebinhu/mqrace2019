@@ -11,7 +11,7 @@ import java.util.Arrays;
  * Created by huzhebin on 2019/08/07.
  */
 public class TimeReader {
-    int cap = 100000000;
+    private int cap = 100000000;
 
     private byte[] base = new byte[cap];
 
@@ -30,8 +30,8 @@ public class TimeReader {
             timeTags.add(t, msgNum);
         }
         if (msgNum >= cap) {
-            int newCap = cap + 100000000;
-            base = Arrays.copyOf(base, newCap);
+            cap = cap + 100000000;
+            base = Arrays.copyOf(base, cap);
         }
         base[msgNum] = (byte) (t - tag);
 //        if (msgNum % 2 == 0) {
