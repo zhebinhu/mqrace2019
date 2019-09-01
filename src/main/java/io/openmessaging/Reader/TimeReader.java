@@ -53,8 +53,8 @@ public class TimeReader {
         int tagIndex = timeTags.tagIndex(time);
         long pTag = timeTags.getTag(tagIndex);
         int pOffset = timeTags.getOffset(tagIndex);
-        int pOffsetB = timeTags.getOffset(tagIndex + 1)-1;
-        if (pOffsetB == -1) {
+        int pOffsetB = timeTags.getOffset(tagIndex + 1);
+        if (pOffsetB == 0) {
             pOffsetB = msgNum;
         }
         long pTime = pTag;
