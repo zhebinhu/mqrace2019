@@ -59,9 +59,7 @@ public class Reader {
         DataContext dataContext = dataContextThreadLocal.get();
         int offsetA = timeReader.getOffset(tMin);
         int offsetB = timeReader.getOffset(tMax + 1);
-        if (tMax == tMin) {
-            System.out.println("offsetA:" + offsetA + " offsetB:" + offsetB);
-        }
+
 //        int offsetA = 0;
 //        int offsetB = 4;
         valueReader.updateContext(offsetA, offsetB, valueContext);
@@ -77,6 +75,9 @@ public class Reader {
             message.setA(value);
             dataReader.getData(offsetA, message, dataContext);
             offsetA++;
+        }
+        if (result.size() == 0) {
+            System.out.println("offsetA:" + offsetA + " offsetB:" + offsetB);
         }
         return result;
     }
