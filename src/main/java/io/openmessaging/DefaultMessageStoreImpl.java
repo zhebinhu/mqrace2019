@@ -66,13 +66,13 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-            //            long starttime = System.currentTimeMillis();
+            long starttime = System.currentTimeMillis();
             for (int i = getBlock(aMin); i <= getBlock(aMax); i++) {
                 //result = reader.get(aMin, aMax, tMin, tMax);
                 result = merge(result, readers[i].get(aMin, aMax, tMin, tMax));
             }
-            //            long endtime = System.currentTimeMillis();
-            //            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
+            long endtime = System.currentTimeMillis();
+            System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -111,7 +111,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
         }
         while (!priorityQueue.isEmpty()) {
             Pair<Message, Writer> pair = priorityQueue.poll();
-            int block =getBlock(pair.fst.getA());
+            int block = getBlock(pair.fst.getA());
             //System.out.println(block);
             readers[block].put(pair.fst);
             Message newMessage = pair.snd.get();
