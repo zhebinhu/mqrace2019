@@ -69,7 +69,7 @@ public class ValueTags {
     }
 
     public int size() {
-        return index - 1;
+        return index;
     }
 
     private int binarySearchOffset(int key) {
