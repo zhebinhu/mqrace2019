@@ -44,9 +44,6 @@ public class TimeTags {
     }
 
     public int getOffset(int offsetIndex) {
-        if(offsetIndex>=index){
-            return -1;
-        }
         return offsets[offsetIndex];
         //return UnsafeWrapper.unsafe.getInt(offsetsBase + offsetIndex * 4);
     }
