@@ -2,10 +2,7 @@ package io.openmessaging;
 
 import io.openmessaging.Reader.Reader;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -30,6 +27,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
     });
 
     private Future future;
+
+    private long[] barriers = new long[4];
 
     @Override
     public void put(Message message) {
@@ -81,6 +80,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private void init() {
 
+        List<Message> cache = new ArrayList<>();
         readers = new Reader[5];
         for (int i = 0; i < 5; i++) {
             readers[i] = new Reader(i);
@@ -108,6 +108,34 @@ public class DefaultMessageStoreImpl extends MessageStore {
             Message message = writer.get();
             Pair<Message, Writer> pair = new Pair<>(message, writer);
             priorityQueue.add(pair);
+        }
+        while (!priorityQueue.isEmpty()&&(cache.size()<1000000)) {
+            Pair<Message, Writer> pair = priorityQueue.poll();
+            cache.add(pair.fst);
+            Message newMessage = pair.snd.get();
+            if (newMessage != null) {
+                pair.fst = newMessage;
+                priorityQueue.add(pair);
+            }
+        }
+        List<Message> tmp = new ArrayList<>(cache);
+        tmp.sort((o1, o2) -> {
+            long t = o1.getA() - o2.getA();
+            if (t == 0) {
+                return 0;
+            }
+            if (t > 0) {
+                return 1;
+            }
+            return -1;
+        });
+        barriers[0] = tmp.get(20000).getA();
+        barriers[1] = tmp.get(40000).getA();
+        barriers[2] = tmp.get(60000).getA();
+        barriers[3] = tmp.get(80000).getA();
+        System.out.println("barriers:"+Arrays.toString(barriers));
+        for(Message message:cache){
+            readers[getBlock(message.getA())].put(message);
         }
         while (!priorityQueue.isEmpty()) {
             Pair<Message, Writer> pair = priorityQueue.poll();
@@ -163,8 +191,11 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private int getBlock(long value) {
-        long a = (0xffffffffffffL + 1) / 4;
-        return value > 0xffffffffffffL ? 4 : value < 0 ? 0 : (int) (value / a);
+        int i = 0;
+        while (i < 4 && value < barriers[i]) {
+            i++;
+        }
+        return i;
     }
 
     private List<Message> merge(List<Message> a, List<Message> b) {
