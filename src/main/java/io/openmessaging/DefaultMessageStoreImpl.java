@@ -79,7 +79,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private void init() {
-
+        System.out.println("init start"+System.currentTimeMillis());
         List<Message> cache = new ArrayList<>();
         readers = new Reader[5];
         for (int i = 0; i < 5; i++) {
@@ -109,7 +109,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             Pair<Message, Writer> pair = new Pair<>(message, writer);
             priorityQueue.add(pair);
         }
-        while (!priorityQueue.isEmpty()&&(cache.size()<1000000)) {
+        while (!priorityQueue.isEmpty() && (cache.size() < 10000000)) {
             Pair<Message, Writer> pair = priorityQueue.poll();
             cache.add(pair.fst);
             Message newMessage = pair.snd.get();
@@ -129,18 +129,20 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
             return -1;
         });
-        barriers[0] = tmp.get(20000).getA();
-        barriers[1] = tmp.get(40000).getA();
-        barriers[2] = tmp.get(60000).getA();
-        barriers[3] = tmp.get(80000).getA();
-        System.out.println("barriers:"+Arrays.toString(barriers));
-        for(Message message:cache){
+        barriers[0] = tmp.get(200000).getA();
+        barriers[1] = tmp.get(400000).getA();
+        barriers[2] = tmp.get(600000).getA();
+        barriers[3] = tmp.get(800000).getA();
+        System.out.println("barriers:" + Arrays.toString(barriers));
+        for (Message message : cache) {
             readers[getBlock(message.getA())].put(message);
         }
+        System.out.println("barriers end"+System.currentTimeMillis());
+        tmp.clear();
+        cache.clear();
         while (!priorityQueue.isEmpty()) {
             Pair<Message, Writer> pair = priorityQueue.poll();
             int block = getBlock(pair.fst.getA());
-            //System.out.println(block);
             readers[block].put(pair.fst);
             Message newMessage = pair.snd.get();
             if (newMessage != null) {
@@ -149,7 +151,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
         writers.clear();
-
+        System.out.println("init end"+System.currentTimeMillis());
     }
 
     @Override
@@ -191,11 +193,17 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private int getBlock(long value) {
-        int i = 0;
-        while (i < 4 && value < barriers[i]) {
-            i++;
+        if (value > barriers[3]) {
+            return 4;
+        } else if (value > barriers[2]) {
+            return 3;
+        } else if (value > barriers[1]) {
+            return 2;
+        } else if (value > barriers[0]) {
+            return 1;
+        } else {
+            return 0;
         }
-        return i;
     }
 
     private List<Message> merge(List<Message> a, List<Message> b) {
