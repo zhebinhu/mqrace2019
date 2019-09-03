@@ -29,7 +29,7 @@ public class ValueTags {
 
     public void add(long real, int offset, byte tag) {
         if (index >= cap) {
-            cap = cap + 4000000;
+            cap = cap + 1000000;
             realBase = Arrays.copyOf(realBase,cap);
             offsetsBase = Arrays.copyOf(offsetsBase,cap);
             tagsBase = Arrays.copyOf(tagsBase,cap);
@@ -56,7 +56,7 @@ public class ValueTags {
         byte tag = tagsBase[realIndex];
         valueContext.tag = tag;
 
-        return real + (long) tag * (offset - tagOffset);
+        return real + (long) tag*2 * (offset - tagOffset);
     }
 
     public long getRealOffset(int offset) {
@@ -67,7 +67,7 @@ public class ValueTags {
         long real = realBase[realIndex];
         int tagOffset = offsetsBase[realIndex];
         byte tag = tagsBase[realIndex];
-        return real + (long) tag * (offset - tagOffset);
+        return real + (long) tag*2 * (offset - tagOffset);
     }
 
     public void update(ValueContext valueContext) {

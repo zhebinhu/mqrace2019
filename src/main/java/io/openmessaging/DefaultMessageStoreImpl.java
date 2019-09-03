@@ -137,6 +137,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             System.out.println("barriers end" + System.currentTimeMillis());
             tmp.clear();
             cache.clear();
+            System.gc();
             while (!priorityQueue.isEmpty()) {
                 Pair<Message, Writer> pair = priorityQueue.poll();
                 readers[getBlock(pair.fst.getA())].put(pair.fst);

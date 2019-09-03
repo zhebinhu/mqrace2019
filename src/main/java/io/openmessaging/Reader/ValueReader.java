@@ -60,13 +60,13 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-        byte size = getByteSize(value);
+        byte size = getShortSize(value);
         if (size != len) {
             len = size;
             valueTags.add(real, messageNum, size);
         }
-        real += size;
-        if (buffers[index].remaining() < size) {
+        real += size*2;
+        if (buffers[index].remaining() < size*2) {
             ByteBuffer tmpBuffer = buffers[index];
             int newIndex = (index + 1) % bufNum;
             tmpBuffer.flip();
@@ -87,8 +87,8 @@ public class ValueReader {
             buffers[index].clear();
         }
         for (int i = size - 1; i >= 0; i--) {
-            byte b = (byte) ((value) >>> (i << 3));
-            buffers[index].put(b);
+            short s = (short) ((value) >>> (i << 4));
+            buffers[index].putShort(s);
         }
         messageNum++;
     }
@@ -118,7 +118,7 @@ public class ValueReader {
         byte tag = valueContext.tag;
         long value = 0;
         for (int i = 0; i < tag; i++) {
-            value = (value << 8) | (valueContext.buffer.get() & 0xff);
+            value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
         }
         return value;
     }
@@ -134,7 +134,7 @@ public class ValueReader {
             byte tag = valueContext.tag;
             long value = 0;
             for (int i = 0; i < tag; i++) {
-                value = (value << 8) | (valueContext.buffer.get() & 0xff);
+                value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
             }
             if (value <= aMax && value >= aMin) {
                 avg.sum += value;
@@ -158,13 +158,24 @@ public class ValueReader {
         valueContext.buffer.flip();
     }
 
-    private byte getByteSize(long value) {
-        long f = 0xff00000000000000L;
-        for (byte i = Constants.VALUE_SIZE; i >= 0; i--) {
+//    private byte getByteSize(long value) {
+//        long f = 0xff00000000000000L;
+//        for (byte i = Constants.VALUE_SIZE; i >= 0; i--) {
+//            if ((value & f) != 0) {
+//                return i;
+//            }
+//            f = f >>> 8;
+//        }
+//        return 0;
+//    }
+
+    private byte getShortSize(long value) {
+        long f = 0xffff00000000L;
+        for (byte i = Constants.VALUE_SIZE / 2; i >= 0; i--) {
             if ((value & f) != 0) {
                 return i;
             }
-            f = f >>> 8;
+            f = f >>> 16;
         }
         return 0;
     }
