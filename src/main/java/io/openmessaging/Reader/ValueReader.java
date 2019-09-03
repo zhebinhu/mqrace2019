@@ -145,7 +145,7 @@ public class ValueReader {
             for (int i = 0; i < tag; i++) {
                 value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
             }
-            if (index >= 80000000 && index < 140000000) {
+            if (offsetA >= 80000000 && offsetA < 140000000) {
                 value = (value << 16) | (cache.getShort((offsetA-80000000) * 2) & 0xffff);
             }
             if (value <= aMax && value >= aMin) {
