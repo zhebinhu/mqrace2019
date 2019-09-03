@@ -28,9 +28,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private Future future;
 
-    private long[] barriers = new long[4];
-
-    private int msgNum = 0;
+    private long[] barriers = new long[Constants.VALUE_BLOCKS - 1];
 
     @Override
     public void put(Message message) {
@@ -84,8 +82,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
         try {
             System.out.println("init start" + System.currentTimeMillis());
             List<Message> cache = new ArrayList<>();
-            readers = new Reader[5];
-            for (int i = 0; i < 5; i++) {
+            readers = new Reader[Constants.VALUE_BLOCKS];
+            for (int i = 0; i < Constants.VALUE_BLOCKS; i++) {
                 readers[i] = new Reader(i);
             }
             PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
@@ -112,7 +110,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 Pair<Message, Writer> pair = new Pair<>(message, writer);
                 priorityQueue.add(pair);
             }
-            while (!priorityQueue.isEmpty() && (cache.size() < 10000000)) {
+            while (!priorityQueue.isEmpty() && (cache.size() < Constants.INITIAL_FLOW)) {
                 Pair<Message, Writer> pair = priorityQueue.poll();
                 cache.add(pair.fst);
                 Message newMessage = pair.snd.get();
@@ -132,10 +130,13 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 }
                 return -1;
             });
-            barriers[0] = tmp.get(2000000).getA();
-            barriers[1] = tmp.get(4000000).getA();
-            barriers[2] = tmp.get(6000000).getA();
-            barriers[3] = tmp.get(8000000).getA();
+            for (int i = 0; i < Constants.VALUE_BLOCKS - 1; i++) {
+                barriers[i] = tmp.get(Constants.INITIAL_FLOW / Constants.VALUE_BLOCKS * (i + 1)).getA();
+            }
+//            barriers[0] = tmp.get(2000000).getA();
+//            barriers[1] = tmp.get(4000000).getA();
+//            barriers[2] = tmp.get(6000000).getA();
+//            barriers[3] = tmp.get(8000000).getA();
 //            barriers[0] = (0xffffffffffffL + 1) / 4;
 //            barriers[1] = barriers[0] * 2;
 //            barriers[2] = barriers[0] * 3;
@@ -203,17 +204,12 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private int getBlock(long value) {
-        if (value > barriers[3]) {
-            return 4;
-        } else if (value > barriers[2]) {
-            return 3;
-        } else if (value > barriers[1]) {
-            return 2;
-        } else if (value > barriers[0]) {
-            return 1;
-        } else {
-            return 0;
+        for (int i = Constants.VALUE_BLOCKS - 1; i > 0; i--) {
+            if (value > barriers[i - 1]) {
+                return i;
+            }
         }
+        return 0;
     }
 
     private List<Message> merge(List<Message> a, List<Message> b) {

@@ -15,7 +15,7 @@ public class TimeReader {
 
     private byte[] base = new byte[cap];
 
-    private TimeTags timeTags = new TimeTags(10000000);
+    private TimeTags timeTags = new TimeTags(5000000);
 
     private int msgNum = 0;
 
