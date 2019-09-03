@@ -44,7 +44,7 @@ public class ValueTags {
         byte tag = UnsafeWrapper.unsafe.getByte(tagsBase + realIndex);
         valueContext.tag = tag;
 
-        return real + (long) tag * (offset - tagOffset);
+        return real + (long) tag*2 * (offset - tagOffset);
     }
 
     public long getRealOffset(int offset) {
@@ -55,7 +55,7 @@ public class ValueTags {
         long real = UnsafeWrapper.unsafe.getLong(realBase + realIndex * 8);
         int tagOffset = UnsafeWrapper.unsafe.getInt(offsetsBase + realIndex * 4);
         byte tag = UnsafeWrapper.unsafe.getByte(tagsBase + realIndex);
-        return real + (long) tag * (offset - tagOffset);
+        return real + (long) tag*2 * (offset - tagOffset);
     }
 
     public void update(ValueContext valueContext) {
