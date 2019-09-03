@@ -79,82 +79,87 @@ public class DefaultMessageStoreImpl extends MessageStore {
     }
 
     private void init() {
-        System.out.println("init start"+System.currentTimeMillis());
-        List<Message> cache = new ArrayList<>();
-        readers = new Reader[5];
-        for (int i = 0; i < 5; i++) {
-            readers[i] = new Reader(i);
-        }
-        PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
-            long t = o1.fst.getT() - o2.fst.getT();
-            if (t == 0) {
-                t = o1.fst.getA() - o2.fst.getA();
-            }
-            if (t == 0) {
-                return 0;
-            }
-            if (t > 0) {
-                return 1;
-            }
-            return -1;
-
-        });
         try {
-            Thread.sleep(1000);
+            System.out.println("init start" + System.currentTimeMillis());
+            List<Message> cache = new ArrayList<>();
+            readers = new Reader[5];
+            for (int i = 0; i < 5; i++) {
+                readers[i] = new Reader(i);
+            }
+            PriorityQueue<Pair<Message, Writer>> priorityQueue = new PriorityQueue<>((o1, o2) -> {
+                long t = o1.fst.getT() - o2.fst.getT();
+                if (t == 0) {
+                    t = o1.fst.getA() - o2.fst.getA();
+                }
+                if (t == 0) {
+                    return 0;
+                }
+                if (t > 0) {
+                    return 1;
+                }
+                return -1;
+
+            });
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                e.printStackTrace(System.out);
+            }
+            for (Writer writer : writers.values()) {
+                Message message = writer.get();
+                Pair<Message, Writer> pair = new Pair<>(message, writer);
+                priorityQueue.add(pair);
+            }
+            while (!priorityQueue.isEmpty() && (cache.size() < 10000000)) {
+                Pair<Message, Writer> pair = priorityQueue.poll();
+                cache.add(pair.fst);
+                Message newMessage = pair.snd.get();
+                if (newMessage != null) {
+                    pair.fst = newMessage;
+                    priorityQueue.add(pair);
+                }
+            }
+            List<Message> tmp = new ArrayList<>(cache);
+            tmp.sort((o1, o2) -> {
+                long t = o1.getA() - o2.getA();
+                if (t == 0) {
+                    return 0;
+                }
+                if (t > 0) {
+                    return 1;
+                }
+                return -1;
+            });
+            barriers[0] = tmp.get(200000).getA();
+            barriers[1] = tmp.get(400000).getA();
+            barriers[2] = tmp.get(600000).getA();
+            barriers[3] = tmp.get(800000).getA();
+//            barriers[0] = (0xffffffffffffL + 1) / 4;
+//            barriers[1] = barriers[0] * 2;
+//            barriers[2] = barriers[0] * 3;
+//            barriers[3] = barriers[0] * 4;
+            System.out.println("barriers:" + Arrays.toString(barriers));
+            for (Message message : cache) {
+                readers[getBlock(message.getA())].put(message);
+            }
+            System.out.println("barriers end" + System.currentTimeMillis());
+            tmp.clear();
+            cache.clear();
+            while (!priorityQueue.isEmpty()) {
+                Pair<Message, Writer> pair = priorityQueue.poll();
+                readers[getBlock(pair.fst.getA())].put(pair.fst);
+                Message newMessage = pair.snd.get();
+                if (newMessage != null) {
+                    pair.fst = newMessage;
+                    priorityQueue.add(pair);
+                }
+            }
+            writers.clear();
+            System.out.println("init end" + System.currentTimeMillis());
         } catch (Exception e) {
             e.printStackTrace(System.out);
+            System.exit(-1);
         }
-        for (Writer writer : writers.values()) {
-            Message message = writer.get();
-            Pair<Message, Writer> pair = new Pair<>(message, writer);
-            priorityQueue.add(pair);
-        }
-        while (!priorityQueue.isEmpty() && (cache.size() < 10000000)) {
-            Pair<Message, Writer> pair = priorityQueue.poll();
-            cache.add(pair.fst);
-            Message newMessage = pair.snd.get();
-            if (newMessage != null) {
-                pair.fst = newMessage;
-                priorityQueue.add(pair);
-            }
-        }
-        List<Message> tmp = new ArrayList<>(cache);
-        tmp.sort((o1, o2) -> {
-            long t = o1.getA() - o2.getA();
-            if (t == 0) {
-                return 0;
-            }
-            if (t > 0) {
-                return 1;
-            }
-            return -1;
-        });
-//        barriers[0] = tmp.get(200000).getA();
-//        barriers[1] = tmp.get(400000).getA();
-//        barriers[2] = tmp.get(600000).getA();
-//        barriers[3] = tmp.get(800000).getA();
-        barriers[0] = (0xffffffffffffL + 1) / 4;
-        barriers[1] = barriers[0]*2;
-        barriers[2] = barriers[0]*3;
-        barriers[3] = barriers[0]*4;
-        System.out.println("barriers:" + Arrays.toString(barriers));
-        for (Message message : cache) {
-            readers[getBlock(message.getA())].put(message);
-        }
-        System.out.println("barriers end"+System.currentTimeMillis());
-        tmp.clear();
-        cache.clear();
-        while (!priorityQueue.isEmpty()) {
-            Pair<Message, Writer> pair = priorityQueue.poll();
-            readers[getBlock(pair.fst.getA())].put(pair.fst);
-            Message newMessage = pair.snd.get();
-            if (newMessage != null) {
-                pair.fst = newMessage;
-                priorityQueue.add(pair);
-            }
-        }
-        writers.clear();
-        System.out.println("init end"+System.currentTimeMillis());
     }
 
     @Override
