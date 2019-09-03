@@ -2,7 +2,6 @@ package io.openmessaging.Reader;
 
 import io.openmessaging.Constants;
 import io.openmessaging.Context.DataContext;
-import io.openmessaging.Context.ValueContext;
 import io.openmessaging.Message;
 
 import java.io.FileNotFoundException;
@@ -20,7 +19,7 @@ import java.util.concurrent.Future;
 public class DataReader {
     private FileChannel fileChannel;
 
-    private final int bufNum = 2;
+    private final int bufNum = 6;
 
     private ByteBuffer[] buffers = new ByteBuffer[bufNum];
 
@@ -90,20 +89,21 @@ public class DataReader {
     }
 
     public void getData(int index, Message message, DataContext dataContext) {
-        dataContext.buffer.position((index - dataContext.offsetA) * Constants.DATA_SIZE);
-        dataContext.buffer.get(message.getBody());
-    }
-
-    public void updateContext(int offsetA, int offsetB, DataContext dataContext) {
-        dataContext.buffer.clear();
-        dataContext.buffer.limit((offsetB - offsetA)*Constants.DATA_SIZE);
-        try {
-            fileChannel.read(dataContext.buffer, (long)offsetA*Constants.DATA_SIZE);
-        } catch (IOException e) {
-            e.printStackTrace(System.out);
+        if (index >= dataContext.bufferMinIndex && index < dataContext.bufferMaxIndex) {
+            dataContext.buffer.position((index - dataContext.bufferMinIndex) * Constants.DATA_SIZE);
+        } else {
+            dataContext.buffer.clear();
+            try {
+                fileChannel.read(dataContext.buffer, ((long) index) * Constants.DATA_SIZE);
+                dataContext.bufferMinIndex = index;
+                dataContext.bufferMaxIndex = Math.min(index + Constants.DATA_NUM, messageNum);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+            }
+            dataContext.buffer.flip();
         }
-        dataContext.buffer.flip();
-        dataContext.offsetA = offsetA;
+
+        dataContext.buffer.get(message.getBody());
     }
 
 }

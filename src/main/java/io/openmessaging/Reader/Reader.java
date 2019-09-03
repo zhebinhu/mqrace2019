@@ -60,7 +60,6 @@ public class Reader {
         int offsetA = timeReader.getOffset(tMin);
         int offsetB = timeReader.getOffset(tMax + 1);
         valueReader.updateContext(offsetA, offsetB, valueContext);
-        dataReader.updateContext(offsetA,offsetB,dataContext);
         //System.out.println("tMin:" + tMin + " tMax:" + tMax + " minblock:" + getBlock(aMin) + " maxblock:" + getBlock(aMax) + " offsetA:" + offsetA + " offsetB:" + offsetB + " " + valueContext.buffer);
         while (offsetA < offsetB) {
             long time = timeReader.get(offsetA, timeContext);
