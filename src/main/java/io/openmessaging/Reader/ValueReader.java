@@ -67,6 +67,9 @@ public class ValueReader {
             value = value >>> 16;
         }
         byte size = getShortSize(value);
+        if (messageNum % 1000 == 1) {
+            System.out.println(size);
+        }
         if (size != len) {
             len = size;
             valueTags.add(real, messageNum, size);
@@ -127,7 +130,7 @@ public class ValueReader {
             value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
         }
         if (index >= 80000000 && index < 140000000) {
-            value = (value << 16) | (cache.getShort((index-80000000) * 2) & 0xffff);
+            value = (value << 16) | (cache.getShort((index - 80000000) * 2) & 0xffff);
         }
         return value;
     }
@@ -146,7 +149,7 @@ public class ValueReader {
                 value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
             }
             if (offsetA >= 80000000 && offsetA < 140000000) {
-                value = (value << 16) | (cache.getShort((offsetA-80000000) * 2) & 0xffff);
+                value = (value << 16) | (cache.getShort((offsetA - 80000000) * 2) & 0xffff);
             }
             if (value <= aMax && value >= aMin) {
                 avg.sum += value;

@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 这是一个简单的基于内存的实现，以方便选手理解题意； 实际提交时，请维持包名和类名不变，把方法实现修改为自己的内容；
@@ -22,6 +23,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean avg = false;
 
+    private volatile boolean end = false;
+
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
         thread.setPriority(10);
@@ -31,6 +34,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
     private Future future;
 
     private long[] barriers = new long[Constants.VALUE_BLOCKS - 1];
+
+    private AtomicInteger count = new AtomicInteger(0);
 
     @Override
     public void put(Message message) {
@@ -168,17 +173,17 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
         //            long starttime = System.currentTimeMillis();
-        //            if (count.getAndIncrement() == 28000) {
-        //                if (!end) {
-        //                    synchronized (this) {
-        //                        if (!end) {
-        //                            System.out.println("end:" + System.currentTimeMillis());
-        //                            end = true;
-        //                            return 0L;
-        //                        }
-        //                    }
-        //                }
-        //            }
+        if (count.getAndIncrement() == 35000) {
+            if (!end) {
+                synchronized (this) {
+                    if (!end) {
+                        System.out.println("end:" + System.currentTimeMillis());
+                        end = true;
+                        return 0L;
+                    }
+                }
+            }
+        }
         //                    long result = reader.avg(aMin, aMax, tMin, tMax);
         //                    long endtime = System.currentTimeMillis();
         //                    System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
