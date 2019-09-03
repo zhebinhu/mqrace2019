@@ -24,6 +24,8 @@ public class ValueReader {
 
     private Future[] futures = new Future[bufNum];
 
+    private ByteBuffer cache = ByteBuffer.allocateDirect(60000000 * 2);
+
     private int index = 0;
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
@@ -41,7 +43,7 @@ public class ValueReader {
 
     private byte len = 0;
 
-    private ValueTags valueTags = new ValueTags(100000);
+    private ValueTags valueTags = new ValueTags(100);
 
     private long real = 0;
 
@@ -60,13 +62,14 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
+        if (messageNum >= 80000000 && messageNum < 140000000) {
+            cache.putShort((short) value);
+            value = value >>> 16;
+        }
         byte size = getShortSize(value);
         if (size != len) {
             len = size;
             valueTags.add(real, messageNum, size);
-        }
-        if (messageNum % 1000 == 1) {
-            System.out.println(size);
         }
         real += size * 2;
         if (buffers[index].remaining() < size * 2) {
@@ -123,6 +126,9 @@ public class ValueReader {
         for (int i = 0; i < tag; i++) {
             value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
         }
+        if (index >= 80000000 && index < 140000000) {
+            value = (value << 16) | (cache.getShort((index-80000000) * 2) & 0xffff);
+        }
         return value;
     }
 
@@ -138,6 +144,9 @@ public class ValueReader {
             long value = 0;
             for (int i = 0; i < tag; i++) {
                 value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
+            }
+            if (offsetA >= 80000000 && offsetA < 140000000) {
+                value = (value << 16) | (cache.getShort((offsetA-80000000) * 2) & 0xffff);
             }
             if (value <= aMax && value >= aMin) {
                 avg.sum += value;
@@ -173,7 +182,7 @@ public class ValueReader {
 //    }
 
     private byte getShortSize(long value) {
-        long f = 0xffff00000000L;
+        long f = 0xffff000000000000L;
         for (byte i = Constants.VALUE_SIZE / 2; i >= 0; i--) {
             if ((value & f) != 0) {
                 return i;

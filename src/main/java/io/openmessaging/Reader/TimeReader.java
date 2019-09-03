@@ -11,11 +11,11 @@ import java.util.Arrays;
  * Created by huzhebin on 2019/08/07.
  */
 public class TimeReader {
-    private int cap = 200000000;
+    private int cap = 205000000;
 
     private byte[] base = new byte[cap];
 
-    private TimeTags timeTags = new TimeTags(5000000);
+    private TimeTags timeTags = new TimeTags(4000000);
 
     private int msgNum = 0;
 
@@ -30,7 +30,7 @@ public class TimeReader {
             timeTags.add(t, msgNum);
         }
         if (msgNum >= cap) {
-            cap = cap + 100000000;
+            cap = cap + 10000000;
             base = Arrays.copyOf(base, cap);
         }
         base[msgNum] = (byte) (t - tag);
@@ -47,6 +47,7 @@ public class TimeReader {
     public void init() {
         //base[msgNum / 2] = halfByte.getByte();
         System.out.println("TimeTags size:" + timeTags.size());
+        System.out.println("msgNum:" + msgNum);
     }
 
     public int getOffset(long time) {

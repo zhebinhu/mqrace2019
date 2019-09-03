@@ -6,7 +6,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 这是一个简单的基于内存的实现，以方便选手理解题意； 实际提交时，请维持包名和类名不变，把方法实现修改为自己的内容；
@@ -22,10 +21,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
     private volatile boolean get = false;
 
     private volatile boolean avg = false;
-
-    private volatile boolean end = false;
-
-    private AtomicInteger count = new AtomicInteger(0);
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
@@ -72,13 +67,10 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-            //long starttime = System.currentTimeMillis();
             for (int i = getBlock(aMin); i <= getBlock(aMax); i++) {
                 //result = reader.get(aMin, aMax, tMin, tMax);
                 result = merge(result, readers[i].get(aMin, aMax, tMin, tMax));
             }
-            //long endtime = System.currentTimeMillis();
-            //System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " size: " + (result.size()) + " getMessage: " + (endtime - starttime));
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
@@ -140,21 +132,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
             for (int i = 0; i < Constants.VALUE_BLOCKS - 1; i++) {
                 barriers[i] = tmp.get(Constants.INITIAL_FLOW / Constants.VALUE_BLOCKS * (i + 1)).getA();
             }
-//            barriers[0] = tmp.get(2000000).getA();
-//            barriers[1] = tmp.get(4000000).getA();
-//            barriers[2] = tmp.get(6000000).getA();
-//            barriers[3] = tmp.get(8000000).getA();
-//            barriers[0] = (0xffffffffffffL + 1) / 4;
-//            barriers[1] = barriers[0] * 2;
-//            barriers[2] = barriers[0] * 3;
-//            barriers[3] = barriers[0] * 4;
             System.out.println("barriers:" + Arrays.toString(barriers));
             for (Message message : cache) {
                 readers[getBlock(message.getA())].put(message);
             }
             System.out.println("barriers end" + System.currentTimeMillis());
-            tmp.clear();
-            cache.clear();
+            tmp = null;
+            cache = null;
+            System.gc();
             while (!priorityQueue.isEmpty()) {
                 Pair<Message, Writer> pair = priorityQueue.poll();
                 readers[getBlock(pair.fst.getA())].put(pair.fst);
@@ -183,21 +168,22 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
         //            long starttime = System.currentTimeMillis();
-                    if (count.getAndIncrement() == 35000) {
-                        if (!end) {
-                            synchronized (this) {
-                                if (!end) {
-                                    System.out.println("end:" + System.currentTimeMillis());
-                                    end = true;
-                                    return 0L;
-                                }
-                            }
-                        }
-                    }
+        //            if (count.getAndIncrement() == 28000) {
+        //                if (!end) {
+        //                    synchronized (this) {
+        //                        if (!end) {
+        //                            System.out.println("end:" + System.currentTimeMillis());
+        //                            end = true;
+        //                            return 0L;
+        //                        }
+        //                    }
+        //                }
+        //            }
         //                    long result = reader.avg(aMin, aMax, tMin, tMax);
         //                    long endtime = System.currentTimeMillis();
         //                    System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
         //System.out.println("memory:" + memoryLoad());
+
         Avg avg = new Avg();
         for (int i = getBlock(aMin); i <= getBlock(aMax); i++) {
             //result = reader.get(aMin, aMax, tMin, tMax);
@@ -206,6 +192,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             avg.count += tmp.count;
         }
         return avg.count == 0 ? 0 : avg.sum / avg.count;
+
         //return 0L;
 
     }

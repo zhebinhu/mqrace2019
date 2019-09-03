@@ -1,24 +1,25 @@
 package io.openmessaging;
 
+import java.nio.ByteBuffer;
+
 /**
  * Created by huzhebin on 2019/08/08.
  */
 public class TimeTags {
-    private long tagsBase;
+    private ByteBuffer tagsBase;
 
     private int[] offsets;
 
     private int index;
 
     public TimeTags(int cap) {
-        tagsBase = UnsafeWrapper.unsafe.allocateMemory(cap * 8);
+        tagsBase = ByteBuffer.allocateDirect(cap * 8);
         offsets = new int[cap];
         index = 0;
     }
 
     public void add(long tag, int offset) {
-        UnsafeWrapper.unsafe.putLong(tagsBase + index * 8, tag);
-        //UnsafeWrapper.unsafe.putInt(offsetsBase + index * 4, offset);
+        tagsBase.putLong(index * 8,tag);
         offsets[index] = offset;
         index++;
     }
@@ -40,12 +41,11 @@ public class TimeTags {
     }
 
     public long getTag(int tagIndex) {
-        return UnsafeWrapper.unsafe.getLong(tagsBase + tagIndex * 8);
+        return tagsBase.getLong(tagIndex * 8);
     }
 
     public int getOffset(int offsetIndex) {
         return offsets[offsetIndex];
-        //return UnsafeWrapper.unsafe.getInt(offsetsBase + offsetIndex * 4);
     }
 
     public int size() {
@@ -58,7 +58,7 @@ public class TimeTags {
 
         while (low <= high) {
             int mid = (low + high) >>> 1;
-            long midVal = UnsafeWrapper.unsafe.getLong(tagsBase + mid * 8);
+            long midVal = tagsBase.getLong(mid * 8);
 
             if (midVal + 255 < key) {
                 low = mid + 1;
@@ -77,7 +77,6 @@ public class TimeTags {
 
         while (low <= high) {
             int mid = (low + high) >>> 1;
-            //int midVal = UnsafeWrapper.unsafe.getInt(offsetsBase + mid * 4);
             int midVal = offsets[mid];
             if (midVal < key) {
                 low = mid + 1;
