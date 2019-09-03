@@ -34,18 +34,10 @@ public class TimeReader {
             base = Arrays.copyOf(base, cap);
         }
         base[msgNum] = (byte) (t - tag);
-//        if (msgNum % 2 == 0) {
-//            halfByte.setRight((byte) (t - tag));
-//        } else {
-//            halfByte.setLeft((byte) (t - tag));
-//            base[msgNum / 2] = halfByte.getByte();
-//            halfByte.setByte((byte) 0);
-//        }
         msgNum++;
     }
 
     public void init() {
-        //base[msgNum / 2] = halfByte.getByte();
         System.out.println("TimeTags size:" + timeTags.size());
     }
 
@@ -61,11 +53,6 @@ public class TimeReader {
         while (pTime < time && pOffset < pOffsetB) {
             pOffset++;
             pTime = pTag + (base[pOffset] & 0xff);
-//            if (pOffset % 2 == 0) {
-//                pTime = pTag + HalfByte.getRight(base[pOffset / 2]);
-//            } else {
-//                pTime = pTag + HalfByte.getLeft(base[pOffset / 2]);
-//            }
         }
         return pOffset;
     }
@@ -82,10 +69,5 @@ public class TimeReader {
             }
         }
         return context.tag + (base[offset] & 0xff);
-//        if (offset % 2 == 0) {
-//            return context.tag + HalfByte.getRight(base[offset / 2]);
-//        } else {
-//            return context.tag + HalfByte.getLeft(base[offset / 2]);
-//        }
     }
 }
