@@ -174,7 +174,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
             }
         }
 
-        if (count.getAndIncrement() == 28000) {
+        if (count.getAndIncrement() == 35000) {
             if (!end) {
                 synchronized (this) {
                     if (!end) {
