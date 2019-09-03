@@ -30,6 +30,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private long[] barriers = new long[4];
 
+    private int msgNum = 0;
+
     @Override
     public void put(Message message) {
         if (!writers.containsKey(Thread.currentThread())) {
@@ -81,7 +83,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
     private void init() {
         try {
             System.out.println("init start" + System.currentTimeMillis());
-            List<Message> cache = new ArrayList<>();
+            List<Long> cache = new ArrayList<>();
+            TmpWriter tmpWriter = new TmpWriter();
             readers = new Reader[5];
             for (int i = 0; i < 5; i++) {
                 readers[i] = new Reader(i);
@@ -110,40 +113,35 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 Pair<Message, Writer> pair = new Pair<>(message, writer);
                 priorityQueue.add(pair);
             }
-            while (!priorityQueue.isEmpty() && (cache.size() < 10000000)) {
+            while (!priorityQueue.isEmpty() && (msgNum < 100000000)) {
                 Pair<Message, Writer> pair = priorityQueue.poll();
-                cache.add(pair.fst);
+                tmpWriter.put(pair.fst);
+                if (msgNum > 90000000) {
+                    cache.add(pair.fst.getA());
+                }
                 Message newMessage = pair.snd.get();
                 if (newMessage != null) {
                     pair.fst = newMessage;
                     priorityQueue.add(pair);
                 }
+                msgNum++;
             }
-            List<Message> tmp = new ArrayList<>(cache);
-            tmp.sort((o1, o2) -> {
-                long t = o1.getA() - o2.getA();
-                if (t == 0) {
-                    return 0;
-                }
-                if (t > 0) {
-                    return 1;
-                }
-                return -1;
-            });
-            barriers[0] = tmp.get(200000).getA();
-            barriers[1] = tmp.get(400000).getA();
-            barriers[2] = tmp.get(600000).getA();
-            barriers[3] = tmp.get(800000).getA();
+            Collections.sort(cache);
+            barriers[0] = cache.get(200000);
+            barriers[1] = cache.get(400000);
+            barriers[2] = cache.get(600000);
+            barriers[3] = cache.get(800000);
 //            barriers[0] = (0xffffffffffffL + 1) / 4;
 //            barriers[1] = barriers[0] * 2;
 //            barriers[2] = barriers[0] * 3;
 //            barriers[3] = barriers[0] * 4;
             System.out.println("barriers:" + Arrays.toString(barriers));
-            for (Message message : cache) {
-                readers[getBlock(message.getA())].put(message);
+            Message msg = tmpWriter.get();
+            while (msg != null) {
+                readers[getBlock(msg.getA())].put(msg);
+                msg = tmpWriter.get();
             }
             System.out.println("barriers end" + System.currentTimeMillis());
-            tmp.clear();
             cache.clear();
             while (!priorityQueue.isEmpty()) {
                 Pair<Message, Writer> pair = priorityQueue.poll();
