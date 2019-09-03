@@ -30,7 +30,7 @@ public class TimeReader {
             timeTags.add(t, msgNum);
         }
         if (msgNum >= cap) {
-            cap = cap + 100000000;
+            cap = cap + 20000000;
             base = Arrays.copyOf(base, cap);
         }
         base[msgNum] = (byte) (t - tag);
@@ -47,6 +47,7 @@ public class TimeReader {
     public void init() {
         //base[msgNum / 2] = halfByte.getByte();
         System.out.println("TimeTags size:" + timeTags.size());
+        System.out.println("msgNum:" + msgNum);
     }
 
     public int getOffset(long time) {
