@@ -19,7 +19,7 @@ import java.util.concurrent.Future;
 public class DataReader {
     private FileChannel fileChannel;
 
-    private final int bufNum = 6;
+    private final int bufNum = 2;
 
     private ByteBuffer[] buffers = new ByteBuffer[bufNum];
 

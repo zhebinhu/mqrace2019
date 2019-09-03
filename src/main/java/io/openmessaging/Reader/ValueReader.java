@@ -41,7 +41,7 @@ public class ValueReader {
 
     private byte len = 0;
 
-    private ValueTags valueTags = new ValueTags(100);
+    private ValueTags valueTags = new ValueTags(100000);
 
     private long real = 0;
 
