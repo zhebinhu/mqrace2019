@@ -67,7 +67,6 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     }
                 }
             }
-            System.out.println("blocks:" + (getBlock(aMax) - getBlock(aMin)));
             for (int i = getBlock(aMin); i <= getBlock(aMax); i++) {
                 //result = reader.get(aMin, aMax, tMin, tMax);
                 result = merge(result, readers[i].get(aMin, aMax, tMin, tMax));
