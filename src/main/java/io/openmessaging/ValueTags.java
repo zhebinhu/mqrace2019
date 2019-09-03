@@ -2,29 +2,41 @@ package io.openmessaging;
 
 import io.openmessaging.Context.ValueContext;
 
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
 /**
  * Created by huzhebin on 2019/08/08.
  */
 public class ValueTags {
-    private long realBase;
+    private long[] realBase;
 
-    private long offsetsBase;
+    private int[] offsetsBase;
 
-    private long tagsBase;
+    private byte[] tagsBase;
 
     private int index;
 
+    private int cap;
+
     public ValueTags(int cap) {
-        realBase = UnsafeWrapper.unsafe.allocateMemory(cap * 8);
-        offsetsBase = UnsafeWrapper.unsafe.allocateMemory(cap * 4);
-        tagsBase = UnsafeWrapper.unsafe.allocateMemory(cap);
+        realBase = new long[cap * 8];
+        offsetsBase = new int[cap * 4];
+        tagsBase = new byte[cap];
+        this.cap = cap;
         index = 0;
     }
 
     public void add(long real, int offset, byte tag) {
-        UnsafeWrapper.unsafe.putLong(realBase + index * 8, real);
-        UnsafeWrapper.unsafe.putInt(offsetsBase + index * 4, offset);
-        UnsafeWrapper.unsafe.putByte(tagsBase + index, tag);
+        if (index >= cap) {
+            cap = cap + 4000000;
+            realBase = Arrays.copyOf(realBase,cap);
+            offsetsBase = Arrays.copyOf(offsetsBase,cap);
+            tagsBase = Arrays.copyOf(tagsBase,cap);
+        }
+        realBase[index] = real;
+        offsetsBase[index] = offset;
+        tagsBase[index] = tag;
         index++;
     }
 
@@ -34,14 +46,14 @@ public class ValueTags {
             realIndex = Math.max(0, -(realIndex + 2));
         }
         valueContext.tagIndex = realIndex;
-        long real = UnsafeWrapper.unsafe.getLong(realBase + realIndex * 8);
-        int tagOffset = UnsafeWrapper.unsafe.getInt(offsetsBase + realIndex * 4);
+        long real = realBase[realIndex];
+        int tagOffset = offsetsBase[realIndex];
         if (realIndex == index - 1) {
             valueContext.nextOffset = Integer.MAX_VALUE;
         } else {
-            valueContext.nextOffset = UnsafeWrapper.unsafe.getInt(offsetsBase + (realIndex + 1) * 4);
+            valueContext.nextOffset = offsetsBase[(realIndex + 1)];
         }
-        byte tag = UnsafeWrapper.unsafe.getByte(tagsBase + realIndex);
+        byte tag = tagsBase[realIndex];
         valueContext.tag = tag;
 
         return real + (long) tag * (offset - tagOffset);
@@ -52,19 +64,19 @@ public class ValueTags {
         if (realIndex < 0) {
             realIndex = Math.max(0, -(realIndex + 2));
         }
-        long real = UnsafeWrapper.unsafe.getLong(realBase + realIndex * 8);
-        int tagOffset = UnsafeWrapper.unsafe.getInt(offsetsBase + realIndex * 4);
-        byte tag = UnsafeWrapper.unsafe.getByte(tagsBase + realIndex);
+        long real = realBase[realIndex];
+        int tagOffset = offsetsBase[realIndex];
+        byte tag = tagsBase[realIndex];
         return real + (long) tag * (offset - tagOffset);
     }
 
     public void update(ValueContext valueContext) {
         valueContext.tagIndex = valueContext.tagIndex + 1;
-        valueContext.tag = UnsafeWrapper.unsafe.getByte(tagsBase + valueContext.tagIndex);
+        valueContext.tag = tagsBase[valueContext.tagIndex];
         if (valueContext.tagIndex == index - 1) {
             valueContext.nextOffset = Integer.MAX_VALUE;
         } else {
-            valueContext.nextOffset = UnsafeWrapper.unsafe.getInt(offsetsBase + (valueContext.tagIndex + 1) * 4);
+            valueContext.nextOffset = offsetsBase[(valueContext.tagIndex + 1)];
         }
     }
 
@@ -78,7 +90,7 @@ public class ValueTags {
 
         while (low <= high) {
             int mid = (low + high) >>> 1;
-            int midVal = UnsafeWrapper.unsafe.getInt(offsetsBase + mid * 4);
+            int midVal = offsetsBase[mid];
 
             if (midVal < key) {
                 low = mid + 1;
