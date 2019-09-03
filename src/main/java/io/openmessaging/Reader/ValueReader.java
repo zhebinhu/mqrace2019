@@ -24,6 +24,8 @@ public class ValueReader {
 
     private Future[] futures = new Future[bufNum];
 
+    private ByteBuffer cache = ByteBuffer.allocateDirect(60000000 * 2);
+
     private int index = 0;
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
@@ -60,13 +62,17 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
+        if (messageNum > 80000000 && messageNum < 140000000) {
+            cache.putShort((short) value);
+            value = value >>> 16;
+        }
         byte size = getShortSize(value);
         if (size != len) {
             len = size;
             valueTags.add(real, messageNum, size);
         }
-        real += size*2;
-        if (buffers[index].remaining() < size*2) {
+        real += size * 2;
+        if (buffers[index].remaining() < size * 2) {
             ByteBuffer tmpBuffer = buffers[index];
             int newIndex = (index + 1) % bufNum;
             tmpBuffer.flip();
@@ -120,6 +126,9 @@ public class ValueReader {
         for (int i = 0; i < tag; i++) {
             value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
         }
+        if (index > 80000000 && index < 140000000) {
+            value = (value << 16) | (cache.getShort((short) value) & 0xffff);
+        }
         return value;
     }
 
@@ -135,6 +144,9 @@ public class ValueReader {
             long value = 0;
             for (int i = 0; i < tag; i++) {
                 value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
+            }
+            if (index > 80000000 && index < 140000000) {
+                value = (value << 16) | (cache.getShort((short) value) & 0xffff);
             }
             if (value <= aMax && value >= aMin) {
                 avg.sum += value;
