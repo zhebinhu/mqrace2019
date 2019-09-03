@@ -24,6 +24,8 @@ public class ValueReader {
 
     private Future[] futures = new Future[bufNum];
 
+    //private ByteBuffer cache = ByteBuffer.allocateDirect(60000000 * 2);
+
     private int index = 0;
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
@@ -41,7 +43,7 @@ public class ValueReader {
 
     private byte len = 0;
 
-    private ValueTags valueTags = new ValueTags(16000000);
+    private ValueTags valueTags = new ValueTags(100);
 
     private long real = 0;
 
@@ -56,26 +58,21 @@ public class ValueReader {
         for (int i = 0; i < bufNum; i++) {
             buffers[i] = ByteBuffer.allocateDirect(Constants.VALUE_CAP);
         }
-//        cache = new byte[Integer.MAX_VALUE - 2];
-//        base = UnsafeWrapper.unsafe.allocateMemory(1000000000);
-//        UnsafeWrapper.unsafe.setMemory(base, 1000000000, (byte) 0);
     }
 
     public void put(Message message) {
         long value = message.getA();
-//        if (messageNum > 500000000 && messageNum < 1500000000) {
-//            UnsafeWrapper.unsafe.putByte(base + messageNum - 500000000, (byte) value);
-//            value = value >>> 8;
+//        if (messageNum >= 80000000 && messageNum < 140000000) {
+//            cache.putShort((short) value);
+//            value = value >>> 16;
 //        }
-//        cache[messageNum] = (byte) value;
-//        value = value >>> 8;
-        byte size = getByteSize(value);
+        byte size = getShortSize(value);
         if (size != len) {
             len = size;
             valueTags.add(real, messageNum, size);
         }
-        real += size;
-        if (buffers[index].remaining() < size) {
+        real += size * 2;
+        if (buffers[index].remaining() < size * 2) {
             ByteBuffer tmpBuffer = buffers[index];
             int newIndex = (index + 1) % bufNum;
             tmpBuffer.flip();
@@ -96,8 +93,8 @@ public class ValueReader {
             buffers[index].clear();
         }
         for (int i = size - 1; i >= 0; i--) {
-            byte b = (byte) ((value) >>> (i << 3));
-            buffers[index].put(b);
+            short s = (short) ((value) >>> (i << 4));
+            buffers[index].putShort(s);
         }
         messageNum++;
     }
@@ -127,11 +124,10 @@ public class ValueReader {
         byte tag = valueContext.tag;
         long value = 0;
         for (int i = 0; i < tag; i++) {
-            value = (value << 8) | (valueContext.buffer.get() & 0xff);
+            value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
         }
-//        value = value << 8 | (cache[index] & 0xff);
-//        if (index > 500000000 && index < 1500000000) {
-//            value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + index - 500000000) & 0xff);
+//        if (index >= 80000000 && index < 140000000) {
+//            value = (value << 16) | (cache.getShort((index-80000000) * 2) & 0xffff);
 //        }
         return value;
     }
@@ -147,11 +143,10 @@ public class ValueReader {
             byte tag = valueContext.tag;
             long value = 0;
             for (int i = 0; i < tag; i++) {
-                value = (value << 8) | (valueContext.buffer.get() & 0xff);
+                value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
             }
-//            value = value << 8 | (cache[offsetA] & 0xff);
-//            if (offsetA > 500000000 && offsetA < 1500000000) {
-//                value = value << 8 | (UnsafeWrapper.unsafe.getByte(base + offsetA - 500000000) & 0xff);
+//            if (offsetA >= 80000000 && offsetA < 140000000) {
+//                value = (value << 16) | (cache.getShort((offsetA-80000000) * 2) & 0xffff);
 //            }
             if (value <= aMax && value >= aMin) {
                 avg.sum += value;
@@ -159,7 +154,6 @@ public class ValueReader {
             }
             offsetA++;
         }
-        //return count == 0 ? 0 : sum / count;
         return avg;
     }
 
@@ -176,13 +170,24 @@ public class ValueReader {
         valueContext.buffer.flip();
     }
 
-    private byte getByteSize(long value) {
-        long f = 0xff00000000000000L;
-        for (byte i = Constants.VALUE_SIZE; i >= 0; i--) {
+//    private byte getByteSize(long value) {
+//        long f = 0xff00000000000000L;
+//        for (byte i = Constants.VALUE_SIZE; i >= 0; i--) {
+//            if ((value & f) != 0) {
+//                return i;
+//            }
+//            f = f >>> 8;
+//        }
+//        return 0;
+//    }
+
+    private byte getShortSize(long value) {
+        long f = 0xffff00000000L;
+        for (byte i = Constants.VALUE_SIZE / 2; i >= 0; i--) {
             if ((value & f) != 0) {
                 return i;
             }
-            f = f >>> 8;
+            f = f >>> 16;
         }
         return 0;
     }
