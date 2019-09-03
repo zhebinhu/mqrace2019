@@ -8,10 +8,10 @@ public class Constants {
     public final static int WRITER_CAP = 16 * 1024;
 
     // data写入缓冲区
-    public final static int DATA_CAP = 34 * 1024 * 1024;
+    public final static int DATA_CAP = 17 * 1024 * 1024;
 
     // value写入缓冲区
-    public final static int VALUE_CAP = 32 * 1024 * 1024;
+    public final static int VALUE_CAP = 16 * 1024 * 1024;
 
     // data 的大小
     public final static int DATA_SIZE = 34;
@@ -22,7 +22,7 @@ public class Constants {
     public final static int VALUE_SIZE = 8;
 
     // value 切片数量
-    public final static int VALUE_BLOCKS = 9;
+    public final static int VALUE_BLOCKS = 12;
 
     // 初始流量
     public final static int INITIAL_FLOW = 10000000;
