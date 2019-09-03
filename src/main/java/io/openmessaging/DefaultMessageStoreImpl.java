@@ -133,7 +133,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
 //        barriers[1] = tmp.get(400000).getA();
 //        barriers[2] = tmp.get(600000).getA();
 //        barriers[3] = tmp.get(800000).getA();
-        barriers[0] = 0xffffffffffffL/4;
+        barriers[0] = (0xffffffffffffL + 1) / 4;
         barriers[1] = barriers[0]*2;
         barriers[2] = barriers[0]*3;
         barriers[3] = barriers[0]*4;
