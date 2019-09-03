@@ -127,7 +127,7 @@ public class ValueReader {
             value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
         }
         if (index > 80000000 && index < 140000000) {
-            value = (value << 16) | (cache.getShort(index * 2) & 0xffff);
+            value = (value << 16) | (cache.getShort((index-80000000) * 2) & 0xffff);
         }
         return value;
     }
@@ -146,7 +146,7 @@ public class ValueReader {
                 value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
             }
             if (index > 80000000 && index < 140000000) {
-                value = (value << 16) | (cache.getShort(offsetA * 2) & 0xffff);
+                value = (value << 16) | (cache.getShort((offsetA-80000000) * 2) & 0xffff);
             }
             if (value <= aMax && value >= aMin) {
                 avg.sum += value;
