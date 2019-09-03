@@ -22,7 +22,7 @@ public class Constants {
     public final static int VALUE_SIZE = 8;
 
     // value 切片
-    public final static int VALUE_BLOCKS = 7;
+    public final static int VALUE_BLOCKS = 9;
 
     // 初始流量
     public final static int INITIAL_FLOW = 10000000;
