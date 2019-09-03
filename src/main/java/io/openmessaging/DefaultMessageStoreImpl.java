@@ -184,16 +184,16 @@ public class DefaultMessageStoreImpl extends MessageStore {
         //                    System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
         //System.out.println("memory:" + memoryLoad());
 
-//        Avg avg = new Avg();
-//        for (int i = getBlock(aMin); i <= getBlock(aMax); i++) {
-//            //result = reader.get(aMin, aMax, tMin, tMax);
-//            Avg tmp = readers[i].avg(aMin, aMax, tMin, tMax);
-//            avg.sum += tmp.sum;
-//            avg.count += tmp.count;
-//        }
-//        return avg.count == 0 ? 0 : avg.sum / avg.count;
+        Avg avg = new Avg();
+        for (int i = getBlock(aMin); i <= getBlock(aMax); i++) {
+            //result = reader.get(aMin, aMax, tMin, tMax);
+            Avg tmp = readers[i].avg(aMin, aMax, tMin, tMax);
+            avg.sum += tmp.sum;
+            avg.count += tmp.count;
+        }
+        return avg.count == 0 ? 0 : avg.sum / avg.count;
 
-        return 0L;
+        //return 0L;
 
     }
 
