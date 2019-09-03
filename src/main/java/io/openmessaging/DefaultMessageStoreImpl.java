@@ -20,6 +20,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     private volatile boolean get = false;
 
+    private volatile boolean avg = false;
+
     private ExecutorService executorService = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r);
         thread.setPriority(10);
@@ -135,8 +137,8 @@ public class DefaultMessageStoreImpl extends MessageStore {
                 readers[getBlock(message.getA())].put(message);
             }
             System.out.println("barriers end" + System.currentTimeMillis());
-            tmp.clear();
-            cache.clear();
+            tmp = null;
+            cache = null;
             System.gc();
             while (!priorityQueue.isEmpty()) {
                 Pair<Message, Writer> pair = priorityQueue.poll();
@@ -157,14 +159,14 @@ public class DefaultMessageStoreImpl extends MessageStore {
 
     @Override
     public long getAvgValue(long aMin, long aMax, long tMin, long tMax) {
-//        if (!avg) {
-//            synchronized (this) {
-//                if (!avg) {
-//                    System.out.println("avg:" + System.currentTimeMillis());
-//                    avg = true;
-//                }
-//            }
-//        }
+        if (!avg) {
+            synchronized (this) {
+                if (!avg) {
+                    System.out.println("avg:" + System.currentTimeMillis());
+                    avg = true;
+                }
+            }
+        }
         //            long starttime = System.currentTimeMillis();
         //            if (count.getAndIncrement() == 28000) {
         //                if (!end) {
@@ -181,15 +183,17 @@ public class DefaultMessageStoreImpl extends MessageStore {
         //                    long endtime = System.currentTimeMillis();
         //                    System.out.println(aMin + " " + aMax + " " + tMin + " " + tMax + " getAvgValue: " + (endtime - starttime));
         //System.out.println("memory:" + memoryLoad());
-        Avg avg = new Avg();
-        for (int i = getBlock(aMin); i <= getBlock(aMax); i++) {
-            //result = reader.get(aMin, aMax, tMin, tMax);
-            Avg tmp = readers[i].avg(aMin, aMax, tMin, tMax);
-            avg.sum += tmp.sum;
-            avg.count += tmp.count;
-        }
-        return avg.count == 0 ? 0 : avg.sum / avg.count;
-        //return 0L;
+
+//        Avg avg = new Avg();
+//        for (int i = getBlock(aMin); i <= getBlock(aMax); i++) {
+//            //result = reader.get(aMin, aMax, tMin, tMax);
+//            Avg tmp = readers[i].avg(aMin, aMax, tMin, tMax);
+//            avg.sum += tmp.sum;
+//            avg.count += tmp.count;
+//        }
+//        return avg.count == 0 ? 0 : avg.sum / avg.count;
+
+        return 0L;
 
     }
 

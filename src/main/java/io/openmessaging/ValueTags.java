@@ -29,7 +29,7 @@ public class ValueTags {
 
     public void add(long real, int offset, byte tag) {
         if (index >= cap) {
-            cap = cap + 1000000;
+            cap = cap + 100000;
             realBase = Arrays.copyOf(realBase,cap);
             offsetsBase = Arrays.copyOf(offsetsBase,cap);
             tagsBase = Arrays.copyOf(tagsBase,cap);
