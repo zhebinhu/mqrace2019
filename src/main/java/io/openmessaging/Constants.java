@@ -25,7 +25,7 @@ public class Constants {
     public final static int VALUE_BLOCKS = 7;
 
     // 初始流量
-    public final static int INITIAL_FLOW = 10000000;
+    public final static int INITIAL_FLOW = 1000000;
 
     //public final static String URL = "D:\\data\\";
 
