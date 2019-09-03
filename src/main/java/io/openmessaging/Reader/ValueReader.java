@@ -67,9 +67,6 @@ public class ValueReader {
             value = value >>> 16;
         }
         byte size = getShortSize(value);
-        if (messageNum % 1000 == 1) {
-            System.out.println(size);
-        }
         if (size != len) {
             len = size;
             valueTags.add(real, messageNum, size);
