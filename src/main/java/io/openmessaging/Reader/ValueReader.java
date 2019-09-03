@@ -62,7 +62,7 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-        if (messageNum > 80000000 && messageNum < 140000000) {
+        if (messageNum >= 80000000 && messageNum < 140000000) {
             cache.putShort((short) value);
             value = value >>> 16;
         }
@@ -126,7 +126,7 @@ public class ValueReader {
         for (int i = 0; i < tag; i++) {
             value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
         }
-        if (index > 80000000 && index < 140000000) {
+        if (index >= 80000000 && index < 140000000) {
             value = (value << 16) | (cache.getShort((index-80000000) * 2) & 0xffff);
         }
         return value;
@@ -145,7 +145,7 @@ public class ValueReader {
             for (int i = 0; i < tag; i++) {
                 value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
             }
-            if (index > 80000000 && index < 140000000) {
+            if (index >= 80000000 && index < 140000000) {
                 value = (value << 16) | (cache.getShort((offsetA-80000000) * 2) & 0xffff);
             }
             if (value <= aMax && value >= aMin) {
