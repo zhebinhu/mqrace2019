@@ -65,6 +65,9 @@ public class ValueReader {
             len = size;
             valueTags.add(real, messageNum, size);
         }
+        if (messageNum % 1000 == 1) {
+            System.out.println(size);
+        }
         real += size * 2;
         if (buffers[index].remaining() < size * 2) {
             ByteBuffer tmpBuffer = buffers[index];
