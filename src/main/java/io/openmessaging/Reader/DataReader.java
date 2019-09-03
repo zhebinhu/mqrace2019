@@ -98,7 +98,7 @@ public class DataReader {
         dataContext.buffer.clear();
         dataContext.buffer.limit((offsetB - offsetA)*Constants.DATA_SIZE);
         try {
-            fileChannel.read(dataContext.buffer, offsetA*Constants.DATA_SIZE);
+            fileChannel.read(dataContext.buffer, (long)offsetA*Constants.DATA_SIZE);
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }
