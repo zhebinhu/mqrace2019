@@ -146,9 +146,18 @@ public class DefaultMessageStoreImpl extends MessageStore {
             cache = null;
             System.gc();
             while (!priorityQueue.isEmpty()) {
+                long small = Long.MIN_VALUE;
                 Pair<Message, Writer> pair = priorityQueue.poll();
+                Pair<Message, Writer> sPair = priorityQueue.peek();
+                if (sPair != null) {
+                    small = sPair.fst.getA();
+                }
                 readers[getBlock(pair.fst.getA())].put(pair.fst);
                 Message newMessage = pair.snd.get();
+                while (newMessage != null && newMessage.getT() <= small) {
+                    readers[getBlock(newMessage.getA())].put(newMessage);
+                    newMessage = pair.snd.get();
+                }
                 if (newMessage != null) {
                     pair.fst = newMessage;
                     priorityQueue.add(pair);
