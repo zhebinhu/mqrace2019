@@ -23,7 +23,7 @@ public class Constants {
 
 
     // value 切片数量
-    public final static int VALUE_BLOCKS = 9;
+    public final static int VALUE_BLOCKS = 7;
 
     // 初始流量
     public final static int INITIAL_FLOW = 1000000;

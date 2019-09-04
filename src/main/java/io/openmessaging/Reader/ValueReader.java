@@ -24,7 +24,7 @@ public class ValueReader {
 
     private Future[] futures = new Future[bufNum];
 
-    //private ByteBuffer cache = ByteBuffer.allocateDirect(110000000 * 2);
+    private ByteBuffer cache = ByteBuffer.allocateDirect(110000000 * 2);
 
     private short[] cache2;
 
@@ -64,17 +64,17 @@ public class ValueReader {
 
     public void put(Message message) {
         long value = message.getA();
-//        if (messageNum >= 60000000 && messageNum < 170000000) {
-//            cache.putShort((short) value);
-//            value = value >>> 16;
-//        }
-//        else if (messageNum >= 170000000 && messageNum < 220000000) {
-//            if (cache2 == null) {
-//                cache2 = new short[50000000];
-//            }
-//            cache2[messageNum - 170000000] = (short) value;
-//            value = value >>> 16;
-//        }
+        if (messageNum >= 60000000 && messageNum < 170000000) {
+            cache.putShort((short) value);
+            value = value >>> 16;
+        }
+        else if (messageNum >= 170000000 && messageNum < 220000000) {
+            if (cache2 == null) {
+                cache2 = new short[50000000];
+            }
+            cache2[messageNum - 170000000] = (short) value;
+            value = value >>> 16;
+        }
         byte size = getShortSize(value);
         if (size != len) {
             len = size;
@@ -135,12 +135,12 @@ public class ValueReader {
         for (int i = 0; i < tag; i++) {
             value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
         }
-//        if (index >= 60000000 && index < 170000000) {
-//            value = (value << 16) | (cache.getShort((index - 60000000) * 2) & 0xffff);
-//        }
-//        else if (index >= 170000000 && index < 220000000) {
-//            value = (value << 16) | (cache2[index - 170000000] & 0xffff);
-//        }
+        if (index >= 60000000 && index < 170000000) {
+            value = (value << 16) | (cache.getShort((index - 60000000) * 2) & 0xffff);
+        }
+        else if (index >= 170000000 && index < 220000000) {
+            value = (value << 16) | (cache2[index - 170000000] & 0xffff);
+        }
         return value;
     }
 
@@ -157,12 +157,12 @@ public class ValueReader {
             for (int i = 0; i < tag; i++) {
                 value = (value << 16) | (valueContext.buffer.getShort() & 0xffff);
             }
-//            if (offsetA >= 60000000 && offsetA < 170000000) {
-//                value = (value << 16) | (cache.getShort((offsetA - 60000000) * 2) & 0xffff);
-//            }
-//            else if (offsetA >= 170000000 && offsetA < 220000000) {
-//                value = (value << 16) | (cache2[offsetA - 170000000] & 0xffff);
-//            }
+            if (offsetA >= 60000000 && offsetA < 170000000) {
+                value = (value << 16) | (cache.getShort((offsetA - 60000000) * 2) & 0xffff);
+            }
+            else if (offsetA >= 170000000 && offsetA < 220000000) {
+                value = (value << 16) | (cache2[offsetA - 170000000] & 0xffff);
+            }
             if (value <= aMax && value >= aMin) {
                 avg.sum += value;
                 avg.count++;

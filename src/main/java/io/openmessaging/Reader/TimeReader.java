@@ -11,7 +11,7 @@ import java.util.Arrays;
  * Created by huzhebin on 2019/08/07.
  */
 public class TimeReader {
-    private int cap = 200000000;
+    private int cap = 300000000;
 
     private byte[] base = new byte[cap];
 
