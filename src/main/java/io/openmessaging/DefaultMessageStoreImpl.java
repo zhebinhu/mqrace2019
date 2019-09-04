@@ -179,7 +179,7 @@ public class DefaultMessageStoreImpl extends MessageStore {
                     if (!end) {
                         System.out.println("end:" + System.currentTimeMillis());
                         end = true;
-                        //return 0L;
+                        return 0L;
                     }
                 }
             }
