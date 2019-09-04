@@ -68,9 +68,9 @@ public class ValueReader {
             cache.putShort((short) value);
             value = value >>> 16;
         }
-        else if (messageNum >= 170000000 && messageNum < 210000000) {
+        else if (messageNum >= 170000000 && messageNum < 200000000) {
             if (cache2 == null) {
-                cache2 = new short[40000000];
+                cache2 = new short[30000000];
             }
             cache2[messageNum - 170000000] = (short) value;
             value = value >>> 16;
@@ -138,7 +138,7 @@ public class ValueReader {
         if (index >= 50000000 && index < 170000000) {
             value = (value << 16) | (cache.getShort((index - 50000000) * 2) & 0xffff);
         }
-        else if (index >= 170000000 && index < 210000000) {
+        else if (index >= 170000000 && index < 200000000) {
             value = (value << 16) | (cache2[index - 170000000] & 0xffff);
         }
         return value;
@@ -160,7 +160,7 @@ public class ValueReader {
             if (offsetA >= 50000000 && offsetA < 170000000) {
                 value = (value << 16) | (cache.getShort((offsetA - 50000000) * 2) & 0xffff);
             }
-            else if (offsetA >= 170000000 && offsetA < 210000000) {
+            else if (offsetA >= 170000000 && offsetA < 200000000) {
                 value = (value << 16) | (cache2[offsetA - 170000000] & 0xffff);
             }
             if (value <= aMax && value >= aMin) {
